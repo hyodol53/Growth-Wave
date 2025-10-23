@@ -83,9 +83,11 @@ def read_user_strength_profile(
         )
 
     strength_stats = crud.praise.get_strength_profile_for_user(db, user=user)
+    total_praises = len(user.praises_received)
 
     return schemas.StrengthProfile(
         user_id=user.id,
         full_name=user.full_name,
+        total_praises=total_praises,
         strengths=strength_stats
     )

@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from app.core.database import engine
 from app.models import user, organization, external_account, project, project_member, praise, praise_limiter, strength, evaluation
 
-from app.api.endpoints import auth, users, organizations, external_accounts, projects, praises, evaluations
+from app.api.endpoints import auth, users, organizations, external_accounts, projects, praises, evaluations, reports
 
 # Create all tables in the database
 # In a real application, you would use Alembic for migrations.
@@ -32,6 +32,7 @@ app.include_router(external_accounts.router, prefix="/api/v1/external-accounts",
 app.include_router(projects.router, prefix="/api/v1/projects", tags=["Projects"])
 app.include_router(praises.router, prefix="/api/v1/praises", tags=["Praises & Strengths"])
 app.include_router(evaluations.router, prefix="/api/v1/evaluations", tags=["Evaluations"])
+app.include_router(reports.router, prefix="/api/v1", tags=["Reports"])
 
 
 @app.get("/", tags=["Root"])

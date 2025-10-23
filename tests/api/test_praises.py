@@ -126,6 +126,7 @@ def test_read_strength_profile(client: TestClient, db: Session):
     profile = response.json()
     assert profile["user_id"] == user_two.id
     assert profile["full_name"] == user_two.full_name
+    assert profile["total_praises"] == 2
     
     strengths = profile["strengths"]
     assert len(strengths) == 3

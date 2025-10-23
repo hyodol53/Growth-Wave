@@ -43,6 +43,14 @@
 -   **테스트:** 이 기능에 대한 테스트 코드는 현재 보류 중입니다.
 -   **테스트 완료:** `tests/api/test_final_evaluations.py`에 테스트 코드를 작성하고 모든 테스트를 성공적으로 통과하여 기능의 안정성을 확보했습니다. 상세 내용은 `docs/devlog/task_2_6_final_grade_calculation_tests.md`를 참조하십시오.
 
+### 2.7 Growth & Culture 리포트 조회 API 개발 (FR-A-4.6)
+`REQUIREMENTS.md`의 `FR-A-4.6` 요구사항에 따라, 관리자가 평가 시 참고할 수 있는 'Growth & Culture 리포트' 조회 API를 개발했습니다. 이 기능은 Track A(평가)와 Track B(성장)를 연결하는 핵심적인 역할을 합니다.
+
+-   **API 엔드포인트:** `GET /api/v1/users/{user_id}/growth-culture-report` 엔드포인트를 신설했습니다.
+-   **핵심 로직:** 현재 리포트는 Track B의 '칭찬하기' 기능으로부터 집계된 '강점 프로필' 정보를 포함합니다.
+-   **권한 제어:** `ADMIN`과 `DEPT_HEAD`만 접근 가능하며, `DEPT_HEAD`는 자신의 하위 조직원만 조회할 수 있도록 제한했습니다.
+-   **테스트:** 신규 API의 정상 동작과 권한 제어 로직을 검증하는 테스트 코드를 `tests/api/test_reports.py`에 작성하고 모든 테스트 통과를 확인했습니다.
+
 ## 테스트 실패 해결 및 기능 안정화
 
 API 개발 과정에서 발생했던 다양한 테스트 실패들을 모두 해결했으며, 전체 테스트가 통과하는 것을 확인했습니다.
