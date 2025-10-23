@@ -12,6 +12,7 @@ class PraiseLimiter(Base):
     recipient_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     period = Column(String, nullable=False, index=True) # e.g., "2024-H1"
     count = Column(Integer, nullable=False, default=0)
+    anonymous_name = Column(String, nullable=True) # Can be null for records created before this feature
 
     sender = relationship("User", back_populates="praises_sent_log", foreign_keys=[sender_id])
     recipient = relationship("User", back_populates="praises_received_log", foreign_keys=[recipient_id])

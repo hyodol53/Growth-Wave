@@ -9,5 +9,6 @@ from . import peer_evaluation
 from . import pm_evaluation
 from . import project
 from . import qualitative_evaluation
+from . import praise_limiter
 from .final_evaluation import final_evaluation
 from . import evaluation_calculator

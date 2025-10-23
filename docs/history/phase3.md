@@ -12,6 +12,9 @@
 - **Task 3.5 & 3.6: 칭찬 인박스 & 강점 프로필 기능 개발** `(완료)`
   - 상세 개발 내역은 [./devlog/3-2.md](./devlog/3-2.md) 문서를 참고하세요.
 
+- **Task 3.7: 익명 칭찬 이름 생성 로직 개선** `(완료)`
+  - 발신자와 수신자 쌍에 대해 일관된 익명 이름(색상+동물)을 생성하도록 로직을 개선했습니다. 상세 내역은 [./devlog/task_3_7_anonymous_praise_names.md](./devlog/task_3_7_anonymous_praise_names.md) 문서를 참고하세요.
+
 ---
 
 ## 다음 단계 (Next Steps)

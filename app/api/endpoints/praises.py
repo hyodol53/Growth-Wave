@@ -4,11 +4,9 @@ from typing import List
 
 from app import crud, models, schemas
 from app.api import deps
+from app.exceptions import PraiseLimitExceeded
 
 router = APIRouter()
-
-# TODO: This should be configurable via a settings page as per NFR-6
-PRAISE_LIMIT_PER_PERIOD = 5
 
 @router.post("/", response_model=schemas.Praise, status_code=status.HTTP_201_CREATED)
 def create_praise(
@@ -36,23 +34,18 @@ def create_praise(
             detail="Recipient not found.",
         )
 
-    # --- Abuse Prevention (Praise Limit) ---
-    limiter = crud.praise.get_praise_limiter(db, sender_id=current_user.id, recipient_id=praise_in.recipient_id)
-    if limiter and limiter.count >= PRAISE_LIMIT_PER_PERIOD:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"You can only praise this user {PRAISE_LIMIT_PER_PERIOD} times per period.",
-        )
-
-    # --- Create Praise ---
-    # 1. Get or create strength hashtags
+    # Get or create strength hashtags
     strengths = crud.strength.get_or_create_strengths_by_hashtags(db, hashtags=praise_in.hashtags)
 
-    # 2. Create the praise itself
-    created_praise = crud.praise.create_praise(db, praise_in=praise_in, sender_id=current_user.id, strengths=strengths)
-
-    # 3. Update the limiter count (must happen after successful praise creation)
-    crud.praise.upsert_praise_limiter(db, limiter=limiter, sender_id=current_user.id, recipient_id=praise_in.recipient_id)
+    try:
+        created_praise = crud.praise.create_praise(
+            db, praise_in=praise_in, sender_id=current_user.id, strengths=strengths
+        )
+    except PraiseLimitExceeded:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"You can only praise this user {crud.praise.PRAISE_LIMIT_PER_PERIOD} times per period.",
+        )
 
     return created_praise
 

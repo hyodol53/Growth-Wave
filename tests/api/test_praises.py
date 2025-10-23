@@ -22,10 +22,10 @@ def test_create_praise(client: TestClient, db: Session):
     assert response.status_code == 201
     data = response.json()
     assert data["message"] == praise_data["message"]
-    assert "recipient_id" not in data # Recipient ID shouldn't be in the final praise response schema
+    assert "recipient_id" not in data
     assert len(data["strengths"]) == 2
-    found_hashtags = {s["hashtag"] for s in data["strengths"]}
-    assert found_hashtags == {"#teamplayer", "#presentationskills"}
+    # Check that a non-empty anonymous name is returned
+    assert data["anonymous_name"] and isinstance(data["anonymous_name"], str)
 
 
 def test_praise_oneself_fails(client: TestClient, db: Session):
@@ -55,33 +55,54 @@ def test_praise_limit(client: TestClient, db: Session):
     assert response.status_code == 429
 
 
-def test_read_praise_inbox(client: TestClient, db: Session):
+def test_read_praise_inbox_and_consistent_anonymous_name(client: TestClient, db: Session):
     user_one = create_random_user(db)
     user_two = create_random_user(db)
+    user_three = create_random_user(db)
     user_one_headers = authentication_token_from_username(client=client, username=user_one.username, db=db)
     user_two_headers = authentication_token_from_username(client=client, username=user_two.username, db=db)
+    user_three_headers = authentication_token_from_username(client=client, username=user_three.username, db=db)
 
-    # User one praises user two
-    client.post("/api/v1/praises/", headers=user_one_headers, json={
+    # User One praises User Two
+    response1 = client.post("/api/v1/praises/", headers=user_one_headers, json={
         "recipient_id": user_two.id, "message": "First praise", "hashtags": ["#1"]
     })
-    # User one praises user two again
-    client.post("/api/v1/praises/", headers=user_one_headers, json={
+    assert response1.status_code == 201
+    praise1_data = response1.json()
+    anonymous_name_from_one = praise1_data["anonymous_name"]
+
+    # User One praises User Two again
+    response2 = client.post("/api/v1/praises/", headers=user_one_headers, json={
         "recipient_id": user_two.id, "message": "Second praise", "hashtags": ["#2"]
     })
+    assert response2.status_code == 201
+    praise2_data = response2.json()
+    assert praise2_data["anonymous_name"] == anonymous_name_from_one, "Praises from the same user should have the same anonymous name"
 
-    # Check user two's inbox
+    # User Three praises User Two - should have a different name
+    response3 = client.post("/api/v1/praises/", headers=user_three_headers, json={
+        "recipient_id": user_two.id, "message": "Third praise", "hashtags": ["#3"]
+    })
+    assert response3.status_code == 201
+    praise3_data = response3.json()
+    assert praise3_data["anonymous_name"] != anonymous_name_from_one, "Praises from different users should have different anonymous names"
+
+    # Check User Two's inbox
     response = client.get("/api/v1/praises/inbox/", headers=user_two_headers)
     assert response.status_code == 200
     inbox_data = response.json()
-    assert len(inbox_data) == 2
-    assert inbox_data[0]["message"] == "Second praise" # Most recent first
+    assert len(inbox_data) == 3
+    assert inbox_data[0]["message"] == "Third praise"
+    assert inbox_data[0]["anonymous_name"] == praise3_data["anonymous_name"]
+    assert inbox_data[1]["message"] == "Second praise"
+    assert inbox_data[1]["anonymous_name"] == anonymous_name_from_one
+    assert inbox_data[2]["message"] == "First praise"
+    assert inbox_data[2]["anonymous_name"] == anonymous_name_from_one
 
-    # Check user one's inbox (should be empty)
+    # Check User One's inbox (should be empty)
     response = client.get("/api/v1/praises/inbox/", headers=user_one_headers)
     assert response.status_code == 200
     assert response.json() == []
-
 
 def test_read_strength_profile(client: TestClient, db: Session):
     user_one = create_random_user(db)

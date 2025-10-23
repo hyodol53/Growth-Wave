@@ -1,44 +1,67 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, and_
 from collections import Counter
-import random
 
+from app import models, schemas
+from app.crud.base import CRUDBase
 from app.models import User, Praise, PraiseLimiter, Strength
 from app.schemas.praise import PraiseCreate
 from app.schemas.strength import StrengthStat
+from app.utils.anonymous_names import generate_anonymous_name
+from app.exceptions import PraiseLimitExceeded
+import datetime
 
-# List of anonymous animals for praise sender
-ANONYMOUS_ANIMALS = ["익명의 고라니", "익명의 다람쥐", "익명의 토끼", "익명의 부엉이", "익명의 사자", "익명의 호랑이"]
+# TODO: This should be configurable via a settings page as per NFR-6
+PRAISE_LIMIT_PER_PERIOD = 5
 
 def get_current_period() -> str:
     """Determines the current evaluation period (e.g., 2024-H1)."""
-    from datetime import datetime
-    now = datetime.now()
+    now = datetime.datetime.now()
     half = "H1" if now.month < 7 else "H2"
     return f"{now.year}-{half}"
 
-def get_praise_limiter(db: Session, *, sender_id: int, recipient_id: int) -> PraiseLimiter | None:
+def create_praise(db: Session, *, praise_in: PraiseCreate, sender_id: int, strengths: list[Strength]) -> Praise:
     period = get_current_period()
-    return db.query(PraiseLimiter).filter_by(sender_id=sender_id, recipient_id=recipient_id, period=period).first()
 
-def upsert_praise_limiter(db: Session, *, limiter: PraiseLimiter | None, sender_id: int, recipient_id: int) -> PraiseLimiter:
-    period = get_current_period()
+    # 1. Find or create the praise limiter record
+    limiter = db.query(models.PraiseLimiter).filter(
+        models.PraiseLimiter.sender_id == sender_id,
+        models.PraiseLimiter.recipient_id == praise_in.recipient_id,
+        models.PraiseLimiter.period == period
+    ).first()
+
+    if limiter and limiter.count >= PRAISE_LIMIT_PER_PERIOD:
+        raise PraiseLimitExceeded()
+
     if limiter:
+        # Record exists, check for anonymous name
+        if not limiter.anonymous_name:
+            # If name is missing (e.g., old data), generate and save it
+            limiter.anonymous_name = generate_anonymous_name(db, praisee_id=praise_in.recipient_id, evaluation_period=period)
         limiter.count += 1
     else:
-        limiter = PraiseLimiter(sender_id=sender_id, recipient_id=recipient_id, period=period, count=1)
+        # No record, create a new one
+        new_name = generate_anonymous_name(db, praisee_id=praise_in.recipient_id, evaluation_period=period)
+        limiter = models.PraiseLimiter(
+            sender_id=sender_id,
+            recipient_id=praise_in.recipient_id,
+            period=period,
+            count=1,
+            anonymous_name=new_name
+        )
         db.add(limiter)
+    
     db.commit()
     db.refresh(limiter)
-    return limiter
 
-def create_praise(db: Session, *, praise_in: PraiseCreate, sender_id: int, strengths: list[Strength]) -> Praise:
-    anonymous_name = random.choice(ANONYMOUS_ANIMALS)
+    anonymous_name_to_use = limiter.anonymous_name
+
+    # 2. Create the praise object
     # Note: sender_id is intentionally not saved in the Praise model to ensure anonymity
     db_praise = Praise(
         recipient_id=praise_in.recipient_id,
         message=praise_in.message,
-        anonymous_name=anonymous_name,
+        anonymous_name=anonymous_name_to_use,
         strengths=strengths
     )
     db.add(db_praise)
