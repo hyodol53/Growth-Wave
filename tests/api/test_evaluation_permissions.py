@@ -73,6 +73,12 @@ def test_read_my_evaluation_result(
     assert data["pm_scores"][0]["pm_name"] == pm.full_name
     assert data["pm_scores"][0]["score"] == 90
 
+    # FR-A-5.2: Ensure sensitive data is not exposed
+    assert "final_score" not in data
+    assert "peer_score" not in data
+    assert "qualitative_score" not in data
+    assert "final_evaluation" not in data
+
 
 def test_read_subordinate_evaluation_as_dept_head(
     client: TestClient, db: Session
@@ -93,6 +99,9 @@ def test_read_subordinate_evaluation_as_dept_head(
             evaluatee_id=subordinate.id,
             evaluation_period=period,
             final_score=95.0,
+            peer_score=92.0,
+            pm_score=96.0,
+            qualitative_score=97.0,
             grade="S",
         ),
     )
@@ -117,8 +126,14 @@ def test_read_subordinate_evaluation_as_dept_head(
 
     assert response.status_code == 200
     data = response.json()
-    assert data["final_evaluation"]["evaluatee_id"] == subordinate.id
-    assert data["final_evaluation"]["grade"] == "S"
+    final_eval_data = data["final_evaluation"]
+    assert final_eval_data["evaluatee_id"] == subordinate.id
+    assert final_eval_data["grade"] == "S"
+    assert final_eval_data["final_score"] == 95.0
+    assert final_eval_data["peer_score"] == 92.0
+    assert final_eval_data["pm_score"] == 96.0
+    assert final_eval_data["qualitative_score"] == 97.0
+    
     assert len(data["peer_feedback"]) == 1
     assert data["peer_feedback"][0] == "Great team player!"
 
