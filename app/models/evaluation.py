@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Enum as SQLAlchemyEnum, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Enum as SQLAlchemyEnum, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.user import UserRole
@@ -73,12 +73,33 @@ class FinalEvaluation(Base):
     id = Column(Integer, primary_key=True, index=True)
     evaluatee_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     evaluation_period = Column(String, nullable=False)
-    
+
     peer_score = Column(Float)
     pm_score = Column(Float)
     qualitative_score = Column(Float)
     final_score = Column(Float, nullable=False)
 
     evaluatee = relationship("User")
+
+    __table_args__ = {'extend_existing': True}
+
+class EvaluationPeriod(Base):
+    __tablename__ = "evaluation_periods"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+
+    __table_args__ = {'extend_existing': True}
+
+
+class DepartmentGradeRatio(Base):
+    __tablename__ = "department_grade_ratios"
+
+    id = Column(Integer, primary_key=True, index=True)
+    department_grade = Column(String, unique=True, index=True, nullable=False)
+    s_ratio = Column(Float, nullable=False)
+    a_ratio = Column(Float, nullable=False)
 
     __table_args__ = {'extend_existing': True}

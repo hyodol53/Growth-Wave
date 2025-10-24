@@ -249,3 +249,129 @@ def calculate_final_evaluations(
             calculated_evaluations.append(final_eval)
 
     return calculated_evaluations
+
+
+@router.post("/evaluation-periods/", response_model=schemas.EvaluationPeriod)
+def create_evaluation_period(
+    *,
+    db: Session = Depends(deps.get_db),
+    evaluation_period_in: schemas.EvaluationPeriodCreate,
+    current_user: models.User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Create a new evaluation period. (Admin only)
+    """
+    evaluation_period = crud.evaluation_period.create(db, obj_in=evaluation_period_in)
+    return evaluation_period
+
+
+@router.get("/evaluation-periods/", response_model=List[schemas.EvaluationPeriod])
+def read_evaluation_periods(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Retrieve evaluation periods. (Admin only)
+    """
+    evaluation_periods = crud.evaluation_period.get_multi(db, skip=skip, limit=limit)
+    return evaluation_periods
+
+
+@router.put("/evaluation-periods/{period_id}", response_model=schemas.EvaluationPeriod)
+def update_evaluation_period(
+    *,
+    db: Session = Depends(deps.get_db),
+    period_id: int,
+    evaluation_period_in: schemas.EvaluationPeriodUpdate,
+    current_user: models.User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Update an evaluation period. (Admin only)
+    """
+    evaluation_period = crud.evaluation_period.get(db=db, id=period_id)
+    if not evaluation_period:
+        raise HTTPException(status_code=404, detail="Evaluation period not found")
+    evaluation_period = crud.evaluation_period.update(db=db, db_obj=evaluation_period, obj_in=evaluation_period_in)
+    return evaluation_period
+
+
+@router.delete("/evaluation-periods/{period_id}", response_model=schemas.EvaluationPeriod)
+def delete_evaluation_period(
+    *,
+    db: Session = Depends(deps.get_db),
+    period_id: int,
+    current_user: models.User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Delete an evaluation period. (Admin only)
+    """
+    evaluation_period = crud.evaluation_period.get(db=db, id=period_id)
+    if not evaluation_period:
+        raise HTTPException(status_code=404, detail="Evaluation period not found")
+    evaluation_period = crud.evaluation_period.remove(db=db, id=period_id)
+    return evaluation_period
+
+
+@router.post("/department-grade-ratios/", response_model=schemas.DepartmentGradeRatio)
+def create_department_grade_ratio(
+    *,
+    db: Session = Depends(deps.get_db),
+    department_grade_ratio_in: schemas.DepartmentGradeRatioCreate,
+    current_user: models.User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Create a new department grade ratio. (Admin only)
+    """
+    department_grade_ratio = crud.department_grade_ratio.create(db, obj_in=department_grade_ratio_in)
+    return department_grade_ratio
+
+
+@router.get("/department-grade-ratios/", response_model=List[schemas.DepartmentGradeRatio])
+def read_department_grade_ratios(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Retrieve department grade ratios. (Admin only)
+    """
+    department_grade_ratios = crud.department_grade_ratio.get_multi(db, skip=skip, limit=limit)
+    return department_grade_ratios
+
+
+@router.put("/department-grade-ratios/{ratio_id}", response_model=schemas.DepartmentGradeRatio)
+def update_department_grade_ratio(
+    *,
+    db: Session = Depends(deps.get_db),
+    ratio_id: int,
+    department_grade_ratio_in: schemas.DepartmentGradeRatioUpdate,
+    current_user: models.User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Update a department grade ratio. (Admin only)
+    """
+    department_grade_ratio = crud.department_grade_ratio.get(db=db, id=ratio_id)
+    if not department_grade_ratio:
+        raise HTTPException(status_code=404, detail="Department grade ratio not found")
+    department_grade_ratio = crud.department_grade_ratio.update(db=db, db_obj=department_grade_ratio, obj_in=department_grade_ratio_in)
+    return department_grade_ratio
+
+
+@router.delete("/department-grade-ratios/{ratio_id}", response_model=schemas.DepartmentGradeRatio)
+def delete_department_grade_ratio(
+    *,
+    db: Session = Depends(deps.get_db),
+    ratio_id: int,
+    current_user: models.User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Delete a department grade ratio. (Admin only)
+    """
+    department_grade_ratio = crud.department_grade_ratio.get(db=db, id=ratio_id)
+    if not department_grade_ratio:
+        raise HTTPException(status_code=404, detail="Department grade ratio not found")
+    department_grade_ratio = crud.department_grade_ratio.remove(db=db, id=ratio_id)
+    return department_grade_ratio

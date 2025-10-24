@@ -17,6 +17,13 @@
 -   **API 엔드포인트:** `POST /api/v1/projects/members/weights` 엔드포인트 생성 및 권한/유효성 검사 로직 구현.
 -   **테스트:** `tests/api/test_projects.py`를 포함한 관련 테스트 코드 작성.
 
+### 2.3 평가 주기 및 등급 비율 설정 API 안정화 (FR-A-2.1, FR-A-2.2)
+이전 개발에서 `TypeError`로 인해 중단되었던 평가 주기 및 등급 비율 관리 API의 버그를 수정하고 안정화했습니다.
+
+-   **핵심 로직 (`app/crud/base.py`):** `create` 메서드가 Pydantic 모델과 `dict` 타입을 모두 처리할 수 있도록 수정하여, 날짜 타입 변환 오류와 `AttributeError`를 모두 해결했습니다.
+-   **API 엔드포인트 (`app/api/endpoints/evaluations.py`):** 관리자만 접근 가능한 평가 주기 및 등급 비율 CRUD API가 이제 정상적으로 동작합니다.
+-   **테스트 (`tests/api/test_evaluations.py`):** 관련된 모든 테스트가 통과하는 것을 확인하여 기능 안정성을 검증했습니다.
+
 ### 2.4 평가 항목 가중치 설정 API 개발 (FR-A-2.3)
 'FR-A-2.3: 시스템 관리자는 직책별 평가 항목의 가중치(%)를 조정할 수 있어야 한다.' 요구사항을 구현했습니다.
 

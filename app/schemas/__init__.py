@@ -18,5 +18,11 @@ from .evaluation import (
     FinalEvaluation,
     FinalEvaluationCreate,
     FinalEvaluationCalculateRequest,
+    EvaluationPeriod,
+    EvaluationPeriodCreate,
+    EvaluationPeriodUpdate,
+    DepartmentGradeRatio,
+    DepartmentGradeRatioCreate,
+    DepartmentGradeRatioUpdate,
 )
 from .report import GrowthAndCultureReport

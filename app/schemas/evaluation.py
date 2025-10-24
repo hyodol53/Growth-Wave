@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import date
 from app.models.user import UserRole
 from app.models.evaluation import EvaluationItem
 from typing import List, Optional
@@ -126,3 +127,46 @@ class FinalEvaluation(FinalEvaluationInDB):
 # Request body for calculate_final_evaluations endpoint
 class FinalEvaluationCalculateRequest(BaseModel):
     user_ids: Optional[List[int]] = None
+
+# EvaluationPeriod Schemas
+class EvaluationPeriodBase(BaseModel):
+    name: str
+    start_date: date
+    end_date: date
+
+class EvaluationPeriodCreate(EvaluationPeriodBase):
+    pass
+
+class EvaluationPeriodUpdate(EvaluationPeriodBase):
+    pass
+
+class EvaluationPeriodInDB(EvaluationPeriodBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class EvaluationPeriod(EvaluationPeriodInDB):
+    pass
+
+
+# DepartmentGradeRatio Schemas
+class DepartmentGradeRatioBase(BaseModel):
+    department_grade: str
+    s_ratio: float
+    a_ratio: float
+
+class DepartmentGradeRatioCreate(DepartmentGradeRatioBase):
+    pass
+
+class DepartmentGradeRatioUpdate(DepartmentGradeRatioBase):
+    pass
+
+class DepartmentGradeRatioInDB(DepartmentGradeRatioBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class DepartmentGradeRatio(DepartmentGradeRatioInDB):
+    pass
