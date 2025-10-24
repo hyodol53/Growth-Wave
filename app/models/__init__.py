@@ -7,3 +7,4 @@ from .strength import Strength
 from .evaluation import EvaluationWeight, PeerEvaluation, PmEvaluation, QualitativeEvaluation, FinalEvaluation
 from .project import Project
 from .project_member import ProjectMember
+from .collaboration import CollaborationInteraction, InteractionType

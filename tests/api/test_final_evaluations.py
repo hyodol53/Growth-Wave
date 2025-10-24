@@ -19,19 +19,19 @@ def test_calculate_final_evaluations_as_dept_head(
 ) -> None:
     # 1. Setup: Create users, orgs, projects, weights, and evaluations
     # Users and Orgs
-    dept_head = create_random_user(db, role=UserRole.DEPT_HEAD)
-    team_lead = create_random_user(db, organization_id=dept_head.organization_id)
-    employee1 = create_random_user(db, organization_id=dept_head.organization_id)
-    employee2 = create_random_user(db, organization_id=dept_head.organization_id)
+    org = create_random_organization(db)
+    dept_head = create_random_user(db, role=UserRole.DEPT_HEAD, organization_id=org.id)
+    team_lead = create_random_user(db, organization_id=org.id)
+    employee1 = create_random_user(db, organization_id=org.id)
+    employee2 = create_random_user(db, organization_id=org.id)
     
     dept_head_headers = authentication_token_from_username(
         client=client, username=dept_head.username, db=db
     )
 
     # Projects
-    project1 = create_random_project(db)
-    project2 = create_random_project(db)
-
+    project1 = create_random_project(db, owner_org_id=dept_head.organization_id)
+    project2 = create_random_project(db, owner_org_id=dept_head.organization_id)
     # Define a consistent evaluation period for the test
     test_evaluation_period = f"{datetime.date.today().year}-H{1 if datetime.date.today().month <= 6 else 2}"
 
@@ -87,12 +87,13 @@ def test_calculate_final_evaluations_for_pm(
 ) -> None:
     # 1. Setup
     admin_user = create_random_user(db, role=UserRole.ADMIN)
-    dept_head = create_random_user(db, role=UserRole.DEPT_HEAD)
-    pm_user = create_random_user(db, role=UserRole.TEAM_LEAD, organization_id=dept_head.organization_id)
+    org = create_random_organization(db)
+    dept_head = create_random_user(db, role=UserRole.DEPT_HEAD, organization_id=org.id)
+    pm_user = create_random_user(db, role=UserRole.TEAM_LEAD, organization_id=org.id)
     
     admin_headers = authentication_token_from_username(client=client, username=admin_user.username, db=db)
 
-    project = create_random_project(db)
+    project = create_random_project(db, owner_org_id=dept_head.organization_id)
     test_evaluation_period = f"{datetime.date.today().year}-H{1 if datetime.date.today().month <= 6 else 2}"
 
     create_project_member(db, project_id=project.id, user_id=pm_user.id, participation_weight=100.0, is_pm=True)

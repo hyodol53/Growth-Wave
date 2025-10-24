@@ -4,12 +4,14 @@ from app.core.config import settings
 from tests.utils.user import create_random_user
 from tests.utils.project import create_random_project
 from tests.utils.project_member import create_project_member
+from tests.utils.organization import create_random_organization
 
 def test_create_peer_evaluations_success(client: TestClient, db: Session) -> None:
     user1 = create_random_user(db, password="password")
     user2 = create_random_user(db)
     user3 = create_random_user(db)
-    project = create_random_project(db)
+    org = create_random_organization(db)
+    project = create_random_project(db, owner_org_id=org.id)
     create_project_member(db, project_id=project.id, user_id=user1.id)
     create_project_member(db, project_id=project.id, user_id=user2.id)
     create_project_member(db, project_id=project.id, user_id=user3.id)
@@ -41,7 +43,8 @@ def test_create_peer_evaluations_avg_score_too_high(client: TestClient, db: Sess
     user1 = create_random_user(db, password="password")
     user2 = create_random_user(db)
     user3 = create_random_user(db)
-    project = create_random_project(db)
+    org = create_random_organization(db)
+    project = create_random_project(db, owner_org_id=org.id)
     create_project_member(db, project_id=project.id, user_id=user1.id)
     create_project_member(db, project_id=project.id, user_id=user2.id)
     create_project_member(db, project_id=project.id, user_id=user3.id)
@@ -68,8 +71,8 @@ def test_create_peer_evaluations_avg_score_too_high(client: TestClient, db: Sess
 def test_create_peer_evaluations_unauthenticated(client: TestClient, db: Session) -> None:
     user2 = create_random_user(db)
     user3 = create_random_user(db)
-    project = create_random_project(db)
-
+    org = create_random_organization(db)
+    project = create_random_project(db, owner_org_id=org.id)
     data = {
         "evaluations": [
             {"project_id": project.id, "evaluatee_id": user2.id, "score": 60},

@@ -4,8 +4,7 @@ from app.schemas.project import ProjectCreate
 from tests.utils.utils import random_lower_string
 from tests.utils.organization import create_random_organization
 
-def create_random_project(db: Session) -> models.Project:
+def create_random_project(db: Session, *, owner_org_id: int) -> models.Project:
     name = random_lower_string()
-    organization = create_random_organization(db)
-    project_in = ProjectCreate(name=name, owner_org_id=organization.id)
+    project_in = ProjectCreate(name=name, owner_org_id=owner_org_id)
     return crud.project.project.create(db=db, obj_in=project_in)

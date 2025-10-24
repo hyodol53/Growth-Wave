@@ -1,21 +1,13 @@
 
 from fastapi import FastAPI
-from app.core.database import engine
-from app.models import user, organization, external_account, project, project_member, praise, praise_limiter, strength, evaluation
-
-from app.api.endpoints import auth, users, organizations, external_accounts, projects, praises, evaluations, reports, retrospectives
+from app.core.database import engine, Base
+# Import all models to ensure they are registered with SQLAlchemy's metadata
+from app.models import user, organization, external_account, project, project_member, praise, praise_limiter, strength, evaluation, collaboration
+from app.api.endpoints import auth, users, organizations, external_accounts, projects, praises, evaluations, reports, retrospectives, collaborations
 
 # Create all tables in the database
 # In a real application, you would use Alembic for migrations.
-user.Base.metadata.create_all(bind=engine)
-organization.Base.metadata.create_all(bind=engine)
-external_account.Base.metadata.create_all(bind=engine)
-project.Base.metadata.create_all(bind=engine)
-project_member.Base.metadata.create_all(bind=engine)
-praise.Base.metadata.create_all(bind=engine)
-praise_limiter.Base.metadata.create_all(bind=engine)
-strength.Base.metadata.create_all(bind=engine)
-evaluation.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI(
@@ -34,6 +26,8 @@ app.include_router(praises.router, prefix="/api/v1/praises", tags=["Praises & St
 app.include_router(evaluations.router, prefix="/api/v1/evaluations", tags=["Evaluations"])
 app.include_router(reports.router, prefix="/api/v1", tags=["Reports"])
 app.include_router(retrospectives.router, prefix="/api/v1/retrospectives", tags=["Retrospectives"])
+app.include_router(collaborations.router, prefix="/api/v1/collaborations", tags=["Collaborations"])
+
 
 
 @app.get("/", tags=["Root"])
