@@ -4,9 +4,80 @@ from typing import List, Any, Optional
 from app import crud, models, schemas
 from app.api import deps
 import datetime
-from app.schemas.evaluation import FinalEvaluationCalculateRequest
+from app.schemas.evaluation import (
+    EvaluationWeight,
+    EvaluationWeightCreate,
+    PeerEvaluationCreate,
+    PmEvaluationCreate,
+    QualitativeEvaluationCreate,
+    FinalEvaluation,
+    FinalEvaluationCalculateRequest,
+    EvaluationPeriod,
+    EvaluationPeriodCreate,
+    DepartmentGradeRatio,
+    DepartmentGradeRatioCreate,
+    GradeAdjustmentRequest,
+)
+from app.models.user import User as UserModel, UserRole
+from app.crud import grade_adjustment
+from app.exceptions import GradeAdjustmentError, GradeTOExceededError
 
 router = APIRouter()
+
+@router.post(
+    "/adjust-grades",
+    response_model=List[FinalEvaluation],
+    dependencies=[Depends(deps.get_current_user)],
+)
+def adjust_grades(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+    adjustments_in: GradeAdjustmentRequest,
+) -> Any:
+    """
+    Adjust final grades for users.
+    - Accessible only by DEPT_HEAD or ADMIN.
+    - DEPT_HEAD can only adjust grades for users in their own department.
+    - The number of B+ and B- grades must be equal within a department.
+    """
+    if current_user.role not in [UserRole.ADMIN, UserRole.DEPT_HEAD]:
+        raise HTTPException(
+            status_code=403,
+            detail="The user doesn't have enough privileges for this operation",
+        )
+
+    if current_user.role == UserRole.ADMIN:
+        # Admins could in theory adjust for any department, but the logic is
+        # scoped to a single department for B+/B- validation. The first user's
+        # department is used as the target.
+        if not adjustments_in.adjustments:
+            return []
+        first_user = crud.user.user.get(db, id=adjustments_in.adjustments[0].user_id)
+        if not first_user or not first_user.organization_id:
+            raise HTTPException(status_code=400, detail="Cannot determine department for adjustment.")
+        department_id = first_user.organization_id
+    else: # DEPT_HEAD
+        if not current_user.organization_id:
+            raise HTTPException(status_code=400, detail="User does not belong to a department.")
+        department_id = current_user.organization_id
+
+    try:
+        updated_evaluations = grade_adjustment.adjust_grades_for_department(
+            db=db,
+            department_id=department_id,
+            evaluation_period=adjustments_in.evaluation_period,
+            adjustments=adjustments_in.adjustments,
+            current_user_role=current_user.role,
+        )
+        return updated_evaluations
+    except GradeAdjustmentError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except GradeTOExceededError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred.")
+
 
 @router.post("/", response_model=schemas.EvaluationWeight)
 def create_evaluation_weight(
@@ -127,7 +198,7 @@ def create_qualitative_evaluations(
     Create new qualitative evaluations for team/department members.
     """
     # FR-A-3.5: Team lead/Dept head can evaluate their members.
-    if current_user.role not in [models.UserRole.TEAM_LEAD, models.UserRole.DEPT_HEAD]:
+    if current_user.role not in [UserRole.TEAM_LEAD, UserRole.DEPT_HEAD]:
         raise HTTPException(
             status_code=403,
             detail="User does not have the right to perform qualitative evaluations.",
@@ -218,7 +289,7 @@ def calculate_final_evaluations(
     """
     user_ids = request_body.user_ids
 
-    if current_user.role not in [models.UserRole.DEPT_HEAD, models.UserRole.ADMIN]:
+    if current_user.role not in [UserRole.DEPT_HEAD, UserRole.ADMIN]:
         raise HTTPException(
             status_code=403,
             detail="Not enough privileges to calculate final evaluations.",
@@ -234,10 +305,10 @@ def calculate_final_evaluations(
             if user:
                 target_users.append(user)
     else:
-        if current_user.role == models.UserRole.DEPT_HEAD:
+        if current_user.role == UserRole.DEPT_HEAD:
             # Calculate for all subordinates of the current DEPT_HEAD
             target_users = crud.user.user.get_subordinates(db, user_id=current_user.id)
-        elif current_user.role == models.UserRole.ADMIN:
+        elif current_user.role == UserRole.ADMIN:
             # Calculate for all users in the system
             target_users = crud.user.user.get_multi(db)
 

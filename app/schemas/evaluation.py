@@ -104,6 +104,7 @@ class FinalEvaluationBase(BaseModel):
     pm_score: float | None = None
     qualitative_score: float | None = None
     final_score: float
+    grade: Optional[str] = None
 
 
 class FinalEvaluationCreate(FinalEvaluationBase):
@@ -155,6 +156,14 @@ class DepartmentGradeRatioBase(BaseModel):
     department_grade: str
     s_ratio: float
     a_ratio: float
+
+class GradeAdjustment(BaseModel):
+    user_id: int
+    grade: str
+
+class GradeAdjustmentRequest(BaseModel):
+    evaluation_period: str
+    adjustments: List[GradeAdjustment]
 
 class DepartmentGradeRatioCreate(DepartmentGradeRatioBase):
     pass

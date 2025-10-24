@@ -78,6 +78,7 @@ class FinalEvaluation(Base):
     pm_score = Column(Float)
     qualitative_score = Column(Float)
     final_score = Column(Float, nullable=False)
+    grade = Column(String, nullable=True)
 
     evaluatee = relationship("User")
 

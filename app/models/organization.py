@@ -10,6 +10,7 @@ class Organization(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     level = Column(Integer, nullable=False)  # 1: 연구소/센터, 2: 실, 3: 팀
+    department_grade = Column(String, nullable=True)
 
     parent_id = Column(Integer, ForeignKey("organizations.id"))
     parent = relationship("Organization", remote_side=[id], back_populates="children")

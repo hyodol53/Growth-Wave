@@ -28,7 +28,8 @@ def create_organization(db: Session, org: OrganizationCreate) -> Organization:
     db_org = Organization(
         name=org.name,
         level=org.level,
-        parent_id=org.parent_id
+        parent_id=org.parent_id,
+        department_grade=org.department_grade
     )
     db.add(db_org)
     db.commit()

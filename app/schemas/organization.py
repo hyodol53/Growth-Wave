@@ -7,6 +7,7 @@ class Organization(BaseModel):
     id: int
     name: str
     level: int
+    department_grade: Optional[str] = None
     parent_id: Optional[int] = None
     children: List["Organization"] = []
 
@@ -20,3 +21,4 @@ class OrganizationCreate(BaseModel):
     name: str
     level: int
     parent_id: Optional[int] = None
+    department_grade: Optional[str] = None
