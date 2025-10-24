@@ -5,6 +5,23 @@ from app.models.evaluation import PeerEvaluation
 from app.schemas.evaluation import PeerEvaluationCreate, PeerEvaluationBase
 
 class CRUDPeerEvaluation(CRUDBase[PeerEvaluation, PeerEvaluationCreate, PeerEvaluationBase]):
+    def get_feedback_for_evaluatee_by_period(
+        self, db: Session, *, evaluatee_id: int, evaluation_period: str
+    ) -> List[str]:
+        """
+        Gets all non-empty feedback strings for an evaluatee for a specific period.
+        """
+        return (
+            db.query(PeerEvaluation.feedback)
+            .filter(
+                PeerEvaluation.evaluatee_id == evaluatee_id,
+                PeerEvaluation.evaluation_period == evaluation_period,
+                PeerEvaluation.feedback.isnot(None),
+                PeerEvaluation.feedback != "",
+            )
+            .all()
+        )
+
     def get_by_project_and_evaluatee(
         self, db: Session, *, project_id: int, evaluatee_id: int, evaluation_period: str
     ) -> List[PeerEvaluation]:

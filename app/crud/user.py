@@ -48,7 +48,11 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         # Include the user's own organization
         all_org_ids = descendant_org_ids + [user.organization_id]
 
-        subordinates = db.query(User).filter(User.organization_id.in_(all_org_ids)).all()
+        subordinates = (
+            db.query(User)
+            .filter(User.organization_id.in_(all_org_ids), User.id != user_id)
+            .all()
+        )
         return subordinates
 
 

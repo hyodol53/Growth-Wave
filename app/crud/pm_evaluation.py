@@ -1,10 +1,34 @@
-from typing import List
+from typing import List, Any
 from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
 from app.models.evaluation import PmEvaluation
+from app.models.project import Project
+from app.models.user import User
 from app.schemas.evaluation import PmEvaluationCreate, PmEvaluationBase
 
 class CRUDPmEvaluation(CRUDBase[PmEvaluation, PmEvaluationCreate, PmEvaluationBase]):
+    def get_for_evaluatee_by_period(
+        self, db: Session, *, evaluatee_id: int, evaluation_period: str
+    ) -> List[Any]:
+        """
+        Gets all PM evaluations for an evaluatee for a specific period,
+        joining with project and user tables to get project name and PM name.
+        """
+        return (
+            db.query(
+                PmEvaluation.score,
+                Project.name.label("project_name"),
+                User.full_name.label("pm_name"),
+            )
+            .join(Project, PmEvaluation.project_id == Project.id)
+            .join(User, PmEvaluation.evaluator_id == User.id)
+            .filter(
+                PmEvaluation.evaluatee_id == evaluatee_id,
+                PmEvaluation.evaluation_period == evaluation_period,
+            )
+            .all()
+        )
+
     def get_by_project_and_evaluatee(
         self, db: Session, *, project_id: int, evaluatee_id: int, evaluation_period: str
     ) -> List[PmEvaluation]:

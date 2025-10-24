@@ -65,6 +65,15 @@
 -   **핵심 로직:** B+/B- 인원수 검증, 부서별 TO(정원) 검증 로직을 포함한 등급 조정 기능을 구현했습니다.
 -   **테스트:** `tests/api/test_grade_adjustments.py`에 성공, 실패, 권한 제어 등 다양한 시나리오에 대한 테스트 케이스를 작성하여 안정성을 검증했습니다.
 
+### 2.9 데이터 열람 권한 로직 구현 (FR-A-5.x)
+`REQUIREMENTS.md`의 `FR-A-5.x` 요구사항에 따라, 사용자 역할(피평가자, 실장, 관리자)별로 평가 데이터를 조회할 수 있는 API와 권한 제어 로직을 구현했습니다.
+
+-   **API 엔드포인트:**
+    -   `GET /api/v1/evaluations/me`: 자신의 평가 결과를 조회합니다. (피평가자용)
+    -   `GET /api/v1/evaluations/{user_id}/result`: 하위 직원의 상세 평가 결과를 조회합니다. (실장/관리자용)
+-   **핵심 로직:** 역할에 따라 다른 데이터 스키마(`MyEvaluationResult`, `ManagerEvaluationView`)를 사용하여 민감한 정보 노출을 제어하고, `deps.py`에 권한 검증을 위한 의존성 함수(`get_user_as_subordinate`)를 추가했습니다.
+-   **테스트:** `tests/api/test_evaluation_permissions.py`에 역할별 접근 시나리오(성공/실패)에 대한 테스트 케이스를 작성하여 기능의 안정성을 검증했습니다.
+
 ## 테스트 실패 해결 및 기능 안정화
 
 API 개발 과정에서 발생했던 다양한 테스트 실패들을 모두 해결했으며, 전체 테스트가 통과하는 것을 확인했습니다.
@@ -74,6 +83,7 @@ API 개발 과정에서 발생했던 다양한 테스트 실패들을 모두 해
 *   **`AssertionError` 해결**: 테스트 코드의 기대 오류 메시지를 실제 API 반환 메시지와 일치하도록 수정했습니다.
 *   **`AttributeError` 및 `ModuleNotFoundError` (다수)**: `__init__.py` 파일에 신규 모듈 및 인스턴스를 등록하지 않아 발생한 문제를 해결하고, 잘못된 import 경로를 수정했습니다.
 *   **`InvalidRequestError` (SQLAlchemy)**: 테스트 실행 중 모델 클래스가 중복으로 정의되어 발생한 오류를 `__table_args__ = {'extend_existing': True}` 옵션을 추가하여 해결했습니다.
+*   **`ValidationError` (Pydantic)**: SQLAlchemy 모델 객체를 Pydantic 스키마로 변환 시 `orm_mode`(현 `from_attributes`) 설정이 누락되어 발생한 오류를 `ConfigDict`를 사용하여 해결했습니다.
 
 ## 결론
-위의 모든 오류를 해결한 결과, `poetry run pytest` 실행 시 모든 테스트가 성공적으로 통과하는 것을 확인했습니다. 이로써 Phase 2에서 계획된 Track A의 핵심 평가 설정 및 진행 기능(조직 관리, 참여 비중 설정, 평가 가중치 설정, 평가 진행 API) 개발이 안정적으로 완료되었음을 선언합니다.
+위의 모든 오류를 해결한 결과, `poetry run pytest` 실행 시 모든 테스트가 성공적으로 통과하는 것을 확인했습니다. 이로써 Phase 2에서 계획된 Track A의 모든 기능(평가 설정, 진행, 산출, 조정 및 결과 조회) 개발이 안정적으로 완료되었음을 선언합니다.

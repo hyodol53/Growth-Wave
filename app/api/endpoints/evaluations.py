@@ -276,6 +276,83 @@ def delete_evaluation_weight(
     return evaluation_weight
 
 
+@router.get("/me", response_model=schemas.MyEvaluationResult)
+def read_my_evaluation_result(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+    evaluation_period: Optional[str] = None,
+) -> Any:
+    """
+    Retrieve the current user's own evaluation results.
+    """
+    # Determine the evaluation period if not provided
+    if not evaluation_period:
+        today = datetime.date.today()
+        evaluation_period = f"{today.year}-H{1 if today.month <= 6 else 2}"
+
+    # FR-A-5.1: Can view final grade and PM scores
+    final_eval = crud.final_evaluation.get_by_evaluatee_and_period(
+        db, evaluatee_id=current_user.id, evaluation_period=evaluation_period
+    )
+    pm_scores_data = crud.pm_evaluation.pm_evaluation.get_for_evaluatee_by_period(
+        db, evaluatee_id=current_user.id, evaluation_period=evaluation_period
+    )
+
+    pm_scores = [
+        schemas.PmScoreResult(
+            project_name=score.project_name,
+            pm_name=score.pm_name,
+            score=score.score,
+        )
+        for score in pm_scores_data
+    ]
+
+    return schemas.MyEvaluationResult(
+        evaluation_period=evaluation_period,
+        grade=final_eval.grade if final_eval else None,
+        pm_scores=pm_scores,
+    )
+
+
+@router.get("/{user_id}/result", response_model=schemas.ManagerEvaluationView)
+def read_subordinate_evaluation_result(
+    *,
+    db: Session = Depends(deps.get_db),
+    user_to_view: models.User = Depends(deps.get_user_as_subordinate),
+    evaluation_period: Optional[str] = None,
+) -> Any:
+    """
+    Retrieve a subordinate's full evaluation result.
+    Accessible by DEPT_HEAD for their subordinates, and ADMIN for anyone.
+    """
+    if not evaluation_period:
+        today = datetime.date.today()
+        evaluation_period = f"{today.year}-H{1 if today.month <= 6 else 2}"
+
+    # FR-A-5.3: Can view all scores, rank, and anonymous feedback
+    final_eval = crud.final_evaluation.get_by_evaluatee_and_period(
+        db, evaluatee_id=user_to_view.id, evaluation_period=evaluation_period
+    )
+    if not final_eval:
+        raise HTTPException(
+            status_code=404,
+            detail="Final evaluation not found for this user and period.",
+        )
+
+    feedback_rows = crud.peer_evaluation.peer_evaluation.get_feedback_for_evaluatee_by_period(
+        db, evaluatee_id=user_to_view.id, evaluation_period=evaluation_period
+    )
+    # The query returns tuples, so we extract the first element
+    peer_feedback = [item[0] for item in feedback_rows]
+
+    return schemas.ManagerEvaluationView(
+        final_evaluation=final_eval,
+        peer_feedback=peer_feedback,
+    )
+
+
+
 @router.post("/calculate", response_model=List[schemas.FinalEvaluation])
 def calculate_final_evaluations(
     *,

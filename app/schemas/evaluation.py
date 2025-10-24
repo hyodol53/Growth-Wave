@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import date
 from app.models.user import UserRole
 from app.models.evaluation import EvaluationItem
@@ -118,8 +118,7 @@ class FinalEvaluationUpdate(FinalEvaluationBase):
 class FinalEvaluationInDB(FinalEvaluationBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FinalEvaluation(FinalEvaluationInDB):
@@ -179,3 +178,30 @@ class DepartmentGradeRatioInDB(DepartmentGradeRatioBase):
 
 class DepartmentGradeRatio(DepartmentGradeRatioInDB):
     pass
+
+
+# Schemas for viewing evaluation results
+class PmScoreResult(BaseModel):
+    project_name: str
+    pm_name: str
+    score: int
+
+
+class MyEvaluationResult(BaseModel):
+    evaluation_period: str
+    grade: Optional[str] = None
+    pm_scores: List[PmScoreResult]
+
+
+class ManagerEvaluationView(BaseModel):
+    final_evaluation: FinalEvaluation
+    peer_feedback: List[str]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+
+
+
+
+

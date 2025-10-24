@@ -11,6 +11,8 @@ from app.models.user import User, UserRole
 from app.schemas.token import TokenData
 from app.crud import user as user_crud
 
+import logging
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
@@ -48,3 +50,31 @@ def get_current_dept_head_user(current_user: User = Depends(get_current_user)) -
             detail="The user doesn't have enough privileges for this operation"
         )
     return current_user
+
+
+def get_user_as_subordinate(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    Dependency to get a user and verify if the current user is their manager or an admin.
+    """
+    user_to_view = user_crud.user.get(db, id=user_id)
+    if not user_to_view:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if current_user.role == UserRole.ADMIN:
+        return user_to_view
+
+    if current_user.role == UserRole.DEPT_HEAD:
+        subordinate_ids = {
+            user.id for user in user_crud.user.get_subordinates(db, user_id=current_user.id)
+        }
+        if user_id in subordinate_ids:
+            return user_to_view
+
+    raise HTTPException(
+        status_code=403,
+        detail="Not enough privileges to view this user's evaluation",
+    )
