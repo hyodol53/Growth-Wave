@@ -21,6 +21,9 @@
 - **Task 3.3: 협업 네트워크 데이터 수집기 개발** `(완료)`
   - 외부 시스템의 활동을 분석하여 사용자 간의 상호작용 관계 데이터를 수집하는 기능을 개발했습니다. 상세 내역은 [../devlog/task_3_3_collaboration_network_collector.md](../devlog/task_3_3_collaboration_network_collector.md) 문서를 참고하세요.
 
+- **Task 3.4: 협업 네트워크 시각화 API 개발** `(완료)`
+  - 수집된 협업 데이터를 기반으로 조직/프로젝트별 협업 관계도 및 분석 데이터를 제공하는 API를 개발했습니다. 상세 내역은 [../devlog/task_3_4_collaboration_network_visualization.md](../devlog/task_3_4_collaboration_network_visualization.md) 문서를 참고하세요.
+
 ---
 
 ## 다음 단계 (Next Steps)

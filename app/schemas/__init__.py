@@ -30,4 +30,4 @@ from .evaluation import (
 )
 from .report import GrowthAndCultureReport
 from .retrospective import RetrospectiveCreateRequest, RetrospectiveResponse
-from .collaboration import CollaborationInteraction, CollaborationInteractionCreate
+from .collaboration import CollaborationInteraction, CollaborationInteractionCreate, CollaborationData, CollaborationGraph, CollaborationAnalysis, CollaborationNode, CollaborationEdge
