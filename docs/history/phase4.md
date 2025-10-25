@@ -17,8 +17,13 @@
   - 실장 및 관리자가 프로젝트를 생성, 수정, 삭제할 수 있는 API를 구현했습니다. 역할 기반 권한 제어 및 소유권 검증 로직을 포함합니다.
   - 상세 개발 내역은 [../devlog/task_4_2_project_management.md](../devlog/task_4_2_project_management.md) 문서를 참고하세요.
 
+- **Task 4.3: 평가 및 프로젝트 이력 조회 기능 개발** `(완료)`
+  - **요구사항:** `FR-A-5.4`
+  - 구성원 본인 또는 상위 보직자가 반기별 평가 결과와 프로젝트 참여 이력을 조회할 수 있는 API를 구현했습니다.
+  - 상세 개발 내역은 [../devlog/task_4_3_user_history_view.md](../devlog/task_4_3_user_history_view.md) 문서를 참고하세요.
+
 ---
 
 ## 다음 단계 (Next Steps)
 
-`WORK_PLAN.md`에 따라, 다음 작업으로 **Task 4.3: 평가 및 프로젝트 이력 조회 기능 개발**을 진행할 예정입니다.
+Phase 4의 모든 작업이 완료되었습니다.

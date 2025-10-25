@@ -4,9 +4,22 @@ from app.schemas.project import ProjectCreate
 from tests.utils.utils import random_lower_string
 from tests.utils.organization import create_random_organization
 from typing import Optional
+from datetime import date
 
-def create_random_project(db: Session, *, owner_org_id: int, name: Optional[str] = None) -> models.Project:
+def create_random_project(
+    db: Session, 
+    *, 
+    owner_org_id: int, 
+    name: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> models.Project:
     if name is None:
         name = random_lower_string()
-    project_in = ProjectCreate(name=name, owner_org_id=owner_org_id)
+    project_in = ProjectCreate(
+        name=name, 
+        owner_org_id=owner_org_id, 
+        start_date=start_date, 
+        end_date=end_date
+    )
     return crud.project.project.create(db=db, obj_in=project_in)

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
+from datetime import date
 
 
 # Shared properties
@@ -7,6 +8,8 @@ class ProjectBase(BaseModel):
     name: str
     description: Optional[str] = None
     owner_org_id: int
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
 
 # Properties to receive on item creation
 class ProjectCreate(ProjectBase):
@@ -17,6 +20,8 @@ class ProjectUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     owner_org_id: Optional[int] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
 
 
 # Properties shared by models stored in DB

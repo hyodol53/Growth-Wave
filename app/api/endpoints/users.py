@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.user import User as UserModel
-from app.schemas.user import User, UserCreate, UserUpdate
+from app.schemas.user import User, UserCreate, UserUpdate, UserHistoryResponse
 from app.crud import user as user_crud
 from app.api import deps
+
 
 
 router = APIRouter()
@@ -72,3 +73,28 @@ def delete_user(
         )
     user = user_crud.user.remove(db, id=user_id)
     return user
+
+
+@router.get("/me/history", response_model=UserHistoryResponse)
+def read_my_history(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+):
+    """
+    Retrieve own user history.
+    """
+    return user_crud.user.get_user_history(db, user_id=current_user.id)
+
+
+@router.get("/{user_id}/history", response_model=UserHistoryResponse)
+def read_user_history(
+    *,
+    user_id: int,
+    db: Session = Depends(deps.get_db),
+    user_to_view: UserModel = Depends(deps.get_user_as_subordinate),
+):
+    """
+    Retrieve a specific user's history. (Admin or Manager of the user only)
+    """
+    return user_crud.user.get_user_history(db, user_id=user_to_view.id)
