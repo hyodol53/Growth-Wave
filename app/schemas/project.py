@@ -13,8 +13,11 @@ class ProjectCreate(ProjectBase):
     pass
 
 # Properties to receive on item update
-class ProjectUpdate(ProjectBase):
-    pass
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    owner_org_id: Optional[int] = None
+
 
 # Properties shared by models stored in DB
 class ProjectInDBBase(ProjectBase):

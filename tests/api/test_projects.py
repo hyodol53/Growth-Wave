@@ -4,24 +4,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.user import UserRole
-from app.models.organization import Organization
-from app.models.project import Project
-from app.models.project_member import ProjectMember
 from tests.utils.user import create_random_user, authentication_token_from_username
-
-def create_organization(db: Session, name: str, level: int, parent_id: int = None) -> Organization:
-    org = Organization(name=name, level=level, parent_id=parent_id)
-    db.add(org)
-    db.commit()
-    db.refresh(org)
-    return org
-
-def create_project(db: Session, name: str, owner_org_id: int) -> Project:
-    project = Project(name=name, owner_org_id=owner_org_id)
-    db.add(project)
-    db.commit()
-    db.refresh(project)
-    return project
+from tests.utils.organization import create_random_organization
+from tests.utils.project import create_random_project
+from app.models.project_member import ProjectMember
 
 
 def test_set_project_member_weights_success(client: TestClient, db: Session):
@@ -30,7 +16,7 @@ def test_set_project_member_weights_success(client: TestClient, db: Session):
     admin_token_headers = authentication_token_from_username(client=client, username=admin_user.username, db=db)
 
     # Create a department (level 2 organization)
-    dept_org = create_organization(db, name="Development Dept", level=2)
+    dept_org = create_random_organization(db, name="Development Dept", level=2)
 
     # Create a dept head in that department
     dept_head_user = create_random_user(db, role=UserRole.DEPT_HEAD, organization_id=dept_org.id)
@@ -40,9 +26,9 @@ def test_set_project_member_weights_success(client: TestClient, db: Session):
     employee_user = create_random_user(db, role=UserRole.EMPLOYEE, organization_id=dept_org.id)
 
     # Create projects owned by the department
-    project1 = create_project(db, name="Project Alpha", owner_org_id=dept_org.id)
-    project2 = create_project(db, name="Project Beta", owner_org_id=dept_org.id)
-    project3 = create_project(db, name="Project Gamma", owner_org_id=dept_org.id)
+    project1 = create_random_project(db, name="Project Alpha", owner_org_id=dept_org.id)
+    project2 = create_random_project(db, name="Project Beta", owner_org_id=dept_org.id)
+    project3 = create_random_project(db, name="Project Gamma", owner_org_id=dept_org.id)
 
     # Test data: employee participates in Project Alpha (50%) and Project Beta (50%)
     weights_data = {
@@ -74,11 +60,11 @@ def test_set_project_member_weights_success(client: TestClient, db: Session):
 
 def test_set_project_member_weights_invalid_total(client: TestClient, db: Session):
     # Setup
-    dept_org = create_organization(db, name="Another Dept", level=2)
+    dept_org = create_random_organization(db, name="Another Dept", level=2)
     dept_head_user = create_random_user(db, role=UserRole.DEPT_HEAD, organization_id=dept_org.id)
     dept_head_token_headers = authentication_token_from_username(client=client, username=dept_head_user.username, db=db)
     employee_user = create_random_user(db, role=UserRole.EMPLOYEE, organization_id=dept_org.id)
-    project1 = create_project(db, name="Project Delta", owner_org_id=dept_org.id)
+    project1 = create_random_project(db, name="Project Delta", owner_org_id=dept_org.id)
 
     # Test data: total weight not 100%
     weights_data = {
@@ -101,10 +87,10 @@ def test_set_project_member_weights_invalid_total(client: TestClient, db: Sessio
 
 def test_set_project_member_weights_unauthorized_role(client: TestClient, db: Session):
     # Setup
-    dept_org = create_organization(db, name="Sales Dept", level=2)
+    dept_org = create_random_organization(db, name="Sales Dept", level=2)
     employee_user = create_random_user(db, role=UserRole.EMPLOYEE, organization_id=dept_org.id)
     employee_token_headers = authentication_token_from_username(client=client, username=employee_user.username, db=db)
-    project1 = create_project(db, name="Project Epsilon", owner_org_id=dept_org.id)
+    project1 = create_random_project(db, name="Project Epsilon", owner_org_id=dept_org.id)
 
     # Test data
     weights_data = {
@@ -126,15 +112,15 @@ def test_set_project_member_weights_unauthorized_role(client: TestClient, db: Se
 
 def test_set_project_member_weights_unauthorized_department(client: TestClient, db: Session):
     # Setup
-    dept_org1 = create_organization(db, name="Dept A", level=2)
-    dept_org2 = create_organization(db, name="Dept B", level=2)
+    dept_org1 = create_random_organization(db, name="Dept A", level=2)
+    dept_org2 = create_random_organization(db, name="Dept B", level=2)
 
     dept_head_user_a = create_random_user(db, role=UserRole.DEPT_HEAD, organization_id=dept_org1.id)
     dept_head_token_headers_a = authentication_token_from_username(client=client, username=dept_head_user_a.username, db=db)
 
     employee_user_b = create_random_user(db, role=UserRole.EMPLOYEE, organization_id=dept_org2.id)
 
-    project1 = create_project(db, name="Project Zeta", owner_org_id=dept_org2.id)
+    project1 = create_random_project(db, name="Project Zeta", owner_org_id=dept_org2.id)
 
     # Test data: Dept Head A tries to set weights for Employee B (different department)
     weights_data = {
@@ -156,10 +142,10 @@ def test_set_project_member_weights_unauthorized_department(client: TestClient, 
 
 def test_set_project_member_weights_non_existent_user(client: TestClient, db: Session):
     # Setup
-    dept_org = create_organization(db, name="NonExistentUser Dept", level=2)
+    dept_org = create_random_organization(db, name="NonExistentUser Dept", level=2)
     dept_head_user = create_random_user(db, role=UserRole.DEPT_HEAD, organization_id=dept_org.id)
     dept_head_token_headers = authentication_token_from_username(client=client, username=dept_head_user.username, db=db)
-    project1 = create_project(db, name="Project Eta", owner_org_id=dept_org.id)
+    project1 = create_random_project(db, name="Project Eta", owner_org_id=dept_org.id)
 
     # Test data: non-existent user_id
     weights_data = {
@@ -181,12 +167,12 @@ def test_set_project_member_weights_non_existent_user(client: TestClient, db: Se
 
 def test_set_project_member_weights_update_existing(client: TestClient, db: Session):
     # Setup
-    dept_org = create_organization(db, name="Update Test Dept", level=2)
+    dept_org = create_random_organization(db, name="Update Test Dept", level=2)
     dept_head_user = create_random_user(db, role=UserRole.DEPT_HEAD, organization_id=dept_org.id)
     dept_head_token_headers = authentication_token_from_username(client=client, username=dept_head_user.username, db=db)
     employee_user = create_random_user(db, role=UserRole.EMPLOYEE, organization_id=dept_org.id)
-    project1 = create_project(db, name="Project Iota", owner_org_id=dept_org.id)
-    project2 = create_project(db, name="Project Kappa", owner_org_id=dept_org.id)
+    project1 = create_random_project(db, name="Project Iota", owner_org_id=dept_org.id)
+    project2 = create_random_project(db, name="Project Kappa", owner_org_id=dept_org.id)
 
     # Initial weights
     initial_weights_data = {
@@ -231,3 +217,88 @@ def test_set_project_member_weights_update_existing(client: TestClient, db: Sess
     # Ensure old entry for project1 is updated, not duplicated, and project2 is new
     all_memberships = db.query(ProjectMember).filter_by(user_id=employee_user.id).all()
     assert len(all_memberships) == 2
+
+
+# Project CRUD Tests
+def test_create_project_by_dept_head(client: TestClient, db: Session):
+    dept_org = create_random_organization(db, name="R&D Dept", level=2)
+    dept_head = create_random_user(db, role=UserRole.DEPT_HEAD, organization_id=dept_org.id)
+    dept_head_token_headers = authentication_token_from_username(client=client, username=dept_head.username, db=db)
+
+    project_data = {"name": "New Core Tech Project", "owner_org_id": dept_org.id}
+    response = client.post("/api/v1/projects/", headers=dept_head_token_headers, json=project_data)
+    
+    assert response.status_code == 201
+    created_project = response.json()
+    assert created_project["name"] == project_data["name"]
+    assert created_project["owner_org_id"] == dept_org.id
+
+def test_create_project_by_admin(client: TestClient, db: Session):
+    admin = create_random_user(db, role=UserRole.ADMIN)
+    admin_token_headers = authentication_token_from_username(client=client, username=admin.username, db=db)
+    other_org = create_random_organization(db, name="Other Dept", level=2)
+
+    project_data = {"name": "Admin Created Project", "owner_org_id": other_org.id}
+    response = client.post("/api/v1/projects/", headers=admin_token_headers, json=project_data)
+    
+    assert response.status_code == 201
+    assert response.json()["name"] == project_data["name"]
+
+def test_create_project_unauthorized_role(client: TestClient, db: Session):
+    org = create_random_organization(db, name="Unauthorized Dept", level=2)
+    employee = create_random_user(db, role=UserRole.EMPLOYEE, organization_id=org.id)
+    employee_token_headers = authentication_token_from_username(client=client, username=employee.username, db=db)
+
+    project_data = {"name": "Unauthorized Project", "owner_org_id": org.id}
+    response = client.post("/api/v1/projects/", headers=employee_token_headers, json=project_data)
+    
+    assert response.status_code == 403
+
+def test_read_projects(client: TestClient, db: Session):
+    org = create_random_organization(db)
+    create_random_project(db, owner_org_id=org.id)
+    user = create_random_user(db)
+    user_token_headers = authentication_token_from_username(client=client, username=user.username, db=db)
+
+    response = client.get("/api/v1/projects/", headers=user_token_headers)
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    assert len(response.json()) > 0
+
+def test_update_project_by_owner_dept_head(client: TestClient, db: Session):
+    dept_org = create_random_organization(db)
+    dept_head = create_random_user(db, role=UserRole.DEPT_HEAD, organization_id=dept_org.id)
+    dept_head_token_headers = authentication_token_from_username(client=client, username=dept_head.username, db=db)
+    project = create_random_project(db, owner_org_id=dept_org.id)
+
+    update_data = {"name": "Updated Project Name"}
+    response = client.put(f"/api/v1/projects/{project.id}", headers=dept_head_token_headers, json=update_data)
+    
+    assert response.status_code == 200
+    assert response.json()["name"] == "Updated Project Name"
+
+def test_update_project_by_other_dept_head(client: TestClient, db: Session):
+    org1 = create_random_organization(db, name="Org 1")
+    org2 = create_random_organization(db, name="Org 2")
+    dept_head_2 = create_random_user(db, role=UserRole.DEPT_HEAD, organization_id=org2.id)
+    dept_head_2_token_headers = authentication_token_from_username(client=client, username=dept_head_2.username, db=db)
+    project_in_org1 = create_random_project(db, owner_org_id=org1.id)
+
+    update_data = {"name": "Illegal Update"}
+    response = client.put(f"/api/v1/projects/{project_in_org1.id}", headers=dept_head_2_token_headers, json=update_data)
+    
+    assert response.status_code == 403
+
+def test_delete_project_by_admin(client: TestClient, db: Session):
+    admin = create_random_user(db, role=UserRole.ADMIN)
+    admin_token_headers = authentication_token_from_username(client=client, username=admin.username, db=db)
+    org = create_random_organization(db)
+    project = create_random_project(db, owner_org_id=org.id)
+
+    response = client.delete(f"/api/v1/projects/{project.id}", headers=admin_token_headers)
+    assert response.status_code == 200
+    assert response.json()["id"] == project.id
+
+    # Verify it's deleted
+    response = client.get(f"/api/v1/projects/{project.id}", headers=admin_token_headers)
+    assert response.status_code == 404

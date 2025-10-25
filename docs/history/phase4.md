@@ -12,8 +12,13 @@
   - 또한, 개발 과정에서 발견된 다수의 Pydantic 라이브러리 관련 경고를 수정하여 코드 품질을 개선했습니다.
   - 상세 개발 내역은 [../devlog/task_4_1_individual_org_user_management.md](../devlog/task_4_1_individual_org_user_management.md) 문서를 참고하세요.
 
+- **Task 4.2: 프로젝트 관리 기능 개발** `(완료)`
+  - **요구사항:** `FR-A-6.x`
+  - 실장 및 관리자가 프로젝트를 생성, 수정, 삭제할 수 있는 API를 구현했습니다. 역할 기반 권한 제어 및 소유권 검증 로직을 포함합니다.
+  - 상세 개발 내역은 [../devlog/task_4_2_project_management.md](../devlog/task_4_2_project_management.md) 문서를 참고하세요.
+
 ---
 
 ## 다음 단계 (Next Steps)
 
-`WORK_PLAN.md`에 따라, 다음 작업으로 **Task 4.2: 프로젝트 관리 기능 개발**을 진행할 예정입니다.
+`WORK_PLAN.md`에 따라, 다음 작업으로 **Task 4.3: 평가 및 프로젝트 이력 조회 기능 개발**을 진행할 예정입니다.
