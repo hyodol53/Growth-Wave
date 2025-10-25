@@ -1,8 +1,9 @@
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 
 from app.models.user import UserRole
+
 
 # Base schema for user properties
 class UserBase(BaseModel):
@@ -23,8 +24,8 @@ class User(UserBase):
     role: UserRole
     organization_id: Optional[int] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 # Schema for updating user data
 class UserUpdate(BaseModel):

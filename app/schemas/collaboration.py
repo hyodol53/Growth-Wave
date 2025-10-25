@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
+
 from typing import List, Dict
 from app.models.collaboration import InteractionType
 
@@ -16,8 +17,8 @@ class CollaborationInteractionCreate(CollaborationInteractionBase):
 class CollaborationInteraction(CollaborationInteractionBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 # Schemas for Network Visualization
 class CollaborationNode(BaseModel):

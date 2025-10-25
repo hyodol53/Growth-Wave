@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from app.models.external_account import AccountType
+
 
 # Shared properties
 class ExternalAccountBase(BaseModel):
@@ -15,5 +16,4 @@ class ExternalAccount(ExternalAccountBase):
     id: int
     owner_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

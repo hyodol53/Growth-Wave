@@ -13,7 +13,6 @@ class Settings(BaseSettings):
     # and set it as an environment variable.
     ENCRYPTION_KEY: str = "moxN23-I7gJjA9b3y1b-iGkR5v7y_wZ3-aX9b_c8d_E="
 
-    class Config:
-        env_file = ".env"
+    model_config = {"env_file": ".env"}
 
 settings = Settings()

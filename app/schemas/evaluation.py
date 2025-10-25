@@ -19,8 +19,7 @@ class EvaluationWeightUpdate(EvaluationWeightBase):
 class EvaluationWeightInDB(EvaluationWeightBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class EvaluationWeight(EvaluationWeightInDB):
     pass
@@ -40,8 +39,7 @@ class PeerEvaluationInDBBase(PeerEvaluationBase):
     evaluator_id: int
     evaluation_period: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PeerEvaluation(PeerEvaluationInDBBase):
     pass
@@ -60,8 +58,7 @@ class PmEvaluationInDBBase(PmEvaluationBase):
     evaluator_id: int
     evaluation_period: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PmEvaluation(PmEvaluationInDBBase):
     pass
@@ -88,8 +85,7 @@ class QualitativeEvaluationInDBBase(QualitativeEvaluationBase):
     evaluator_id: int
     evaluation_period: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QualitativeEvaluation(QualitativeEvaluationInDBBase):
@@ -143,8 +139,7 @@ class EvaluationPeriodUpdate(EvaluationPeriodBase):
 class EvaluationPeriodInDB(EvaluationPeriodBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class EvaluationPeriod(EvaluationPeriodInDB):
     pass
@@ -173,8 +168,8 @@ class DepartmentGradeRatioUpdate(DepartmentGradeRatioBase):
 class DepartmentGradeRatioInDB(DepartmentGradeRatioBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class DepartmentGradeRatio(DepartmentGradeRatioInDB):
     pass

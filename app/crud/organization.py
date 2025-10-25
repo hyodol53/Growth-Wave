@@ -37,6 +37,24 @@ def create_organization(db: Session, org: OrganizationCreate) -> Organization:
     return db_org
 
 
+def update_organization(db: Session, db_org: Organization, org_in: "OrganizationUpdate") -> Organization:
+    update_data = org_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_org, field, value)
+    db.add(db_org)
+    db.commit()
+    db.refresh(db_org)
+    return db_org
+
+
+def delete_organization(db: Session, org_id: int) -> Organization:
+    db_org = db.query(Organization).filter(Organization.id == org_id).first()
+    if db_org:
+        db.delete(db_org)
+        db.commit()
+    return db_org
+
+
 def sync_organizations_from_file(db: Session, file: UploadFile) -> Dict[str, Any]:
     content = file.file.read()
     file_content = content.decode("utf-8")

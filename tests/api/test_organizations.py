@@ -74,3 +74,89 @@ def test_upload_organizations_by_admin(client: TestClient, db: Session):
     center = orgs["New Center"]
     team = orgs["New Team"]
     assert team["parent_id"] == center["id"]
+
+
+def test_update_organization_by_admin(client: TestClient, db: Session):
+    admin = create_random_user(db, role='admin')
+    admin_token_headers = authentication_token_from_username(
+        client=client, username=admin.username, db=db
+    )
+    
+    org_data = {"name": "Original Name", "level": 2}
+    response = client.post("/api/v1/organizations/", headers=admin_token_headers, json=org_data)
+    org_id = response.json()["id"]
+
+    update_data = {"name": "Updated Name"}
+    response = client.put(f"/api/v1/organizations/{org_id}", headers=admin_token_headers, json=update_data)
+    assert response.status_code == 200
+    assert response.json()["name"] == "Updated Name"
+
+def test_update_organization_not_found(client: TestClient, db: Session):
+    admin = create_random_user(db, role='admin')
+    admin_token_headers = authentication_token_from_username(
+        client=client, username=admin.username, db=db
+    )
+    update_data = {"name": "Updated Name"}
+    response = client.put("/api/v1/organizations/9999", headers=admin_token_headers, json=update_data)
+    assert response.status_code == 404
+
+def test_update_organization_by_non_admin(client: TestClient, db: Session):
+    admin = create_random_user(db, role='admin')
+    admin_token_headers = authentication_token_from_username(
+        client=client, username=admin.username, db=db
+    )
+    org_data = {"name": "Original Name", "level": 2}
+    response = client.post("/api/v1/organizations/", headers=admin_token_headers, json=org_data)
+    org_id = response.json()["id"]
+
+    user = create_random_user(db, role='employee')
+    user_token_headers = authentication_token_from_username(
+        client=client, username=user.username, db=db
+    )
+    update_data = {"name": "Updated Name"}
+    response = client.put(f"/api/v1/organizations/{org_id}", headers=user_token_headers, json=update_data)
+    assert response.status_code == 403
+
+
+def test_delete_organization_by_admin(client: TestClient, db: Session):
+    admin = create_random_user(db, role='admin')
+    admin_token_headers = authentication_token_from_username(
+        client=client, username=admin.username, db=db
+    )
+    org_data = {"name": "To Be Deleted", "level": 1}
+    response = client.post("/api/v1/organizations/", headers=admin_token_headers, json=org_data)
+    org_id = response.json()["id"]
+
+    response = client.delete(f"/api/v1/organizations/{org_id}", headers=admin_token_headers)
+    assert response.status_code == 200
+    assert response.json()["name"] == "To Be Deleted"
+
+    # Verify it's gone
+    response = client.get(f"/api/v1/organizations/", headers=admin_token_headers)
+    orgs = response.json()
+    assert org_id not in [org["id"] for org in orgs]
+
+
+def test_delete_organization_not_found(client: TestClient, db: Session):
+    admin = create_random_user(db, role='admin')
+    admin_token_headers = authentication_token_from_username(
+        client=client, username=admin.username, db=db
+    )
+    response = client.delete("/api/v1/organizations/9999", headers=admin_token_headers)
+    assert response.status_code == 404
+
+def test_delete_organization_by_non_admin(client: TestClient, db: Session):
+    admin = create_random_user(db, role='admin')
+    admin_token_headers = authentication_token_from_username(
+        client=client, username=admin.username, db=db
+    )
+    org_data = {"name": "Protected Org", "level": 1}
+    response = client.post("/api/v1/organizations/", headers=admin_token_headers, json=org_data)
+    org_id = response.json()["id"]
+
+    user = create_random_user(db, role='employee')
+    user_token_headers = authentication_token_from_username(
+        client=client, username=user.username, db=db
+    )
+    response = client.delete(f"/api/v1/organizations/{org_id}", headers=user_token_headers)
+    assert response.status_code == 403

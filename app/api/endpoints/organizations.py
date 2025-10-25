@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.user import User as UserModel
-from app.schemas.organization import Organization, OrganizationCreate
+from app.schemas.organization import Organization, OrganizationCreate, OrganizationUpdate
 from app.crud import organization as org_crud
 from app.api import deps
+
 
 router = APIRouter()
 
@@ -54,3 +55,36 @@ def upload_organizations(
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to process file: {e}")
+
+
+@router.put("/{org_id}", response_model=Organization)
+def update_organization(
+    *,
+    db: Session = Depends(get_db),
+    org_id: int,
+    org_in: OrganizationUpdate,
+    current_user: UserModel = Depends(deps.get_current_admin_user)
+):
+    """
+    Update an organization. (Admin only)
+    """
+    db_org = org_crud.get_organization(db, org_id=org_id)
+    if not db_org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    return org_crud.update_organization(db, db_org=db_org, org_in=org_in)
+
+
+@router.delete("/{org_id}", response_model=Organization)
+def delete_organization(
+    *,
+    db: Session = Depends(get_db),
+    org_id: int,
+    current_user: UserModel = Depends(deps.get_current_admin_user)
+):
+    """
+    Delete an organization. (Admin only)
+    """
+    db_org = org_crud.get_organization(db, org_id=org_id)
+    if not db_org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    return org_crud.delete_organization(db, org_id=org_id)

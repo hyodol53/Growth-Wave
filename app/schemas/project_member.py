@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
+
 
 # Shared properties
 class ProjectMemberBase(BaseModel):
@@ -20,8 +21,8 @@ class ProjectMemberUpdate(BaseModel):
 class ProjectMemberInDBBase(ProjectMemberBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 # Properties to return to client
 class ProjectMember(ProjectMemberInDBBase):
