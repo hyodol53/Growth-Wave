@@ -75,6 +75,16 @@ def delete_user(
     return user
 
 
+@router.get("/me", response_model=User)
+def read_current_user(
+    current_user: UserModel = Depends(deps.get_current_user),
+):
+    """
+    Retrieve current authenticated user.
+    """
+    return current_user
+
+
 @router.get("/me/history", response_model=UserHistoryResponse)
 def read_my_history(
     *,

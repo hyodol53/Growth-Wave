@@ -1,5 +1,6 @@
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
 # Import all models to ensure they are registered with SQLAlchemy's metadata
 from app.models import user, organization, external_account, project, project_member, praise, praise_limiter, strength, evaluation, collaboration
@@ -14,6 +15,23 @@ app = FastAPI(
     title="Growth-Wave: Dual-Track HR Platform",
     description="This is the API for the Growth-Wave platform, combining formal evaluations with a growth & culture platform.",
     version="0.1.0"
+)
+
+# Add CORS middleware
+origins = [
+    "http://localhost",
+    "http://localhost:5173",  # Frontend default port
+    "http://localhost:8000",  # Backend default port (if frontend is served from here)
+    "http://localhost:8001",  # Another common port
+    # You might need to add other origins where your frontend is hosted
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # API Routers
