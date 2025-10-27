@@ -42,6 +42,42 @@ export const auth = {
     const response = await api.get('/users/me');
     return response.data;
   },
+  getOrganizations: async () => {
+    const response = await api.get('/organizations/');
+    return response.data;
+  },
+  getUsers: async () => {
+    const response = await api.get('/users/');
+    return response.data;
+  },
+
+  // Organization CRUD
+  createOrganization: async (data: any) => {
+    const response = await api.post('/organizations/', data);
+    return response.data;
+  },
+  updateOrganization: async (id: number, data: any) => {
+    const response = await api.put(`/organizations/${id}`, data);
+    return response.data;
+  },
+  deleteOrganization: async (id: number) => {
+    const response = await api.delete(`/organizations/${id}`);
+    return response.data;
+  },
+
+  // User CRUD
+  createUser: async (data: any) => {
+    const response = await api.post('/users/', data);
+    return response.data;
+  },
+  updateUser: async (id: number, data: any) => {
+    const response = await api.put(`/users/${id}`, data);
+    return response.data;
+  },
+  deleteUser: async (id: number) => {
+    const response = await api.delete(`/users/${id}`);
+    return response.data;
+  },
 };
 
 export default api;

@@ -1,47 +1,125 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { auth } from '../services/api';
+import { User } from '../schemas/user'; // Assuming you have a user schema/type defined
+
+import {
+  AppBar,
+  Box,
+  CssBaseline,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Typography,
+  Button
+} from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import SummarizeIcon from '@mui/icons-material/Summarize';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+
+const drawerWidth = 240;
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const currentUser = await auth.getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.error('Failed to fetch user', error);
+        handleLogout();
+      }
+    };
+    fetchUser();
+  }, []);
+
   const handleLogout = () => {
     auth.logout();
-    window.location.reload();
+    navigate('/login');
+    window.location.reload(); // Force reload to clear state
   };
 
+  const menuItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+    { text: 'My Profile', icon: <AccountCircleIcon />, path: '/profile' },
+    { text: 'Evaluations', icon: <AssessmentIcon />, path: '/evaluations' },
+    { text: 'Reports', icon: <SummarizeIcon />, path: '/reports' },
+  ];
+
+  const adminMenuItems = [
+    { text: 'Organization', icon: <AdminPanelSettingsIcon />, path: '/admin/organizations' },
+  ];
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <header style={{ backgroundColor: '#333', color: 'white', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Growth-Wave</div>
-        <nav>
-          <Link to="/" style={{ color: 'white', textDecoration: 'none', marginRight: '1rem' }}>Home</Link>
-          <Link to="/profile" style={{ color: 'white', textDecoration: 'none', marginRight: '1rem' }}>Profile</Link>
-          <button onClick={handleLogout} style={{ background: 'none', border: '1px solid white', color: 'white', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Logout</button>
-        </nav>
-      </header>
-
-      <div style={{ display: 'flex', flex: 1 }}>
-        <aside style={{ width: '200px', backgroundColor: '#f4f4f4', padding: '1rem', borderRight: '1px solid #ddd' }}>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            <li style={{ marginBottom: '0.5rem' }}><Link to="/" style={{ textDecoration: 'none', color: '#333' }}>Dashboard</Link></li>
-            <li style={{ marginBottom: '0.5rem' }}><Link to="/evaluations" style={{ textDecoration: 'none', color: '#333' }}>Evaluations</Link></li>
-            <li style={{ marginBottom: '0.5rem' }}><Link to="/reports" style={{ textDecoration: 'none', color: '#333' }}>Reports</Link></li>
-            <li style={{ marginBottom: '0.5rem' }}><Link to="/admin" style={{ textDecoration: 'none', color: '#333' }}>Admin</Link></li>
-          </ul>
-        </aside>
-
-        <main style={{ flex: 1, padding: '1rem' }}>
-          {children}
-        </main>
-      </div>
-
-      <footer style={{ backgroundColor: '#333', color: 'white', textAlign: 'center', padding: '1rem', marginTop: 'auto' }}>
-        &copy; 2025 Growth-Wave. All rights reserved.
-      </footer>
-    </div>
+    <Box sx={{ display: 'flex' }}>
+      <CssBaseline />
+      <AppBar
+        position="fixed"
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
+        <Toolbar>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            Growth-Wave
+          </Typography>
+          <Typography sx={{ mr: 2 }}>{user?.full_name || user?.username}</Typography>
+          <Button color="inherit" onClick={handleLogout}>Logout</Button>
+        </Toolbar>
+      </AppBar>
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+        }}
+      >
+        <Toolbar />
+        <Box sx={{ overflow: 'auto' }}>
+          <List>
+            {menuItems.map((item) => (
+              <ListItem key={item.text} disablePadding>
+                <ListItemButton component={RouterLink} to={item.path}>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+          {user?.role === 'admin' && (
+            <List>
+              <ListItem disablePadding>
+                 <Typography sx={{ pl: 2, pt: 1, pb: 1, fontWeight: 'bold', color: 'text.secondary' }}>Admin</Typography>
+              </ListItem>
+              {adminMenuItems.map((item) => (
+                <ListItem key={item.text} disablePadding>
+                  <ListItemButton component={RouterLink} to={item.path}>
+                    <ListItemIcon>{item.icon}</ListItemIcon>
+                    <ListItemText primary={item.text} />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Box>
+      </Drawer>
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <Toolbar />
+        {children}
+      </Box>
+    </Box>
   );
 };
 
