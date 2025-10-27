@@ -78,6 +78,34 @@ export const auth = {
     const response = await api.delete(`/users/${id}`);
     return response.data;
   },
+
+  // Project CRUD
+  getProjects: async () => {
+    const response = await api.get('/projects/');
+    return response.data;
+  },
+  createProject: async (data: any) => {
+    const response = await api.post('/projects/', data);
+    return response.data;
+  },
+  updateProject: async (id: number, data: any) => {
+    const response = await api.put(`/projects/${id}`, data);
+    return response.data;
+  },
+  deleteProject: async (id: number) => {
+    const response = await api.delete(`/projects/${id}`);
+    return response.data;
+  },
+
+  // Project Members
+  setProjectMemberWeights: async (data: any) => {
+    const response = await api.post('/projects/members/weights', data);
+    return response.data;
+  },
+  getProjectMembers: async (id: number) => {
+    const response = await api.get(`/projects/${id}/members`);
+    return response.data;
+  },
 };
 
 export default api;

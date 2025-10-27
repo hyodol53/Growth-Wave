@@ -23,6 +23,9 @@ import SummarizeIcon from '@mui/icons-material/Summarize';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
+
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+
 const drawerWidth = 240;
 
 interface LayoutProps {
@@ -59,8 +62,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { text: 'Reports', icon: <SummarizeIcon />, path: '/reports' },
   ];
 
-  const adminMenuItems = [
+  const managementMenuItems = [
     { text: 'Organization', icon: <AdminPanelSettingsIcon />, path: '/admin/organizations' },
+    { text: 'Projects', icon: <BusinessCenterIcon />, path: '/admin/projects' },
   ];
 
   return (
@@ -98,12 +102,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </ListItem>
             ))}
           </List>
-          {user?.role === 'admin' && (
+          {(user?.role === 'admin' || user?.role === 'dept_head') && (
             <List>
               <ListItem disablePadding>
-                 <Typography sx={{ pl: 2, pt: 1, pb: 1, fontWeight: 'bold', color: 'text.secondary' }}>Admin</Typography>
+                 <Typography sx={{ pl: 2, pt: 1, pb: 1, fontWeight: 'bold', color: 'text.secondary' }}>Management</Typography>
               </ListItem>
-              {adminMenuItems.map((item) => (
+              {managementMenuItems.map((item) => (
                 <ListItem key={item.text} disablePadding>
                   <ListItemButton component={RouterLink} to={item.path}>
                     <ListItemIcon>{item.icon}</ListItemIcon>

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Layout from './components/Layout';
-import AdminRoute from './components/AdminRoute';
+import AuthorizedRoute from './components/AuthorizedRoute';
 import OrganizationManagementPage from './pages/Admin/OrganizationManagementPage';
+import ProjectManagementPage from './pages/Admin/ProjectManagementPage';
 import { auth } from './services/api';
 
 const Dashboard: React.FC = () => {
@@ -113,7 +114,22 @@ const App: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/admin/organizations" element={<AdminRoute><OrganizationManagementPage /></AdminRoute>} />
+                <Route 
+                  path="/admin/organizations" 
+                  element={
+                    <AuthorizedRoute allowedRoles={['admin']}>
+                      <OrganizationManagementPage />
+                    </AuthorizedRoute>
+                  }
+                />
+                <Route 
+                  path="/admin/projects" 
+                  element={
+                    <AuthorizedRoute allowedRoles={['admin', 'dept_head']}>
+                      <ProjectManagementPage />
+                    </AuthorizedRoute>
+                  }
+                />
                 {/* Add other routes here */}
               </Routes>
             </Layout>
