@@ -60,12 +60,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
     { text: 'My Profile', icon: <AccountCircleIcon />, path: '/profile' },
     { text: 'My Evaluations', icon: <AssessmentIcon />, path: '/evaluations' },
-    { text: 'Reports', icon: <SummarizeIcon />, path: '/reports' },
+    { text: 'My History', icon: <SummarizeIcon />, path: '/history' },
   ];
 
   const managementMenuItems = [
-    { text: 'Organization', icon: <AdminPanelSettingsIcon />, path: '/admin/organizations' },
-    { text: 'Projects', icon: <BusinessCenterIcon />, path: '/admin/projects' },
+    { text: 'Organization', icon: <AdminPanelSettingsIcon />, path: '/admin/organizations', roles: ['admin'] },
+    { text: 'Projects', icon: <BusinessCenterIcon />, path: '/admin/projects', roles: ['admin', 'dept_head'] },
+    { text: 'Grade Adjustment', icon: <TuneIcon />, path: '/admin/grade-adjustment', roles: ['admin', 'dept_head'] },
+    { text: 'Evaluation Settings', icon: <TuneIcon />, path: '/admin/evaluation-settings', roles: ['admin'] },
   ];
 
   return (
@@ -109,21 +111,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                  <Typography sx={{ pl: 2, pt: 1, pb: 1, fontWeight: 'bold', color: 'text.secondary' }}>Management</Typography>
               </ListItem>
               {managementMenuItems.map((item) => (
-                <ListItem key={item.text} disablePadding>
-                  <ListItemButton component={RouterLink} to={item.path}>
-                    <ListItemIcon>{item.icon}</ListItemIcon>
-                    <ListItemText primary={item.text} />
-                  </ListItemButton>
-                </ListItem>
+                item.roles.includes(user.role) && (
+                  <ListItem key={item.text} disablePadding>
+                    <ListItemButton component={RouterLink} to={item.path}>
+                      <ListItemIcon>{item.icon}</ListItemIcon>
+                      <ListItemText primary={item.text} />
+                    </ListItemButton>
+                  </ListItem>
+                )
               ))}
-              {user?.role === 'admin' && (
-                <ListItem key="eval-settings" disablePadding>
-                  <ListItemButton component={RouterLink} to="/admin/evaluation-settings">
-                    <ListItemIcon><TuneIcon /></ListItemIcon>
-                    <ListItemText primary="Evaluation Settings" />
-                  </ListItemButton>
-                </ListItem>
-              )}
             </List>
           )}
         </Box>

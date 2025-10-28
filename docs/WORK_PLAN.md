@@ -88,8 +88,8 @@
 | 4.1 | 개별 조직 및 인원 관리 기능 개발 | `[x]` | Agent-C | `FR-A-1.4`, `FR-A-1.5`, `FR-A-1.6`. 개별 CRUD API 구현 |
 | 4.2 | 프로젝트 관리 기능 개발 | `[x]` | Agent-C | `FR-A-6.x`. 프로젝트 생성/수정/삭제 및 멤버 배정 API |
 | 4.3 | 평가 및 프로젝트 이력 조회 기능 개발 | `[x]` | Agent-C | `FR-A-5.4`. 기간별 데이터 조회 기능 추가 |
-| 4.4 | 프로젝트 멤버 조회 API 개발 | `[ ]` | Agent-Backend | `GET /projects/{project_id}/members` 구현. Task 6.4 선행 작업. |
-| 4.5 | 하위 조직원 조회 API 개발 | `[ ]` | Agent-Backend | `GET /users/me/subordinates` 구현. Task 6.4 선행 작업. |
+| 4.4 | 프로젝트 멤버 조회 API 개발 | `[x]` | Agent-Backend | `GET /projects/{project_id}/members` 구현. Task 6.4 선행 작업. |
+| 4.5 | 하위 조직원 조회 API 개발 | `[x]` | Agent-Backend | `GET /users/me/subordinates` 구현. Task 6.4 선행 작업. |
 
 ---
 ### **Phase 5: 프론트엔드 기반 구축 (UI/UX Foundation)**
@@ -114,8 +114,8 @@
 | 6.2 | 프로젝트 관리 UI 개발 (실장 이상) | `[x]` | Agent-Frontend | `FR-A-6.x`. 프로젝트 목록 조회, 생성, 수정, 멤버 배정 |
 | 6.3 | 평가 설정 UI 개발 (관리자/실장) | `[x]` | Agent-Frontend | `FR-A-1.3, 2.1, 2.2`. 참여 비중, 평가 기간, 등급 비율 설정 |
 | 6.4 | 평가 진행 UI 개발 (전체) | `[x]` | Agent-Frontend | `FR-A-3.x`. PM동료평가, PM평가, 정성평가 제출 화면. **(UI 개발 완료, Task 4.4, 4.5의 백엔드 구현 후 연동 필요)** |
-| 6.5 | 최종 등급 조정 UI 개발 (실장) | `[ ]` | Agent-Frontend | `FR-A-4.4, 4.5`. 점수 현황 조회, B+/B- 조정, 동점자 처리 |
-| 6.6 | 평가 결과 및 이력 조회 UI 개발 | `[ ]` | Agent-Frontend | `FR-A-5.x`. 역할별(개인/관리자) 결과 조회, 과거 이력 조회 |
+| 6.5 | 최종 등급 조정 UI 개발 (실장) | `[x]` | Agent-Frontend | `FR-A-4.4, 4.5`. 점수 현황 조회, B+/B- 조정, 동점자 처리 |
+| 6.6 | 평가 결과 및 이력 조회 UI 개발 | `[x]` | Agent-Frontend | `FR-A-5.x`. 역할별(개인/관리자) 결과 조회, 과거 이력 조회 |
 
 ---
 

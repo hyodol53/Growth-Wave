@@ -33,10 +33,30 @@
     - 각 설정에 대한 조회(`DataGrid`), 생성/수정(`Dialog`), 삭제 기능을 모두 구현하여 관리의 편의성을 높였습니다.
   - 상세 개발 내역은 [../devlog/task_6_3_evaluation_settings_ui.md](../devlog/task_6_3_evaluation_settings_ui.md) 문서를 참고하세요.
 
-- **Task 6.4: 평가 진행 UI 개발 (진행 중)**
+- **Task 6.4: 평가 진행 UI 개발 (완료)**
   - **요구사항:** `FR-A-3.x`
-  - 평가 대상 목록 조회 API 부재로 인해, 명세를 먼저 정의하고 Mock 데이터를 기반으로 프론트엔드 UI 개발을 우선 완료했습니다.
+  - Mock 데이터를 기반으로 개발되었던 평가 진행 UI를 실제 백엔드 API와 연동하여 최종 완료했습니다.
   - **주요 구현 내용**:
-    - 정성평가, PM평가, 동료평가를 진행할 수 있는 3가지 종류의 다이얼로그 UI를 각각 구현했습니다.
-    - 동료평가 시 평균 70점 초과를 방지하는 프론트엔드 유효성 검사 로직을 포함했습니다.
-  - 상세 개발 내역은 [../devlog/task_6_4_evaluation_ui.md](../devlog/task_6_4_evaluation_ui.md) 문서를 참고하세요.
+    - `MyEvaluationsPage`에서 `getUserHistory`, `getMySubordinates`, `getProjectMembers` API를 호출하여 실제 평가 대상자 목록을 동적으로 구성하도록 리팩토링했습니다.
+    - 정성평가, PM평가, 동료평가 다이얼로그에 실제 데이터를 전달하여 기능이 완전하게 동작하도록 수정했습니다.
+  - 상세 개발 내역은 [../devlog/task_6_4_evaluation_ui.md](../devlog/task_6_4_evaluation_ui.md) 및 [../devlog/task_6_4_evaluation_ui_integration.md](../devlog/task_6_4_evaluation_ui_integration.md) 문서를 참고하세요.
+
+- **Task 6.5: 최종 등급 조정 UI 개발 (완료)**
+  - **요구사항:** `FR-A-4.4, 4.5`
+  - 실장 및 관리자가 하위 조직원의 최종 등급을 조정할 수 있는 페이지를 구현했습니다.
+  - **주요 구현 내용**:
+    - 관리자/실장 전용 라우팅 및 네비게이션 메뉴를 추가했습니다.
+    - `DataGrid`를 사용하여 하위 조직원의 점수 및 등급 현황을 표시하고, 등급을 직접 수정할 수 있는 UI를 구현했습니다.
+    - B+와 B- 등급의 인원수가 동일해야 한다는 비즈니스 규칙을 프론트엔드에서 실시간으로 검증하는 로직을 추가했습니다.
+  - 상세 개발 내역은 [../devlog/task_6_5_final_grade_adjustment_ui.md](../devlog/task_6_5_final_grade_adjustment_ui.md) 문서를 참고하세요.
+
+- **Task 6.6: 평가 결과 및 이력 조회 UI 개발 (완료)**
+  - **요구사항:** `FR-A-5.x`
+  - 사용자가 자신의 과거 평가 결과와 프로젝트 이력을 조회할 수 있는 페이지를 구현했습니다.
+  - **주요 구현 내용**:
+    - 모든 사용자가 접근할 수 있는 'My History' 페이지를 생성하고 네비게이션을 추가했습니다.
+    - Accordion UI를 사용하여 평가 기간별로 결과를 명확하게 구분하여 보여줍니다.
+    - 사용자의 역할(일반 사용자 vs 관리자/실장)에 따라 API로부터 받은 데이터의 노출 수준을 프론트엔드에서 제어하여, 민감한 점수 정보가 권한 없는 사용자에게 보이지 않도록 구현했습니다.
+  - 상세 개발 내역은 [../devlog/task_6_6_evaluation_history_ui.md](../devlog/task_6_6_evaluation_history_ui.md) 문서를 참고하세요.
+
+

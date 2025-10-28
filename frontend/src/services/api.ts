@@ -2,7 +2,7 @@ import axios from 'axios';
 
 import { User, UserCreate, UserUpdate, UserHistoryItem } from '../schemas/user';
 import { ProjectMemberDetails } from '../schemas/project';
-import { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate, PeerEvaluationCreate, PmEvaluationCreate, QualitativeEvaluationCreate } from '../schemas/evaluation';
+import { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate, PeerEvaluationCreate, PmEvaluationCreate, QualitativeEvaluationCreate, ManagerEvaluationView, GradeAdjustmentRequest } from '../schemas/evaluation';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -142,5 +142,10 @@ export const getEvaluationWeights = () => api.get<EvaluationWeight[]>('/evaluati
 export const createEvaluationWeight = (data: EvaluationWeightCreate) => api.post<EvaluationWeight>('/evaluations/', data);
 export const updateEvaluationWeight = (id: number, data: EvaluationWeightUpdate) => api.put<EvaluationWeight>(`/evaluations/${id}`, data);
 export const deleteEvaluationWeight = (id: number) => api.delete(`/evaluations/${id}`);
+
+// Grade Adjustment
+export const getEvaluationResultForUser = (userId: number) => api.get<ManagerEvaluationView>(`/evaluations/${userId}/result`);
+export const adjustGrades = (data: GradeAdjustmentRequest) => api.post('/evaluations/adjust-grades', data);
+
 
 export default api;

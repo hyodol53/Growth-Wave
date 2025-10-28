@@ -7,6 +7,7 @@ import OrganizationManagementPage from './pages/Admin/OrganizationManagementPage
 import ProjectManagementPage from './pages/Admin/ProjectManagementPage';
 import EvaluationSettingsPage from './pages/Admin/EvaluationSettingsPage';
 import MyEvaluationsPage from './pages/MyEvaluationsPage';
+import HistoryPage from './pages/HistoryPage';
 import { auth } from './services/api';
 
 const Dashboard: React.FC = () => {
@@ -95,30 +96,30 @@ const Profile: React.FC = () => {
   );
 };
 
-const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!localStorage.getItem('access_token'));
+import FinalGradeAdjustmentPage from './pages/Admin/FinalGradeAdjustmentPage';
 
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
-  };
+// ... (imports)
+
+// ... (Dashboard and Profile components)
+
+const App: React.FC = () => {
+  // ... (useState and handleLoginSuccess)
 
   return (
     <Router>
       <Routes>
-        <Route
-          path="/login"
-          element={isLoggedIn ? <Navigate to="/" /> : <Login onLoginSuccess={handleLoginSuccess} />}
-        />
+        {/* ... (login route) */}
         <Route
           path="/*"
           element={isLoggedIn ? (
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/evaluations" element={<MyEvaluationsPage />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/evaluations" element={<MyEvaluationsPage />} />
+                <Route path="/history" element={<HistoryPage />} />
 
-            {/* Admin Routes */}
+                {/* Admin Routes */}
                 <Route 
                   path="/admin/organizations" 
                   element={
@@ -127,11 +128,35 @@ const App: React.FC = () => {
                     </AuthorizedRoute>
                   }
                 />
-            <Route path="/admin/projects" element={<AuthorizedRoute roles={['admin', 'dept_head']}><ProjectManagementPage /></AuthorizedRoute>} />
-            <Route path="/admin/evaluation-settings" element={<AuthorizedRoute roles={['admin']}><EvaluationSettingsPage /></AuthorizedRoute>} />
-          </Routes>
-        </Layout>
-      )}
+                <Route 
+                  path="/admin/projects" 
+                  element={
+                    <AuthorizedRoute allowedRoles={['admin', 'dept_head']}>
+                      <ProjectManagementPage />
+                    </AuthorizedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/evaluation-settings" 
+                  element={
+                    <AuthorizedRoute allowedRoles={['admin']}>
+                      <EvaluationSettingsPage />
+                    </AuthorizedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/grade-adjustment" 
+                  element={
+                    <AuthorizedRoute allowedRoles={['admin', 'dept_head']}>
+                      <FinalGradeAdjustmentPage />
+                    </AuthorizedRoute>
+                  } 
+                />
+              </Routes>
+            </Layout>
+          ) : (
+            <Navigate to="/login" />
+          )}
         />
       </Routes>
     </Router>
