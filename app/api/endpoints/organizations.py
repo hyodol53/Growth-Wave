@@ -56,6 +56,27 @@ def upload_organizations(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to process file: {e}")
 
+@router.post("/sync-chart", response_model=Dict[str, Any])
+def sync_org_chart(
+    *,
+    db: Session = Depends(get_db),
+    file: UploadFile = File(...),
+    current_user: UserModel = Depends(deps.get_current_admin_user)
+):
+    """
+    Upload a JSON file to sync the entire organization chart, including users.
+    - Creates/updates organizations and users.
+    - Assigns roles based on hierarchy.
+    """
+    if not file.filename.endswith(".json"):
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JSON is supported.")
+
+    try:
+        result = org_crud.sync_organizations_and_users_from_json(db, file=file)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
+
 
 @router.put("/{org_id}", response_model=Organization)
 def update_organization(

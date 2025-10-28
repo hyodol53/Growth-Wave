@@ -9,6 +9,7 @@ class UserRole(str, enum.Enum):
     EMPLOYEE = "employee"
     TEAM_LEAD = "team_lead"
     DEPT_HEAD = "dept_head"  # 실장
+    CENTER_HEAD = "center_head" # 센터장/연구소장
     ADMIN = "admin" # 인사관리자
 
 class User(Base):
@@ -19,6 +20,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String)
+    title = Column(String, nullable=True)
     role = Column(SQLAlchemyEnum(UserRole), default=UserRole.EMPLOYEE, nullable=False)
 
     organization_id = Column(Integer, ForeignKey("organizations.id"))

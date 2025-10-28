@@ -11,6 +11,7 @@ from app.schemas.project_member import ProjectMember
 class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
+    title: Optional[str] = None
 
 # Schema for user creation
 class UserCreate(UserBase):
@@ -36,6 +37,7 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     organization_id: Optional[int] = None
     role: Optional[UserRole] = None
+    title: Optional[str] = None
 
 
 # Schemas for User History

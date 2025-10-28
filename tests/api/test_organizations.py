@@ -4,6 +4,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from tests.utils.user import create_random_user, authentication_token_from_username
+from app.models.user import User, UserRole
+from app.crud import user as crud_user
 
 def test_create_organization_by_admin(client: TestClient, db: Session):
     admin = create_random_user(db, role='admin')
@@ -160,3 +162,70 @@ def test_delete_organization_by_non_admin(client: TestClient, db: Session):
     )
     response = client.delete(f"/api/v1/organizations/{org_id}", headers=user_token_headers)
     assert response.status_code == 403
+
+def test_sync_org_chart_by_admin(client: TestClient, db: Session):
+    admin = create_random_user(db, role='admin')
+    admin_token_headers = authentication_token_from_username(
+        client=client, username=admin.username, db=db
+    )
+
+    chart_data = [
+        {
+            "name": "Test Center",
+            "leader": {"name": "Center Head", "email": "center.head@test.com", "title": "Center Leader"},
+            "members": [],
+            "sub_organizations": [
+                {
+                    "name": "Test Department",
+                    "leader": {"name": "Dept Head", "email": "dept.head@test.com", "title": "Dept. Leader"},
+                    "members": [],
+                    "sub_organizations": [
+                        {
+                            "name": "Test Team",
+                            "leader": {"name": "Team Lead", "email": "team.lead@test.com", "title": "Team Leader"},
+                            "members": [
+                                {"name": "Employee 1", "email": "emp1@test.com", "title": "Staff"},
+                                {"name": "Employee 2", "email": "emp2@test.com", "title": "Staff"}
+                            ],
+                            "sub_organizations": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+    json_string = json.dumps(chart_data)
+    json_content = io.BytesIO(json_string.encode('utf-8'))
+
+    response = client.post(
+        "/api/v1/organizations/sync-chart",
+        headers=admin_token_headers,
+        files={"file": ("chart.json", json_content, "application/json")}
+    )
+
+    assert response.status_code == 200
+    stats = response.json()
+    assert stats["orgs_created"] == 3
+    assert stats["users_created"] == 5
+    
+    # Verify roles and titles
+    center_head = crud_user.user.get_by_email(db, email="center.head@test.com")
+    assert center_head.role == UserRole.CENTER_HEAD
+    assert center_head.title == "Center Leader"
+
+    dept_head = crud_user.user.get_by_email(db, email="dept.head@test.com")
+    assert dept_head.role == UserRole.DEPT_HEAD
+    assert dept_head.title == "Dept. Leader"
+
+    team_lead = crud_user.user.get_by_email(db, email="team.lead@test.com")
+    assert team_lead.role == UserRole.TEAM_LEAD
+    assert team_lead.title == "Team Leader"
+
+    emp1 = crud_user.user.get_by_email(db, email="emp1@test.com")
+    assert emp1.role == UserRole.EMPLOYEE
+    assert emp1.title == "Staff"
+
+    # Verify organization assignment
+    assert dept_head.organization.parent_id == center_head.organization.id
+    assert team_lead.organization.parent_id == dept_head.organization.id
+    assert emp1.organization_id == team_lead.organization_id
