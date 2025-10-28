@@ -88,6 +88,8 @@
 | 4.1 | 개별 조직 및 인원 관리 기능 개발 | `[x]` | Agent-C | `FR-A-1.4`, `FR-A-1.5`, `FR-A-1.6`. 개별 CRUD API 구현 |
 | 4.2 | 프로젝트 관리 기능 개발 | `[x]` | Agent-C | `FR-A-6.x`. 프로젝트 생성/수정/삭제 및 멤버 배정 API |
 | 4.3 | 평가 및 프로젝트 이력 조회 기능 개발 | `[x]` | Agent-C | `FR-A-5.4`. 기간별 데이터 조회 기능 추가 |
+| 4.4 | 프로젝트 멤버 조회 API 개발 | `[ ]` | Agent-Backend | `GET /projects/{project_id}/members` 구현. Task 6.4 선행 작업. |
+| 4.5 | 하위 조직원 조회 API 개발 | `[ ]` | Agent-Backend | `GET /users/me/subordinates` 구현. Task 6.4 선행 작업. |
 
 ---
 ### **Phase 5: 프론트엔드 기반 구축 (UI/UX Foundation)**
