@@ -1,4 +1,3 @@
-
 export interface EvaluationPeriod {
     id: number;
     name: string;
@@ -103,3 +102,26 @@ export interface GradeAdjustmentRequest {
     adjustments: GradeAdjustment[];
 }
 
+export interface PeerEvaluationCreate {
+    evaluations: {
+        project_id: number;
+        evaluatee_id: number;
+        score: number;
+        feedback: string;
+    }[];
+}
+
+export interface PmEvaluationCreate {
+    evaluations: {
+        project_id: number;
+        evaluatee_id: number;
+        score: number;
+    }[];
+}
+
+export interface QualitativeEvaluationCreate {
+    evaluations: {
+        evaluatee_id: number;
+        score: number;
+    }[];
+}

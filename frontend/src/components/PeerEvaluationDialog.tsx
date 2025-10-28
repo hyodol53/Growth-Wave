@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, List, ListItem, ListItemText, Typography, Accordion, AccordionSummary, AccordionDetails, Alert } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Typography, Accordion, AccordionSummary, AccordionDetails, Alert } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { PeerEvaluationCreate } from '../schemas/evaluation';
+import type { PeerEvaluationCreate } from '../schemas/evaluation';
 
 // This is a mock schema for project members based on the API spec we defined
 interface ProjectMember {

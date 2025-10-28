@@ -1,18 +1,24 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Container, Typography, Button, Paper } from '@mui/material';
-import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
+import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
+import type { GridColDef } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 
 import { auth } from '../../services/api';
-import { Project } from '../../schemas/project';
-import { User } from '../../schemas/user';
-import { Organization } from '../../schemas/organization';
+import type { Project, ProjectCreate, ProjectUpdate } from '../../schemas/project';
+import type { User } from '../../schemas/user';
+import type { Organization } from '../../schemas/organization';
 
 import ProjectDialog from '../../components/Admin/ProjectDialog';
 import ProjectMemberDialog from '../../components/Admin/ProjectMemberDialog';
+
+interface MemberSaveData {
+  user_id: number;
+  weight: number;
+}
 
 const ProjectManagementPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -68,12 +74,12 @@ const ProjectManagementPage: React.FC = () => {
   };
 
   // --- API Action Handlers ---
-  const handleSaveProject = async (data: any) => {
+  const handleSaveProject = async (data: ProjectCreate | ProjectUpdate) => {
     try {
       if (editingProject) {
         await auth.updateProject(editingProject.id, data);
       } else {
-        await auth.createProject(data);
+        await auth.createProject(data as ProjectCreate);
       }
       handleCloseProjectDialog();
       fetchData();
@@ -93,12 +99,12 @@ const ProjectManagementPage: React.FC = () => {
     }
   };
 
-  const handleSaveMembers = async (members: Omit<ProjectMember, 'project_id'>[]) => {
+  const handleSaveMembers = async (members: MemberSaveData[]) => {
     if (!managingMembersFor) return;
     try {
       await auth.setProjectMemberWeights({ 
         project_id: managingMembersFor.id, 
-        members 
+        weights: members
       });
       handleCloseMemberDialog();
       // No need to fetchData() as this doesn't change the project list view
@@ -114,13 +120,13 @@ const ProjectManagementPage: React.FC = () => {
       field: 'pm_id',
       headerName: 'Project Manager',
       width: 180,
-      valueGetter: (value, row) => users.find(u => u.id === row.pm_id)?.full_name || 'N/A',
+      valueGetter: (_value, row) => users.find(u => u.id === row.pm_id)?.full_name || 'N/A',
     },
     {
       field: 'owner_org_id',
       headerName: 'Owning Organization',
       width: 200,
-      valueGetter: (value, row) => organizations.find(o => o.id === row.owner_org_id)?.name || 'N/A',
+      valueGetter: (_value, row) => organizations.find(o => o.id === row.owner_org_id)?.name || 'N/A',
     },
     { field: 'start_date', headerName: 'Start Date', width: 120 },
     { field: 'end_date', headerName: 'End Date', width: 120 },

@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Container, Typography, Grid, Paper, Button, IconButton } from '@mui/material';
-import { TreeView } from '@mui/x-tree-view/TreeView';
-import { TreeItem, TreeItemProps } from '@mui/x-tree-view/TreeItem';
+import { Box, Container, Typography, Paper, Button, IconButton } from '@mui/material';
+import { GridLegacy as Grid } from '@mui/material';
+import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
+import { TreeItem, type TreeItemProps } from '@mui/x-tree-view/TreeItem';
 import { styled } from '@mui/material/styles';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
+import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
+import type { GridColDef } from '@mui/x-data-grid';
 import { auth } from '../../services/api';
-import { Organization } from '../../schemas/organization';
-import { User } from '../../schemas/user';
+import type { Organization } from '../../schemas/organization';
+import type { User, UserCreate, UserUpdate } from '../../schemas/user';
 import OrganizationDialog from '../../components/Admin/OrganizationDialog';
 import UserDialog from '../../components/Admin/UserDialog';
 
@@ -88,9 +90,11 @@ const OrganizationManagementPage: React.FC = () => {
   }, [organizations]);
 
   // --- Handlers ---
-  const handleOrgSelect = (event: React.SyntheticEvent, nodeId: string) => {
-    const orgId = parseInt(nodeId, 10);
-    setSelectedOrgId(orgId);
+  const handleOrgSelect = (_event: React.SyntheticEvent| null , nodeId: string | null) => {
+    if ( nodeId){
+      const orgId = parseInt(nodeId, 10);
+      setSelectedOrgId(orgId);
+    }    
   };
 
   // Org Dialog
@@ -123,12 +127,12 @@ const OrganizationManagementPage: React.FC = () => {
     }
   };
 
-  const handleSaveUser = async (data: any) => {
+  const handleSaveUser = async (data: UserCreate | UserUpdate) => {
     try {
       if (editingUser) {
         await auth.updateUser(editingUser.id, data);
       } else {
-        await auth.createUser(data);
+        await auth.createUser(data as UserCreate);
       }
       handleCloseUserDialog();
       fetchData();
@@ -149,7 +153,7 @@ const OrganizationManagementPage: React.FC = () => {
     nodes.map((node) => (
       <StyledTreeItem 
         key={node.id} 
-        nodeId={node.id} 
+        itemId={node.id} 
         label={node.name}
         onEdit={() => handleOpenOrgDialog(node.original)}
         onDelete={() => handleDeleteOrganization(node.original.id)}
@@ -169,7 +173,7 @@ const OrganizationManagementPage: React.FC = () => {
       field: 'organization',
       headerName: 'Organization',
       width: 130,
-      valueGetter: (value, row) => organizations.find(org => org.id === row.organization_id)?.name || 'N/A',
+      valueGetter: (_value, row) => organizations.find(org => org.id === row.organization_id)?.name || 'N/A',
     },
     {
         field: 'actions',
@@ -212,21 +216,23 @@ const OrganizationManagementPage: React.FC = () => {
             <Button variant="contained" onClick={() => handleOpenUserDialog(null)}>Add User</Button>
         </Box>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Paper sx={{ p: 2, minHeight: 600 }}>
               <Typography variant="h6" gutterBottom>Organizations</Typography>
-              <TreeView
+              <SimpleTreeView
                 aria-label="organization tree"
-                defaultCollapseIcon={<ExpandMoreIcon />}
-                defaultExpandIcon={<ChevronRightIcon />}
+                slots={{ 
+                  collapseIcon: ExpandMoreIcon, 
+                  expandIcon: ChevronRightIcon 
+                }}
                 sx={{ flexGrow: 1, overflowY: 'auto' }}
-                onNodeSelect={handleOrgSelect}
+                onSelectedItemsChange={handleOrgSelect}
               >
                 {renderTree(orgTree)}
-              </TreeView>
+              </SimpleTreeView>
             </Paper>
           </Grid>
-          <Grid item xs={12} md={8}>
+          <Grid xs={12} md={8}>
             <Paper sx={{ height: 650, width: '100%' }}>
               <Typography variant="h6" gutterBottom sx={{ p: 2 }}>
                 Users {selectedOrgId ? `in "${organizations.find(o => o.id === selectedOrgId)?.name}"` : ''}

@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate, UserRole, EvaluationItem } from '../../schemas/evaluation';
+import type { EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate } from '../../schemas/evaluation';
+import { UserRole, EvaluationItem } from '../../schemas/evaluation';
 
 interface EvaluationWeightDialogProps {
   open: boolean;

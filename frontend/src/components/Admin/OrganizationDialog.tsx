@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogTitle, TextField, Button, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { Organization } from '../../schemas/organization';
+import type { Organization } from '../../schemas/organization';
 
 interface OrganizationDialogProps {
   open: boolean;

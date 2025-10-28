@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Tabs, Tab, Button, CircularProgress } from '@mui/material';
-import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
+import type { GridColDef } from '@mui/x-data-grid';
 import * as api from '../../services/api';
-import { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate } from '../../schemas/evaluation';
+import type { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate } from '../../schemas/evaluation';
 import EvaluationPeriodDialog from '../../components/Admin/EvaluationPeriodDialog';
 import DepartmentGradeRatioDialog from '../../components/Admin/DepartmentGradeRatioDialog';
 import EvaluationWeightDialog from '../../components/Admin/EvaluationWeightDialog';
@@ -33,17 +34,17 @@ const EvaluationSettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   
   // Evaluation Periods
-  const [periods, setPeriods] = useState<GridRowsProp>([]);
+  const [periods, setPeriods] = useState<EvaluationPeriod[]>([]);
   const [periodDialogOpen, setPeriodDialogOpen] = useState(false);
   const [editingPeriod, setEditingPeriod] = useState<EvaluationPeriod | null>(null);
 
   // Department Grade Ratios
-  const [ratios, setRatios] = useState<GridRowsProp>([]);
+  const [ratios, setRatios] = useState<DepartmentGradeRatio[]>([]);
   const [ratioDialogOpen, setRatioDialogOpen] = useState(false);
   const [editingRatio, setEditingRatio] = useState<DepartmentGradeRatio | null>(null);
 
   // Evaluation Weights
-  const [weights, setWeights] = useState<GridRowsProp>([]);
+  const [weights, setWeights] = useState<EvaluationWeight[]>([]);
   const [weightDialogOpen, setWeightDialogOpen] = useState(false);
   const [editingWeight, setEditingWeight] = useState<EvaluationWeight | null>(null);
 
@@ -79,7 +80,7 @@ const EvaluationSettingsPage: React.FC = () => {
     Promise.all([fetchPeriods(), fetchRatios(), fetchWeights()]).finally(() => setLoading(false));
   }, []);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
   };
 
@@ -155,8 +156,8 @@ const EvaluationSettingsPage: React.FC = () => {
   const periodColumns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'name', headerName: 'Period Name', width: 150 },
-    { field: 'start_date', headerName: 'Start Date', width: 150, type: 'date', valueGetter: (params) => new Date(params.value) },
-    { field: 'end_date', headerName: 'End Date', width: 150, type: 'date', valueGetter: (params) => new Date(params.value) },
+    { field: 'start_date', headerName: 'Start Date', width: 150, type: 'date', valueGetter: (value) => value ? new Date(value) : null },
+    { field: 'end_date', headerName: 'End Date', width: 150, type: 'date', valueGetter: (value) => value ? new Date(value) : null },
     { field: 'is_active', headerName: 'Active', width: 120, type: 'boolean' },
     {
       field: 'actions',
@@ -226,7 +227,18 @@ const EvaluationSettingsPage: React.FC = () => {
                 <Button variant="contained" onClick={handleAddNewPeriod}>Add New Period</Button>
             </Box>
             <Box sx={{ height: 600, width: '100%' }}>
-              <DataGrid rows={periods} columns={periodColumns} pageSize={10} rowsPerPageOptions={[10]} checkboxSelection disableSelectionOnClick />
+              <DataGrid 
+                rows={periods} 
+                columns={periodColumns} 
+                initialState={{
+                  pagination: {
+                    paginationModel: { pageSize: 10 },
+                  },
+                }}
+                pageSizeOptions={[10]} 
+                checkboxSelection 
+                disableRowSelectionOnClick 
+              />
             </Box>
           </TabPanel>
           <TabPanel value={tabIndex} index={1}>
@@ -234,7 +246,18 @@ const EvaluationSettingsPage: React.FC = () => {
                 <Button variant="contained" onClick={handleAddNewRatio}>Add New Ratio</Button>
             </Box>
             <Box sx={{ height: 600, width: '100%' }}>
-              <DataGrid rows={ratios} columns={ratioColumns} pageSize={10} rowsPerPageOptions={[10]} checkboxSelection disableSelectionOnClick />
+              <DataGrid 
+                rows={ratios} 
+                columns={ratioColumns} 
+                initialState={{
+                  pagination: {
+                    paginationModel: { pageSize: 10 },
+                  },
+                }}
+                pageSizeOptions={[10]} 
+                checkboxSelection 
+                disableRowSelectionOnClick 
+              />
             </Box>
           </TabPanel>
           <TabPanel value={tabIndex} index={2}>
@@ -242,7 +265,18 @@ const EvaluationSettingsPage: React.FC = () => {
                 <Button variant="contained" onClick={handleAddNewWeight}>Add New Weight</Button>
             </Box>
             <Box sx={{ height: 600, width: '100%' }}>
-              <DataGrid rows={weights} columns={weightColumns} pageSize={10} rowsPerPageOptions={[10]} checkboxSelection disableSelectionOnClick />
+              <DataGrid 
+                rows={weights} 
+                columns={weightColumns} 
+                initialState={{
+                  pagination: {
+                    paginationModel: { pageSize: 10 },
+                  },
+                }}
+                pageSizeOptions={[10]} 
+                checkboxSelection 
+                disableRowSelectionOnClick 
+              />
             </Box>
           </TabPanel>
         </>

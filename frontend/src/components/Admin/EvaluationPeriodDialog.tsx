@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box } from '@mui/material';
-import { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate } from '../../schemas/evaluation';
+import type { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate } from '../../schemas/evaluation';
 
 interface EvaluationPeriodDialogProps {
   open: boolean;

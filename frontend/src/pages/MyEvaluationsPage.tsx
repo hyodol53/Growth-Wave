@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Card, CardContent, CardActions, Button, Grid } from '@mui/material';
+import { Box, Typography, CircularProgress, Card, CardContent, CardActions, Button } from '@mui/material';
+import { GridLegacy as Grid } from '@mui/material';
 import * as api from '../services/api';
-import { User, UserHistoryItem } from '../schemas/user';
-import { ProjectMemberDetails } from '../schemas/project';
-import { PeerEvaluationCreate, PmEvaluationCreate, QualitativeEvaluationCreate } from '../schemas/evaluation';
+import type { User, ProjectHistoryItem } from '../schemas/user';
+import type { ProjectMemberDetails } from '../schemas/project';
+import type { PeerEvaluationCreate, PmEvaluationCreate, QualitativeEvaluationCreate } from '../schemas/evaluation';
 import QualitativeEvaluationDialog from '../components/QualitativeEvaluationDialog';
 import PmEvaluationDialog from '../components/PmEvaluationDialog';
 import PeerEvaluationDialog from '../components/PeerEvaluationDialog';
@@ -31,7 +32,7 @@ const MyEvaluationsPage: React.FC = () => {
   
   // Data from API
   const [subordinates, setSubordinates] = useState<User[]>([]);
-  const [projectsWithMembers, setProjectsWithMembers] = useState<ProjectWithMembers[]>([]);
+  // const [projectsWithMembers, setProjectsWithMembers] = useState<ProjectWithMembers[]>([]);
 
   // Dialog states
   const [qualitativeOpen, setQualitativeOpen] = useState(false);
@@ -69,9 +70,10 @@ const MyEvaluationsPage: React.FC = () => {
             // 2. Fetch user's projects and their members for Peer and PM evaluations
             const historyRes = await api.getUserHistory();
             const myProjects = historyRes.data;
+            const allProjects = Object.values(myProjects).flatMap(entry => entry.projects);
 
             const projectsData: ProjectWithMembers[] = await Promise.all(
-                myProjects.map(async (proj) => {
+                allProjects.map(async (proj: ProjectHistoryItem) => {
                     const membersRes = await api.getProjectMembers(proj.project_id);
                     return {
                         id: proj.project_id,
@@ -80,7 +82,7 @@ const MyEvaluationsPage: React.FC = () => {
                     };
                 })
             );
-            setProjectsWithMembers(projectsData);
+            // setProjectsWithMembers(projectsData);
 
             // 3. Create evaluation tasks based on fetched project data
             for (const project of projectsData) {
@@ -169,7 +171,7 @@ const MyEvaluationsPage: React.FC = () => {
       ) : (
         <Grid container spacing={3} sx={{ mt: 2 }}>
             {tasks.length > 0 ? tasks.map((task, index) => (
-                <Grid item xs={12} md={6} lg={4} key={index}>
+                <Grid xs={12} md={6} lg={4} key={index}>
                     <Card>
                         <CardContent>
                             <Typography variant="h6">{task.title}</Typography>
@@ -181,7 +183,9 @@ const MyEvaluationsPage: React.FC = () => {
                     </Card>
                 </Grid>
             )) : (
-                <Typography sx={{p: 3}}>진행해야 할 평가가 없습니다.</Typography>
+                <Grid xs={12}>
+                    <Typography sx={{p: 3}}>진행해야 할 평가가 없습니다.</Typography>
+                </Grid>
             )}
         </Grid>
       )}

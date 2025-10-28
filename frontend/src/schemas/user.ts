@@ -1,3 +1,4 @@
+import type { FinalEvaluation } from './evaluation';
 
 // Based on backend/app/schemas/organization.py
 export interface Organization {
@@ -7,7 +8,12 @@ export interface Organization {
   parent_id: number | null;
 }
 
-export type UserRole = 'employee' | 'team_lead' | 'dept_head' | 'admin';
+export enum UserRole {
+    EMPLOYEE = "employee",
+    TEAM_LEAD = "team_lead",
+    DEPT_HEAD = "dept_head",
+    ADMIN = "admin",
+}
 
 // Based on backend/app/schemas/user.py
 export interface User {
@@ -21,11 +27,28 @@ export interface User {
   organization?: Organization | null; // Optional, as it might not always be fetched
 }
 
-// Based on backend GET /api/v1/users/me/history response
-export interface UserHistoryItem {
-  project_id: number;
-  project_name: string;
-  role: string;
-  start_date: string;
-  end_date: string;
+export interface UserCreate {
+    email: string;
+    full_name?: string;
+    username: string;
+    role: UserRole;
+    organization_id?: number;
+    password?: string;
 }
+
+export type UserUpdate = Partial<UserCreate>;
+
+
+// Based on backend GET /api/v1/users/me/history response
+export interface ProjectHistoryItem {
+    project_id: number;
+    project_name: string;
+    participation_weight: number;
+}
+
+export interface UserHistoryEntry {
+    final_evaluation: FinalEvaluation | null;
+    projects: ProjectHistoryItem[];
+}
+
+export type UserHistoryResponse = Record<string, UserHistoryEntry>;

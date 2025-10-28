@@ -7,3 +7,6 @@ export interface Organization {
   parent_id: number | null;
   department_grade: string | null;
 }
+
+export type OrganizationCreate = Omit<Organization, 'id'>;
+export type OrganizationUpdate = Partial<OrganizationCreate>;

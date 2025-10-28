@@ -1,19 +1,30 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogTitle, TextField, Button, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { User } from '../../schemas/user';
-import { Organization } from '../../schemas/organization';
+import type { SelectChangeEvent } from '@mui/material';
+import type { User, UserCreate, UserUpdate } from '../../schemas/user';
+import { UserRole } from '../../schemas/user';
+import type { Organization } from '../../schemas/organization';
 
 interface UserDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (user: any) => void; // Let's use `any` for now for simplicity, can be refined
+  onSave: (user: UserCreate | UserUpdate) => void;
   user: User | null;
   allOrganizations: Organization[];
 }
 
 const UserDialog: React.FC<UserDialogProps> = ({ open, onClose, onSave, user, allOrganizations }) => {
-  const [formData, setFormData] = useState<any>({});
+  const getInitialData = (): UserCreate => ({
+    email: '',
+    full_name: '',
+    username: '',
+    role: UserRole.EMPLOYEE,
+    organization_id: undefined,
+    password: ''
+  });
+
+  const [formData, setFormData] = useState<UserCreate>(getInitialData());
 
   useEffect(() => {
     if (user) {
@@ -22,42 +33,28 @@ const UserDialog: React.FC<UserDialogProps> = ({ open, onClose, onSave, user, al
         full_name: user.full_name || '',
         username: user.username,
         role: user.role,
-        organization_id: user.organization_id || '',
+        organization_id: user.organization_id || undefined,
         password: '' // Password should not be displayed
       });
     } else {
       // Reset form for new user
-      setFormData({
-        email: '',
-        full_name: '',
-        username: '',
-        role: 'employee',
-        organization_id: '',
-        password: ''
-      });
+      setFormData(getInitialData());
     }
   }, [user, open]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<UserRole | number>) => {
     const { name, value } = e.target;
-    setFormData((prev: any) => ({ ...prev, [name as string]: value }));
+    setFormData((prev) => ({ ...prev, [name as string]: value }));
   };
-
-  const handleSelectChange = (e: any) => {
-      const { name, value } = e.target;
-      setFormData((prev: any) => ({ ...prev, [name as string]: value }));
-  }
 
   const handleSave = () => {
     // Filter out empty password field for updates
-    const dataToSave = { ...formData };
+    const dataToSave: UserCreate | UserUpdate = { ...formData };
     if (user && !dataToSave.password) {
       delete dataToSave.password;
     }
     onSave(dataToSave);
   };
-
-  const roles = ['employee', 'team_lead', 'dept_head', 'admin'];
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -109,9 +106,9 @@ const UserDialog: React.FC<UserDialogProps> = ({ open, onClose, onSave, user, al
           <Select
             name="role"
             value={formData.role || ''}
-            onChange={handleSelectChange}
+            onChange={handleChange}
           >
-            {roles.map((role) => (
+            {Object.values(UserRole).map((role) => (
               <MenuItem key={role} value={role}>{role}</MenuItem>
             ))}
           </Select>
@@ -121,7 +118,7 @@ const UserDialog: React.FC<UserDialogProps> = ({ open, onClose, onSave, user, al
           <Select
             name="organization_id"
             value={formData.organization_id || ''}
-            onChange={handleSelectChange}
+            onChange={handleChange}
           >
             <MenuItem value=""><em>None</em></MenuItem>
             {allOrganizations.map((org) => (

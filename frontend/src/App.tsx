@@ -9,9 +9,12 @@ import EvaluationSettingsPage from './pages/Admin/EvaluationSettingsPage';
 import MyEvaluationsPage from './pages/MyEvaluationsPage';
 import HistoryPage from './pages/HistoryPage';
 import { auth } from './services/api';
+import type { User } from './schemas/user';
+import { UserRole } from './schemas/user';
+import FinalGradeAdjustmentPage from './pages/Admin/FinalGradeAdjustmentPage';
 
 const Dashboard: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -51,7 +54,7 @@ const Dashboard: React.FC = () => {
 };
 
 const Profile: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -96,19 +99,12 @@ const Profile: React.FC = () => {
   );
 };
 
-import FinalGradeAdjustmentPage from './pages/Admin/FinalGradeAdjustmentPage';
-
-// ... (imports)
-
-// ... (Dashboard and Profile components)
-
 const App: React.FC = () => {
-  // ... (useState and handleLoginSuccess)
-
+  const isLoggedIn = !!localStorage.getItem('access_token');
   return (
     <Router>
       <Routes>
-        {/* ... (login route) */}
+        <Route path="/login" element={<Login />} />
         <Route
           path="/*"
           element={isLoggedIn ? (
@@ -123,7 +119,7 @@ const App: React.FC = () => {
                 <Route 
                   path="/admin/organizations" 
                   element={
-                    <AuthorizedRoute allowedRoles={['admin']}>
+                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN]}>
                       <OrganizationManagementPage />
                     </AuthorizedRoute>
                   }
@@ -131,7 +127,7 @@ const App: React.FC = () => {
                 <Route 
                   path="/admin/projects" 
                   element={
-                    <AuthorizedRoute allowedRoles={['admin', 'dept_head']}>
+                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
                       <ProjectManagementPage />
                     </AuthorizedRoute>
                   } 
@@ -139,7 +135,7 @@ const App: React.FC = () => {
                 <Route 
                   path="/admin/evaluation-settings" 
                   element={
-                    <AuthorizedRoute allowedRoles={['admin']}>
+                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN]}>
                       <EvaluationSettingsPage />
                     </AuthorizedRoute>
                   } 
@@ -147,7 +143,7 @@ const App: React.FC = () => {
                 <Route 
                   path="/admin/grade-adjustment" 
                   element={
-                    <AuthorizedRoute allowedRoles={['admin', 'dept_head']}>
+                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
                       <FinalGradeAdjustmentPage />
                     </AuthorizedRoute>
                   } 

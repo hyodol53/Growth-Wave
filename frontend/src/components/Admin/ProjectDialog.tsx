@@ -2,30 +2,35 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, 
-  Select, MenuItem, FormControl, InputLabel, Grid
+  Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
-import { Project } from '../../schemas/project';
-import { User } from '../../schemas/user';
-import { Organization } from '../../schemas/organization';
+import type { SelectChangeEvent } from '@mui/material';
+import { GridLegacy as Grid } from '@mui/material';
+
+import type { Project, ProjectCreate, ProjectUpdate } from '../../schemas/project';
+import type { User } from '../../schemas/user';
+import type { Organization } from '../../schemas/organization';
+
+const initialFormData: ProjectCreate = { 
+  name: '', 
+  description: '', 
+  start_date: '', 
+  end_date: '', 
+  pm_id: 0, 
+  owner_org_id: 0 
+};
 
 interface ProjectDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (project: any) => void;
+  onSave: (project: ProjectCreate | ProjectUpdate) => void;
   project: Project | null;
   users: User[];
   organizations: Organization[];
 }
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, project, users, organizations }) => {
-  const [formData, setFormData] = useState<any>({ 
-    name: '', 
-    description: '', 
-    start_date: '', 
-    end_date: '', 
-    pm_id: '', 
-    owner_org_id: '' 
-  });
+  const [formData, setFormData] = useState<ProjectCreate>(initialFormData);
 
   useEffect(() => {
     if (project) {
@@ -34,17 +39,17 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
         description: project.description || '',
         start_date: project.start_date ? project.start_date.split('T')[0] : '',
         end_date: project.end_date ? project.end_date.split('T')[0] : '',
-        pm_id: project.pm_id || '',
-        owner_org_id: project.owner_org_id || '',
+        pm_id: project.pm_id || 0,
+        owner_org_id: project.owner_org_id || 0,
       });
     } else {
-      setFormData({ name: '', description: '', start_date: '', end_date: '', pm_id: '', owner_org_id: '' });
+      setFormData(initialFormData);
     }
   }, [project, open]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<number>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name!]: value }));
+    setFormData((prev) => ({ ...prev, [name!]: value }));
   };
 
   const handleSave = () => {
@@ -56,7 +61,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
       <DialogTitle>{project ? 'Edit Project' : 'Create Project'}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               name="name"
               label="Project Name"
@@ -66,7 +71,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               required
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextField
               name="description"
               label="Description"
@@ -77,7 +82,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               rows={3}
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <TextField
               name="start_date"
               label="Start Date"
@@ -89,7 +94,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               required
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <TextField
               name="end_date"
               label="End Date"
@@ -101,15 +106,15 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               required
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <FormControl fullWidth required>
               <InputLabel id="pm-select-label">Project Manager</InputLabel>
               <Select
                 labelId="pm-select-label"
                 name="pm_id"
-                value={formData.pm_id}
+                value={formData.pm_id || ''}
                 label="Project Manager"
-                onChange={handleChange as any}
+                onChange={handleChange}
               >
                 {users.map(user => (
                   <MenuItem key={user.id} value={user.id}>{user.full_name || user.username}</MenuItem>
@@ -117,15 +122,15 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <FormControl fullWidth required>
               <InputLabel id="org-select-label">Owning Organization</InputLabel>
               <Select
                 labelId="org-select-label"
                 name="owner_org_id"
-                value={formData.owner_org_id}
+                value={formData.owner_org_id || ''}
                 label="Owning Organization"
-                onChange={handleChange as any}
+                onChange={handleChange}
               >
                 {organizations.map(org => (
                   <MenuItem key={org.id} value={org.id}>{org.name}</MenuItem>

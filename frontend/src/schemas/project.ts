@@ -1,6 +1,6 @@
 
-import { User } from './user';
-import { Organization } from './organization';
+import type { User } from './user';
+import type { Organization } from './organization';
 
 // Based on backend/app/schemas/project.py
 export interface Project {
@@ -14,6 +14,9 @@ export interface Project {
     pm?: User;
     owner_org?: Organization;
 }
+
+export type ProjectCreate = Omit<Project, 'id' | 'pm' | 'owner_org'>;
+export type ProjectUpdate = Partial<ProjectCreate>;
 
 // Based on backend/app/schemas/project_member.py
 export interface ProjectMember {

@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, DepartmentGrade } from '../../schemas/evaluation';
+import type { DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate } from '../../schemas/evaluation';
+import { DepartmentGrade } from '../../schemas/evaluation';
 
 interface DepartmentGradeRatioDialogProps {
   open: boolean;

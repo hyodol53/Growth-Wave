@@ -5,14 +5,19 @@ import {
   Select, MenuItem, FormControl, InputLabel, TextField, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction, CircularProgress, Alert
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Project, ProjectMember } from '../../schemas/project';
-import { User } from '../../schemas/user';
-import { auth } from '../../services/api';
+import type { Project, ProjectMember } from '../../schemas/project';
+import type { User } from '../../schemas/user';
+import { getProjectMembers } from '../../services/api';
+
+interface MemberSaveData {
+  user_id: number;
+  weight: number;
+}
 
 interface ProjectMemberDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (members: Omit<ProjectMember, 'project_id'>[]) => void;
+  onSave: (members: MemberSaveData[]) => void;
   project: Project | null;
   allUsers: User[];
 }
@@ -31,8 +36,9 @@ const ProjectMemberDialog: React.FC<ProjectMemberDialogProps> = ({ open, onClose
     setError(null);
     try {
       // This is an assumed API endpoint. If it fails, it will be caught.
-      const currentMembers = await auth.getProjectMembers(project.id);
-      setMembers(currentMembers);
+      const response = await getProjectMembers(project.id);
+      const membersWithProjectId = response.data.map(m => ({ ...m, project_id: project.id }));
+      setMembers(membersWithProjectId);
     } catch (e) {
       console.error("Failed to fetch project members. This might be because the API endpoint doesn't exist yet.", e);
       setError("Could not load project members. The feature might be incomplete.");
@@ -70,7 +76,7 @@ const ProjectMemberDialog: React.FC<ProjectMemberDialogProps> = ({ open, onClose
       alert('Total participation weight must be exactly 100%.');
       return;
     }
-    const membersToSave = members.map(({ user_id, participation_weight }) => ({ user_id, participation_weight }));
+    const membersToSave = members.map(({ user_id, participation_weight }) => ({ user_id, weight: participation_weight }));
     onSave(membersToSave);
   };
 

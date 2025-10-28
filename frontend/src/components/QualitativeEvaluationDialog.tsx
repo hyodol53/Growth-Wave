@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, List, ListItem, ListItemText, Typography } from '@mui/material';
-import { User } from '../schemas/user';
-import { QualitativeEvaluationCreate } from '../schemas/evaluation';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, List, ListItem, ListItemText, Typography } from '@mui/material';
+import type { User } from '../schemas/user';
+import type { QualitativeEvaluationCreate } from '../schemas/evaluation';
 
 interface QualitativeEvaluationDialogProps {
   open: boolean;

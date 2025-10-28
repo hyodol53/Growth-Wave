@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { auth } from '../services/api';
-import { UserRole } from '../schemas/user';
+import type { UserRole } from '../schemas/user';
 
 interface AuthorizedRouteProps {
   children: React.ReactElement;

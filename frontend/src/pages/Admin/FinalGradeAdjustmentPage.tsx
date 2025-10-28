@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Typography, Container, Button, Alert, Snackbar } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridCellParams } from '@mui/x-data-grid';
-import { getMySubordinates, getEvaluationResultForUser, adjustGrades } from '../services/api';
-import { User } from '../schemas/user';
-import { ManagerEvaluationView, GradeAdjustment } from '../schemas/evaluation';
+import { DataGrid } from '@mui/x-data-grid';
+import type { GridColDef, GridCellParams } from '@mui/x-data-grid';
+import { getMySubordinates, getEvaluationResultForUser, adjustGrades } from '../../services/api';
+import type { User } from '../../schemas/user';
+import type { GradeAdjustment, ManagerEvaluationView } from '../../schemas/evaluation';
+import { AxiosError } from 'axios';
 
 interface UserEvaluationData extends User {
   final_score: number | null;
@@ -25,21 +27,25 @@ const FinalGradeAdjustmentPage: React.FC = () => {
         const subordinatesRes = await getMySubordinates();
         const subordinates = subordinatesRes.data;
 
-        const evaluationDataPromises = subordinates.map(user => 
-          getEvaluationResultForUser(user.id).then(res => ({...user, result: res.data}))
+        const evaluationDataPromises = subordinates.map((user: User) => 
+          getEvaluationResultForUser(user.id).then(res => ({...user, result: res.data as ManagerEvaluationView}))
         );
         
         const results = await Promise.all(evaluationDataPromises);
 
-        const combinedData: UserEvaluationData[] = results.map(item => ({
+        const combinedData: UserEvaluationData[] = results.map((item: User & { result: ManagerEvaluationView }) => ({
           ...item,
           final_score: item.result.final_evaluation?.final_score ?? null,
           current_grade: item.result.final_evaluation?.grade ?? 'N/A',
         }));
 
         setUsers(combinedData);
-      } catch (err: any) {
-        setError(err.response?.data?.detail || 'Failed to fetch data.');
+      } catch (err) {
+        if (err instanceof AxiosError) {
+          setError(err.response?.data?.detail || 'Failed to fetch data.');
+        } else {
+          setError('An unexpected error occurred.');
+        }
         console.error(err);
       } finally {
         setLoading(false);
@@ -81,8 +87,12 @@ const FinalGradeAdjustmentPage: React.FC = () => {
       setSuccess('Grades adjusted successfully!');
       setAdjustedGrades({});
       // Optionally re-fetch data here
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to save changes.');
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        setError(err.response?.data?.detail || 'Failed to save changes.');
+      } else {
+        setError('An unexpected error occurred while saving.');
+      }
       console.error(err);
     }
   };
@@ -94,7 +104,7 @@ const FinalGradeAdjustmentPage: React.FC = () => {
       field: 'final_score', 
       headerName: 'Final Score', 
       width: 120,
-      valueGetter: (params: GridValueGetterParams) => params.row.final_score?.toFixed(2) ?? 'N/A',
+      valueGetter: (_value, row) => row.final_score?.toFixed(2) ?? 'N/A',
     },
     { field: 'current_grade', headerName: 'Current Grade', width: 130 },
     {
@@ -131,7 +141,7 @@ const FinalGradeAdjustmentPage: React.FC = () => {
             rows={users}
             columns={columns}
             loading={loading}
-            getRowId={(row) => row.id}
+            getRowId={(row: UserEvaluationData) => row.id}
           />
         </Box>
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>

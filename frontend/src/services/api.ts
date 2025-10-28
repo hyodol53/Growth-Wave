@@ -1,8 +1,9 @@
 import axios from 'axios';
 
-import { User, UserCreate, UserUpdate, UserHistoryItem } from '../schemas/user';
-import { ProjectMemberDetails } from '../schemas/project';
-import { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate, PeerEvaluationCreate, PmEvaluationCreate, QualitativeEvaluationCreate, ManagerEvaluationView, GradeAdjustmentRequest } from '../schemas/evaluation';
+import type { User, UserCreate, UserUpdate, UserHistoryResponse } from '../schemas/user';
+import type { OrganizationCreate, OrganizationUpdate } from '../schemas/organization';
+import type { ProjectCreate, ProjectUpdate, ProjectMemberDetails } from '../schemas/project';
+import type { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate, PeerEvaluationCreate, PmEvaluationCreate, QualitativeEvaluationCreate, ManagerEvaluationView, GradeAdjustmentRequest } from '../schemas/evaluation';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -25,6 +26,14 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+interface ProjectMemberWeightsPayload {
+  project_id: number;
+  weights: {
+    user_id: number;
+    weight: number;
+  }[];
+}
 
 export const auth = {
   login: async (username: string, password: string) => {
@@ -56,11 +65,11 @@ export const auth = {
   },
 
   // Organization CRUD
-  createOrganization: async (data: any) => {
+  createOrganization: async (data: OrganizationCreate) => {
     const response = await api.post('/organizations/', data);
     return response.data;
   },
-  updateOrganization: async (id: number, data: any) => {
+  updateOrganization: async (id: number, data: OrganizationUpdate) => {
     const response = await api.put(`/organizations/${id}`, data);
     return response.data;
   },
@@ -70,11 +79,11 @@ export const auth = {
   },
 
   // User CRUD
-  createUser: async (data: any) => {
+  createUser: async (data: UserCreate) => {
     const response = await api.post('/users/', data);
     return response.data;
   },
-  updateUser: async (id: number, data: any) => {
+  updateUser: async (id: number, data: UserUpdate) => {
     const response = await api.put(`/users/${id}`, data);
     return response.data;
   },
@@ -88,11 +97,11 @@ export const auth = {
     const response = await api.get('/projects/');
     return response.data;
   },
-  createProject: async (data: any) => {
+  createProject: async (data: ProjectCreate) => {
     const response = await api.post('/projects/', data);
     return response.data;
   },
-  updateProject: async (id: number, data: any) => {
+  updateProject: async (id: number, data: ProjectUpdate) => {
     const response = await api.put(`/projects/${id}`, data);
     return response.data;
   },
@@ -102,7 +111,7 @@ export const auth = {
   },
 
   // Project Members
-  setProjectMemberWeights: async (data: any) => {
+  setProjectMemberWeights: async (data: ProjectMemberWeightsPayload) => {
     const response = await api.post('/projects/members/weights', data);
     return response.data;
   },
@@ -115,7 +124,7 @@ export const deleteProject = (projectId: number) => api.delete(`/projects/${proj
 // =============================================================================
 
 // Data fetching for evaluation page
-export const getUserHistory = () => api.get<UserHistoryItem[]>('/users/me/history');
+export const getUserHistory = () => api.get<UserHistoryResponse>('/users/me/history');
 export const getProjectMembers = (projectId: number) => api.get<ProjectMemberDetails[]>(`/projects/${projectId}/members`);
 export const getMySubordinates = () => api.get<User[]>('/users/me/subordinates');
 

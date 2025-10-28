@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Container, Accordion, AccordionSummary, AccordionDetails,
-  CircularProgress, Alert, Paper, Grid, List, ListItem, ListItemText, Divider
+  CircularProgress, Alert, Paper, List, ListItem, ListItemText, Divider
 } from '@mui/material';
+import { GridLegacy as Grid } from '@mui/material';
+
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getUserHistory, auth } from '../services/api';
-import { UserHistoryResponse, ProjectHistoryItem } from '../schemas/user';
-import { User, UserRole } from '../schemas/user';
+import type { User, UserHistoryResponse, ProjectHistoryItem } from '../schemas/user';
+import { UserRole } from '../schemas/user';
+import { AxiosError } from 'axios';
 
 const HistoryPage: React.FC = () => {
   const [history, setHistory] = useState<UserHistoryResponse | null>(null);
@@ -24,8 +27,12 @@ const HistoryPage: React.FC = () => {
         ]);
         setHistory(historyRes.data);
         setCurrentUser(userRes);
-      } catch (err: any) {
-        setError(err.response?.data?.detail || 'Failed to fetch history data.');
+      } catch (err) {
+        if (err instanceof AxiosError) {
+          setError(err.response?.data?.detail || 'Failed to fetch history data.');
+        } else {
+          setError('An unexpected error occurred.');
+        }
         console.error(err);
       } finally {
         setLoading(false);
@@ -77,7 +84,7 @@ const HistoryPage: React.FC = () => {
               </AccordionSummary>
               <AccordionDetails>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
+                  <Grid xs={12} md={6}>
                     <Paper sx={{ p: 2 }}>
                       <Typography variant="h6" gutterBottom>Evaluation Result</Typography>
                       <Typography variant="body1">
@@ -100,7 +107,7 @@ const HistoryPage: React.FC = () => {
                        )}
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid xs={12} md={6}>
                     <Paper sx={{ p: 2 }}>
                       <Typography variant="h6" gutterBottom>Projects</Typography>
                       <List dense>

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { auth } from '../services/api';
-import { User } from '../schemas/user'; // Assuming you have a user schema/type defined
+import type { User } from '../schemas/user'; // Assuming you have a user schema/type defined
 
 import {
   AppBar,
@@ -37,6 +37,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
 
+  const handleLogout = useCallback(() => {
+    auth.logout();
+    navigate('/login');
+    window.location.reload(); // Force reload to clear state
+  }, [navigate]);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -48,13 +54,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       }
     };
     fetchUser();
-  }, []);
-
-  const handleLogout = () => {
-    auth.logout();
-    navigate('/login');
-    window.location.reload(); // Force reload to clear state
-  };
+  }, [handleLogout]);
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
