@@ -8,6 +8,8 @@ from tests.utils.user import create_random_user, authentication_token_from_usern
 from tests.utils.organization import create_random_organization
 from tests.utils.project import create_random_project
 from app.models.project_member import ProjectMember
+from app.schemas.project_member import ProjectMemberCreate
+from app.crud import project_member as crud_pm
 
 
 def test_set_project_member_weights_success(client: TestClient, db: Session):
@@ -302,3 +304,63 @@ def test_delete_project_by_admin(client: TestClient, db: Session):
     # Verify it's deleted
     response = client.get(f"/api/v1/projects/{project.id}", headers=admin_token_headers)
     assert response.status_code == 404
+
+def test_read_project_members(client: TestClient, db: Session):
+    # Setup: An organization, a project, and a user to make the request
+    org = create_random_organization(db)
+    requesting_user = create_random_user(db, organization_id=org.id)
+    user_token_headers = authentication_token_from_username(
+        client=client, username=requesting_user.username, db=db
+    )
+    project = create_random_project(db, owner_org_id=org.id)
+
+    # Create two members for the project
+    member1 = create_random_user(db, organization_id=org.id)
+    member2 = create_random_user(db, organization_id=org.id)
+
+    crud_pm.project_member.create(db, obj_in=ProjectMemberCreate(
+        user_id=member1.id,
+        project_id=project.id,
+        is_pm=True,
+        participation_weight=60
+    ))
+    crud_pm.project_member.create(db, obj_in=ProjectMemberCreate(
+        user_id=member2.id,
+        project_id=project.id,
+        is_pm=False,
+        participation_weight=40
+    ))
+
+    # Make the API call
+    response = client.get(
+        f"/api/v1/projects/{project.id}/members", headers=user_token_headers
+    )
+
+    # Assertions
+    assert response.status_code == 200
+    members_list = response.json()
+    assert len(members_list) == 2
+    
+    # Create a dict for easy lookup
+    members = {m['user_id']: m for m in members_list}
+
+    assert members[member1.id]["full_name"] == member1.full_name
+    assert members[member1.id]["is_pm"] is True
+    assert members[member1.id]["participation_weight"] == 60
+
+    assert members[member2.id]["full_name"] == member2.full_name
+    assert members[member2.id]["is_pm"] is False
+    assert members[member2.id]["participation_weight"] == 40
+
+
+def test_read_project_members_not_found(client: TestClient, db: Session):
+    user = create_random_user(db)
+    user_token_headers = authentication_token_from_username(
+        client=client, username=user.username, db=db
+    )
+    non_existent_project_id = 99999
+    response = client.get(
+        f"/api/v1/projects/{non_existent_project_id}/members", headers=user_token_headers
+    )
+    assert response.status_code == 404
+    assert "Project not found" in response.json()["detail"]

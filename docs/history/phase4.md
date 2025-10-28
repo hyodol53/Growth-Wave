@@ -22,6 +22,16 @@
   - 구성원 본인 또는 상위 보직자가 반기별 평가 결과와 프로젝트 참여 이력을 조회할 수 있는 API를 구현했습니다.
   - 상세 개발 내역은 [../devlog/task_4_3_user_history_view.md](../devlog/task_4_3_user_history_view.md) 문서를 참고하세요.
 
+- **Task 4.4: 프로젝트 멤버 조회 API 개발** `(완료)`
+  - **요구사항:** `FR-A-6.x` (간접적으로 FR-A-3.1, FR-A-3.3 지원)
+  - 특정 프로젝트에 속한 모든 멤버의 목록과 정보를 조회하는 API를 구현했습니다.
+  - 상세 개발 내역은 [../devlog/task_4_4_project_members_api.md](../devlog/task_4_4_project_members_api.md) 문서를 참고하세요.
+
+- **Task 4.5: 하위 조직원 조회 API 개발** `(완료)`
+  - **요구사항:** `FR-A-5.4` (간접적으로 FR-A-3.5 지원)
+  - 현재 로그인한 관리자(팀장 또는 실장)의 모든 하위 조직원 목록을 조회하는 API를 구현했습니다.
+  - 상세 개발 내역은 [../devlog/task_4_5_subordinates_api.md](../devlog/task_4_5_subordinates_api.md) 문서를 참고하세요.
+
 ---
 
 ## 다음 단계 (Next Steps)

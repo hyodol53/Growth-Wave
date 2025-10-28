@@ -1,11 +1,11 @@
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.user import User as UserModel
+from app.models.user import User as UserModel, UserRole
 from app.schemas.user import User, UserCreate, UserUpdate, UserHistoryResponse
 from app.crud import user as user_crud
 from app.api import deps
@@ -83,6 +83,25 @@ def read_current_user(
     Retrieve current authenticated user.
     """
     return current_user
+
+
+@router.get("/me/subordinates", response_model=List[User])
+def read_my_subordinates(
+    *,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+):
+    """
+    Retrieve all subordinates for the current user (team_lead or dept_head).
+    """
+    if current_user.role not in [UserRole.TEAM_LEAD, UserRole.DEPT_HEAD]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view subordinates.",
+        )
+    
+    subordinates = user_crud.user.get_subordinates(db, user_id=current_user.id)
+    return subordinates
 
 
 @router.get("/me/history", response_model=UserHistoryResponse)

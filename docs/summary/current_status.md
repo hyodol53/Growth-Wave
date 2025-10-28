@@ -21,6 +21,7 @@
 *   **프로젝트 참여 비중 설정:** 실장이 소속 인원의 프로젝트별 참여 비중을 설정할 수 있는 API(`POST /api/v1/projects/members/weights`)를 개발했습니다.
 *   **평가 항목 가중치 설정:** 관리자가 직책별 평가 항목의 가중치를 설정하는 API(`/api/v1/evaluations/`)를 구현했습니다.
 *   **PM동료평가:** 동료에게 점수를 부여하는 API(`POST /api/v1/evaluations/peer-evaluations/`)를 개발했으며, 평균 점수 제한 등 어뷰징 방지 로직을 포함합니다.
+*   **프로젝트 멤버 및 하위 조직원 조회 API:** 프론트엔드(Phase 6.4)에서 평가 대상자 선택 화면 구현에 필요한 프로젝트 멤버 조회 API (`GET /api/v1/projects/{project_id}/members`)와 관리자의 하위 조직원 조회 API (`GET /api/v1/users/me/subordinates`)를 구현했습니다.
 *   **안정화:** 개발 과정에서 발생한 다수의 테스트 실패를 성공적으로 해결하여 기능의 안정성을 확보했으며, 모든 테스트가 통과함을 확인했습니다.
 
 ### Phase 3: Track B 기능 개발 (진행 중)

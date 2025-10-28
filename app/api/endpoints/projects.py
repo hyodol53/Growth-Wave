@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.project import Project, ProjectCreate, ProjectUpdate
-from app.schemas.project_member import ProjectMember, ProjectMemberWeightsUpdate
+from app.schemas.project_member import ProjectMember, ProjectMemberWeightsUpdate, ProjectMemberDetail
 from app.crud import project as crud_project
 from app.crud import project_member as crud_pm
 from app.crud import user as crud_user
@@ -105,6 +105,37 @@ def delete_project(
         )
     project = crud_project.project.remove(db=db, id=project_id)
     return project
+
+
+
+@router.get("/{project_id}/members", response_model=List[ProjectMemberDetail])
+def read_project_members(
+    *,
+    db: Session = Depends(get_db),
+    project_id: int,
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Get all members of a specific project.
+    """
+    project = crud_project.project.get(db=db, id=project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    members_data = crud_pm.project_member.get_multi_by_project_with_user_details(
+        db=db, project_id=project_id
+    )
+    
+    members = [
+        ProjectMemberDetail(
+            user_id=member.user_id,
+            full_name=member.full_name,
+            is_pm=member.is_pm,
+            participation_weight=member.participation_weight,
+        )
+        for member in members_data
+    ]
+    return members
 
 
 @router.post("/members/weights", response_model=List[ProjectMember])

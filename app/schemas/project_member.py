@@ -41,3 +41,10 @@ class ProjectWeight(BaseModel):
 class ProjectMemberWeightsUpdate(BaseModel):
     user_id: int
     weights: List[ProjectWeight]
+
+
+class ProjectMemberDetail(BaseModel):
+    user_id: int
+    full_name: str
+    is_pm: bool
+    participation_weight: int

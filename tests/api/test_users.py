@@ -165,3 +165,74 @@ def test_read_user_history_unauthorized(client: TestClient, db: Session):
 
     # Assert
     assert response.status_code == 403
+
+def test_read_my_subordinates_as_dept_head(client: TestClient, db: Session):
+    # 1. Setup organization hierarchy
+    center = create_random_organization(db, name="Center", level=1)
+    dept = create_random_organization(db, name="Department", level=2, parent_id=center.id)
+    team = create_random_organization(db, name="Team", level=3, parent_id=dept.id)
+    other_dept = create_random_organization(db, name="Other Department", level=2, parent_id=center.id)
+
+    # 2. Setup users
+    dept_head = create_random_user(db, role="dept_head", organization_id=dept.id)
+    team_lead = create_random_user(db, role="team_lead", organization_id=team.id)
+    employee_in_team = create_random_user(db, role="employee", organization_id=team.id)
+    employee_in_dept = create_random_user(db, role="employee", organization_id=dept.id)
+    employee_in_other_dept = create_random_user(db, role="employee", organization_id=other_dept.id)
+
+    # 3. Get token and make request
+    dept_head_token = authentication_token_from_username(
+        client=client, username=dept_head.username, db=db
+    )
+    response = client.get("/api/v1/users/me/subordinates", headers=dept_head_token)
+
+    # 4. Assertions
+    assert response.status_code == 200
+    subordinates = response.json()
+    assert len(subordinates) == 3
+
+    subordinate_ids = {s["id"] for s in subordinates}
+    assert team_lead.id in subordinate_ids
+    assert employee_in_team.id in subordinate_ids
+    assert employee_in_dept.id in subordinate_ids
+    assert dept_head.id not in subordinate_ids
+    assert employee_in_other_dept.id not in subordinate_ids
+
+
+def test_read_my_subordinates_as_team_lead(client: TestClient, db: Session):
+    # 1. Setup organization hierarchy
+    center = create_random_organization(db, name="Center2", level=1)
+    dept = create_random_organization(db, name="Department2", level=2, parent_id=center.id)
+    team = create_random_organization(db, name="Team2", level=3, parent_id=dept.id)
+
+    # 2. Setup users
+    team_lead = create_random_user(db, role="team_lead", organization_id=team.id)
+    employee_in_team = create_random_user(db, role="employee", organization_id=team.id)
+    employee_in_dept = create_random_user(db, role="employee", organization_id=dept.id)
+
+    # 3. Get token and make request
+    team_lead_token = authentication_token_from_username(
+        client=client, username=team_lead.username, db=db
+    )
+    response = client.get("/api/v1/users/me/subordinates", headers=team_lead_token)
+
+    # 4. Assertions
+    assert response.status_code == 200
+    subordinates = response.json()
+    assert len(subordinates) == 1
+    assert subordinates[0]["id"] == employee_in_team.id
+
+
+def test_read_my_subordinates_as_employee(client: TestClient, db: Session):
+    # 1. Setup user
+    employee = create_random_user(db, role="employee")
+    employee_token = authentication_token_from_username(
+        client=client, username=employee.username, db=db
+    )
+
+    # 2. Make request
+    response = client.get("/api/v1/users/me/subordinates", headers=employee_token)
+
+    # 3. Assertions
+    assert response.status_code == 403
+    assert "You do not have permission" in response.json()["detail"]
