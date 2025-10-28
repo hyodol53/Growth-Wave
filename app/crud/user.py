@@ -103,6 +103,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             
             project_history = [
                 ProjectHistoryItem(
+                    project_id=pm.project.id,
                     project_name=pm.project.name,
                     participation_weight=pm.participation_weight,
                     is_pm=pm.is_pm,

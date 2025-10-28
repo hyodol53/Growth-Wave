@@ -40,6 +40,7 @@ class UserUpdate(BaseModel):
 
 # Schemas for User History
 class ProjectHistoryItem(BaseModel):
+    project_id: int
     project_name: str
     participation_weight: int
     is_pm: bool

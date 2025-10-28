@@ -41,11 +41,13 @@
                 },
                 "projects": [
                     {
+                        "project_id": 101,
                         "project_name": "Project Alpha",
                         "participation_weight": 70,
                         "is_pm": true
                     },
                     {
+                        "project_id": 102,
                         "project_name": "Project Beta",
                         "participation_weight": 30,
                         "is_pm": false

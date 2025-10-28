@@ -134,6 +134,7 @@ def test_read_my_history(client: TestClient, db: Session):
     assert history_for_period1["final_evaluation"]["grade"] == "S"
     assert len(history_for_period1["projects"]) == 1
     assert history_for_period1["projects"][0]["project_name"] == project1.name
+    assert history_for_period1["projects"][0]["project_id"] == project1.id
 
 def test_read_user_history_by_manager(client: TestClient, db: Session):
     # Setup
