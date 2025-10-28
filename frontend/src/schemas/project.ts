@@ -21,3 +21,11 @@ export interface ProjectMember {
     project_id: number;
     participation_weight: number;
 }
+
+// Based on backend GET /api/v1/projects/{project_id}/members response
+export interface ProjectMemberDetails {
+    user_id: number;
+    full_name: string;
+    is_pm: boolean;
+    participation_weight: number;
+}

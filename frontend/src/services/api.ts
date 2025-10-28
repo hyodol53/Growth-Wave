@@ -1,5 +1,9 @@
 import axios from 'axios';
 
+import { User, UserCreate, UserUpdate, UserHistoryItem } from '../schemas/user';
+import { ProjectMemberDetails } from '../schemas/project';
+import { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate, PeerEvaluationCreate, PmEvaluationCreate, QualitativeEvaluationCreate } from '../schemas/evaluation';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 const api = axios.create({
@@ -38,7 +42,7 @@ export const auth = {
   logout: () => {
     localStorage.removeItem('access_token');
   },
-  getCurrentUser: async () => {
+  getCurrentUser: async (): Promise<User> => {
     const response = await api.get('/users/me');
     return response.data;
   },
@@ -102,10 +106,41 @@ export const auth = {
     const response = await api.post('/projects/members/weights', data);
     return response.data;
   },
-  getProjectMembers: async (id: number) => {
-    const response = await api.get(`/projects/${id}/members`);
-    return response.data;
-  },
 };
+
+export const deleteProject = (projectId: number) => api.delete(`/projects/${projectId}`);
+
+// =============================================================================
+// Evaluation APIs
+// =============================================================================
+
+// Data fetching for evaluation page
+export const getUserHistory = () => api.get<UserHistoryItem[]>('/users/me/history');
+export const getProjectMembers = (projectId: number) => api.get<ProjectMemberDetails[]>(`/projects/${projectId}/members`);
+export const getMySubordinates = () => api.get<User[]>('/users/me/subordinates');
+
+// Submitting evaluations
+export const createPeerEvaluations = (data: PeerEvaluationCreate) => api.post('/evaluations/peer-evaluations/', data);
+export const createPmEvaluations = (data: PmEvaluationCreate) => api.post('/evaluations/pm-evaluations/', data);
+export const createQualitativeEvaluations = (data: QualitativeEvaluationCreate) => api.post('/evaluations/qualitative-evaluations/', data);
+
+// Evaluation Settings
+// Evaluation Periods
+export const getEvaluationPeriods = () => api.get<EvaluationPeriod[]>('/evaluations/evaluation-periods/');
+export const createEvaluationPeriod = (data: EvaluationPeriodCreate) => api.post<EvaluationPeriod>('/evaluations/evaluation-periods/', data);
+export const updateEvaluationPeriod = (id: number, data: EvaluationPeriodUpdate) => api.put<EvaluationPeriod>(`/evaluations/evaluation-periods/${id}`, data);
+export const deleteEvaluationPeriod = (id: number) => api.delete(`/evaluations/evaluation-periods/${id}`);
+
+// Department Grade Ratios
+export const getDepartmentGradeRatios = () => api.get<DepartmentGradeRatio[]>('/evaluations/department-grade-ratios/');
+export const createDepartmentGradeRatio = (data: DepartmentGradeRatioCreate) => api.post<DepartmentGradeRatio>('/evaluations/department-grade-ratios/', data);
+export const updateDepartmentGradeRatio = (id: number, data: DepartmentGradeRatioUpdate) => api.put<DepartmentGradeRatio>(`/evaluations/department-grade-ratios/${id}`, data);
+export const deleteDepartmentGradeRatio = (id: number) => api.delete(`/evaluations/department-grade-ratios/${id}`);
+
+// Evaluation Weights
+export const getEvaluationWeights = () => api.get<EvaluationWeight[]>('/evaluations/');
+export const createEvaluationWeight = (data: EvaluationWeightCreate) => api.post<EvaluationWeight>('/evaluations/', data);
+export const updateEvaluationWeight = (id: number, data: EvaluationWeightUpdate) => api.put<EvaluationWeight>(`/evaluations/${id}`, data);
+export const deleteEvaluationWeight = (id: number) => api.delete(`/evaluations/${id}`);
 
 export default api;
