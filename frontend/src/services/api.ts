@@ -92,6 +92,19 @@ export const auth = {
     return response.data;
   },
 
+  // Organization Sync
+  syncOrganizationsWithJson: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/organizations/sync-chart', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
   // Project CRUD
   getProjects: async () => {
     const response = await api.get('/projects/');

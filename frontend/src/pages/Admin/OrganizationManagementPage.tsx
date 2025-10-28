@@ -15,6 +15,7 @@ import type { Organization } from '../../schemas/organization';
 import type { User, UserCreate, UserUpdate } from '../../schemas/user';
 import OrganizationDialog from '../../components/Admin/OrganizationDialog';
 import UserDialog from '../../components/Admin/UserDialog';
+import OrgSync from '../../components/Admin/OrgSync';
 
 // Interface for the hierarchical node structure
 interface OrgTreeNode {
@@ -211,6 +212,7 @@ const OrganizationManagementPage: React.FC = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           Organization and User Management
         </Typography>
+        <OrgSync onSyncSuccess={fetchData} />
         <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
             <Button variant="contained" onClick={() => handleOpenOrgDialog(null)}>Add Organization</Button>
             <Button variant="contained" onClick={() => handleOpenUserDialog(null)}>Add User</Button>
