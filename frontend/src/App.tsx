@@ -5,6 +5,8 @@ import Layout from './components/Layout';
 import AuthorizedRoute from './components/AuthorizedRoute';
 import OrganizationManagementPage from './pages/Admin/OrganizationManagementPage';
 import ProjectManagementPage from './pages/Admin/ProjectManagementPage';
+import EvaluationSettingsPage from './pages/Admin/EvaluationSettingsPage';
+import MyEvaluationsPage from './pages/MyEvaluationsPage';
 import { auth } from './services/api';
 
 const Dashboard: React.FC = () => {
@@ -113,7 +115,10 @@ const App: React.FC = () => {
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/evaluations" element={<MyEvaluationsPage />} />
+
+            {/* Admin Routes */}
                 <Route 
                   path="/admin/organizations" 
                   element={
@@ -122,20 +127,11 @@ const App: React.FC = () => {
                     </AuthorizedRoute>
                   }
                 />
-                <Route 
-                  path="/admin/projects" 
-                  element={
-                    <AuthorizedRoute allowedRoles={['admin', 'dept_head']}>
-                      <ProjectManagementPage />
-                    </AuthorizedRoute>
-                  }
-                />
-                {/* Add other routes here */}
-              </Routes>
-            </Layout>
-          ) : (
-            <Navigate to="/login" />
-          )}
+            <Route path="/admin/projects" element={<AuthorizedRoute roles={['admin', 'dept_head']}><ProjectManagementPage /></AuthorizedRoute>} />
+            <Route path="/admin/evaluation-settings" element={<AuthorizedRoute roles={['admin']}><EvaluationSettingsPage /></AuthorizedRoute>} />
+          </Routes>
+        </Layout>
+      )}
         />
       </Routes>
     </Router>

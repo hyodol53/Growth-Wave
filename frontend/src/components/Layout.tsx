@@ -22,6 +22,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import SummarizeIcon from '@mui/icons-material/Summarize';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import TuneIcon from '@mui/icons-material/Tune';
 
 
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
@@ -58,7 +59,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
     { text: 'My Profile', icon: <AccountCircleIcon />, path: '/profile' },
-    { text: 'Evaluations', icon: <AssessmentIcon />, path: '/evaluations' },
+    { text: 'My Evaluations', icon: <AssessmentIcon />, path: '/evaluations' },
     { text: 'Reports', icon: <SummarizeIcon />, path: '/reports' },
   ];
 
@@ -115,6 +116,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </ListItemButton>
                 </ListItem>
               ))}
+              {user?.role === 'admin' && (
+                <ListItem key="eval-settings" disablePadding>
+                  <ListItemButton component={RouterLink} to="/admin/evaluation-settings">
+                    <ListItemIcon><TuneIcon /></ListItemIcon>
+                    <ListItemText primary="Evaluation Settings" />
+                  </ListItemButton>
+                </ListItem>
+              )}
             </List>
           )}
         </Box>

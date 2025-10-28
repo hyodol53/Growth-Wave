@@ -24,3 +24,19 @@
     - 프로젝트 목록을 표시하는 `DataGrid`와 생성/수정을 위한 `ProjectDialog`를 구현했습니다.
     - 프로젝트 멤버를 배정하고 참여 비중(%)을 관리하는 `ProjectMemberDialog`를 구현했으며, 총합 100% 유효성 검사 로직을 포함했습니다.
   - 상세 개발 내역은 [../devlog/task_6_2_project_management_ui.md](../devlog/task_6_2_project_management_ui.md) 문서를 참고하세요.
+
+- **Task 6.3: 평가 설정 UI 개발 (완료)**
+  - **요구사항:** `FR-A-2.1, 2.2, 2.3`
+  - 관리자가 평가 주기, 등급 비율, 평가 항목별 가중치를 관리할 수 있는 페이지를 구현했습니다.
+  - **주요 구현 내용**:
+    - 탭(Tabs)을 사용하여 세 가지 다른 설정(주기, 비율, 가중치)을 관리하는 UI를 구성했습니다.
+    - 각 설정에 대한 조회(`DataGrid`), 생성/수정(`Dialog`), 삭제 기능을 모두 구현하여 관리의 편의성을 높였습니다.
+  - 상세 개발 내역은 [../devlog/task_6_3_evaluation_settings_ui.md](../devlog/task_6_3_evaluation_settings_ui.md) 문서를 참고하세요.
+
+- **Task 6.4: 평가 진행 UI 개발 (진행 중)**
+  - **요구사항:** `FR-A-3.x`
+  - 평가 대상 목록 조회 API 부재로 인해, 명세를 먼저 정의하고 Mock 데이터를 기반으로 프론트엔드 UI 개발을 우선 완료했습니다.
+  - **주요 구현 내용**:
+    - 정성평가, PM평가, 동료평가를 진행할 수 있는 3가지 종류의 다이얼로그 UI를 각각 구현했습니다.
+    - 동료평가 시 평균 70점 초과를 방지하는 프론트엔드 유효성 검사 로직을 포함했습니다.
+  - 상세 개발 내역은 [../devlog/task_6_4_evaluation_ui.md](../devlog/task_6_4_evaluation_ui.md) 문서를 참고하세요.
