@@ -161,7 +161,7 @@ export const deleteProject = (projectId: number) => api.delete(`/projects/${proj
 // =============================================================================
 
 // Data fetching for evaluation page
-export const getUserHistory = () => api.get<UserHistoryResponse>('/users/me/history');
+export const getUserHistory = () => api.get<{ history: UserHistoryResponse }>('/users/me/history');
 export const getProjectMembers = (projectId: number) => api.get<ProjectMemberDetails[]>(`/projects/${projectId}/members`);
 export const getMySubordinates = () => api.get<User[]>('/users/me/subordinates');
 

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Box, Button, Input, Typography, CircularProgress, Alert } from '@mui/material';
+import { Box, Button, Typography, CircularProgress, Alert } from '@mui/material';
 import { auth } from '../../services/api';
 
 interface OrgSyncProps {
