@@ -11,13 +11,12 @@ import type { Project, ProjectCreate, ProjectUpdate } from '../../schemas/projec
 import type { User } from '../../schemas/user';
 import type { Organization } from '../../schemas/organization';
 
-const initialFormData: ProjectCreate = { 
+const initialFormData: Omit<ProjectCreate, 'owner_org_id'> = { 
   name: '', 
   description: '', 
   start_date: '', 
   end_date: '', 
   pm_id: 0, 
-  owner_org_id: 0 
 };
 
 interface ProjectDialogProps {
@@ -30,7 +29,7 @@ interface ProjectDialogProps {
 }
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, project, users, organizations }) => {
-  const [formData, setFormData] = useState<ProjectCreate>(initialFormData);
+  const [formData, setFormData] = useState<Omit<ProjectCreate, 'owner_org_id'>>(initialFormData);
 
   useEffect(() => {
     if (project) {
@@ -40,14 +39,17 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
         start_date: project.start_date ? project.start_date.split('T')[0] : '',
         end_date: project.end_date ? project.end_date.split('T')[0] : '',
         pm_id: project.pm_id || 0,
-        owner_org_id: project.owner_org_id || 0,
       });
     } else {
-      setFormData({
-        ...initialFormData,
-        pm_id: users[0]?.id || 0,
-        owner_org_id: organizations[0]?.id || 0,
-      });
+      // Only set default pm_id if users are available
+      if (users.length > 0) {
+        setFormData({
+          ...initialFormData,
+          pm_id: users[0].id,
+        });
+      } else {
+        setFormData(initialFormData);
+      }
     }
   }, [project, open, users, organizations]);
 
@@ -126,22 +128,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               </Select>
             </FormControl>
           </Grid>
-          <Grid xs={12}>
-            <FormControl fullWidth required>
-              <InputLabel id="org-select-label">Owning Organization</InputLabel>
-              <Select
-                labelId="org-select-label"
-                name="owner_org_id"
-                value={formData.owner_org_id}
-                label="Owning Organization"
-                onChange={handleChange}
-              >
-                {organizations.map(org => (
-                  <MenuItem key={org.id} value={org.id}>{org.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+
         </Grid>
       </DialogContent>
       <DialogActions>

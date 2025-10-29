@@ -90,12 +90,7 @@ const ProjectManagementPage: React.FC = () => {
       width: 180,
       valueGetter: (_value, row) => users.find(u => u.id === row.pm_id)?.full_name || 'N/A',
     },
-    {
-      field: 'owner_org_id',
-      headerName: 'Owning Organization',
-      width: 200,
-      valueGetter: (_value, row) => organizations.find(o => o.id === row.owner_org_id)?.name || 'N/A',
-    },
+
     { field: 'start_date', headerName: 'Start Date', width: 120 },
     { field: 'end_date', headerName: 'End Date', width: 120 },
     {
@@ -126,7 +121,7 @@ const ProjectManagementPage: React.FC = () => {
           Project Management
         </Typography>
         <Box sx={{ mb: 2 }}>
-          <Button variant="contained" onClick={() => handleOpenProjectDialog(null)}>
+          <Button variant="contained" onClick={() => handleOpenProjectDialog(null)} disabled={loading}>
             Create Project
           </Button>
         </Box>
