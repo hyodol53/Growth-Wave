@@ -17,6 +17,13 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome against localhost",
+            "url": "http://localhost:5173", // 1단계에서 확인한 주소
+            "webRoot": "${workspaceFolder}/frontend/src" // 소스 코드 위치
         }
     ]
 }
