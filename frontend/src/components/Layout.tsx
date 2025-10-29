@@ -23,6 +23,7 @@ import SummarizeIcon from '@mui/icons-material/Summarize';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import TuneIcon from '@mui/icons-material/Tune';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
 
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
@@ -66,6 +67,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const managementMenuItems = [
     { text: 'Organization', icon: <AdminPanelSettingsIcon />, path: '/admin/organizations', roles: ['admin'] },
     { text: 'Projects', icon: <BusinessCenterIcon />, path: '/admin/projects', roles: ['admin', 'dept_head'] },
+    { text: 'Member Weights', icon: <AccountTreeIcon />, path: '/admin/member-weights', roles: ['admin', 'dept_head'] },
     { text: 'Grade Adjustment', icon: <TuneIcon />, path: '/admin/grade-adjustment', roles: ['admin', 'dept_head'] },
     { text: 'Evaluation Settings', icon: <TuneIcon />, path: '/admin/evaluation-settings', roles: ['admin'] },
   ];

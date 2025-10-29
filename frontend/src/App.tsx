@@ -12,6 +12,7 @@ import { auth } from './services/api';
 import type { User } from './schemas/user';
 import { UserRole } from './schemas/user';
 import FinalGradeAdjustmentPage from './pages/Admin/FinalGradeAdjustmentPage';
+import MemberWeightManagementPage from './pages/Admin/MemberWeightManagementPage';
 
 const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -145,6 +146,14 @@ const App: React.FC = () => {
                   element={
                     <AuthorizedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
                       <FinalGradeAdjustmentPage />
+                    </AuthorizedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/member-weights" 
+                  element={
+                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
+                      <MemberWeightManagementPage />
                     </AuthorizedRoute>
                   } 
                 />
