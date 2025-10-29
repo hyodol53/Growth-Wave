@@ -286,6 +286,77 @@ def delete_evaluation_weight(
     return evaluation_weight
 
 
+
+@router.get("/pm-evaluations/{project_id}", response_model=schemas.PmEvaluationDetail)
+def read_pm_evaluation_details(
+    *,
+    db: Session = Depends(deps.get_db),
+    project_id: int,
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Get details for a PM to conduct evaluations for a specific project.
+    """
+    active_period = crud.evaluation_period.get_active_period(db)
+    if not active_period:
+        raise HTTPException(status_code=400, detail="No active evaluation period.")
+
+    project = crud.project.project.get(db, id=project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found.")
+
+    # Check if the current user is a PM for this project
+    project_member_pm = crud.project_member.project_member.get_by_user_and_project(
+        db, user_id=current_user.id, project_id=project_id
+    )
+    if not project_member_pm or not project_member_pm.is_pm:
+        raise HTTPException(
+            status_code=403,
+            detail="User is not a Project Manager for this project.",
+        )
+
+    project_members = crud.project_member.project_member.get_multi_by_project_with_user_details(
+        db, project_id=project_id
+    )
+    
+    members_to_evaluate = []
+    evaluated_count = 0
+    for member in project_members:
+        if member.user_id == current_user.id:
+            continue
+
+        existing_eval = crud.pm_evaluation.pm_evaluation.get_by_evaluator_and_evaluatee(
+            db,
+            project_id=project_id,
+            evaluator_id=current_user.id,
+            evaluatee_id=member.user_id,
+            evaluation_period=active_period.name,
+        )
+
+        target = schemas.PmEvaluationTarget(
+            evaluatee_id=member.user_id,
+            evaluatee_name=member.full_name,
+            score=existing_eval.score if existing_eval else None,
+            comment=existing_eval.comment if existing_eval else None,
+        )
+        members_to_evaluate.append(target)
+        if existing_eval:
+            evaluated_count += 1
+
+    status = "NOT_STARTED"
+    if evaluated_count > 0:
+        status = "IN_PROGRESS"
+    if evaluated_count == len(members_to_evaluate) and evaluated_count > 0:
+        status = "COMPLETED"
+
+    return schemas.PmEvaluationDetail(
+        project_id=project.id,
+        project_name=project.name,
+        status=status,
+        members_to_evaluate=members_to_evaluate,
+    )
+
+
 @router.get("/peer-evaluations/{project_id}", response_model=schemas.PeerEvaluationDetail)
 def read_peer_evaluation_details(
     *,

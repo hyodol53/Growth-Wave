@@ -173,3 +173,59 @@ def test_upsert_pm_evaluations(client: TestClient, db: Session) -> None:
     assert response_update.status_code == 200
     assert response_update.json()[0]["score"] == 85
     assert response_update.json()[0]["comment"] == "Excellent progress"
+
+
+def test_get_pm_evaluation_details(client: TestClient, db: Session) -> None:
+    # 1. Setup
+    pm = create_random_user(db)
+    member1 = create_random_user(db)
+    member2 = create_random_user(db)
+    non_pm = create_random_user(db)
+    pm_headers = authentication_token_from_username(client=client, username=pm.username, db=db)
+    non_pm_headers = authentication_token_from_username(client=client, username=non_pm.username, db=db)
+
+    today = datetime.date.today()
+    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
+    
+    project = create_random_project(db, pm_id=pm.id, start_date=today, end_date=today + datetime.timedelta(days=10))
+    create_project_member(db, project_id=project.id, user_id=pm.id, is_pm=True)
+    create_project_member(db, project_id=project.id, user_id=member1.id, is_pm=False)
+    create_project_member(db, project_id=project.id, user_id=member2.id, is_pm=False)
+    create_project_member(db, project_id=project.id, user_id=non_pm.id, is_pm=False)
+
+    # 2. Action (Forbidden for non-PM)
+    response_forbidden = client.get(f"/api/v1/evaluations/pm-evaluations/{project.id}", headers=non_pm_headers)
+    assert response_forbidden.status_code == 403
+
+    # 3. Action (Not started for PM)
+    response_not_started = client.get(f"/api/v1/evaluations/pm-evaluations/{project.id}", headers=pm_headers)
+    
+    # 4. Assert (Not started)
+    assert response_not_started.status_code == 200
+    details = response_not_started.json()
+    assert details["project_id"] == project.id
+    assert details["status"] == "NOT_STARTED"
+    assert len(details["members_to_evaluate"]) == 3 # member1, member2, non_pm
+    assert details["members_to_evaluate"][0]["score"] is None
+
+    # 5. Action (In progress)
+    evaluation_data = {
+        "evaluations": [
+            {"project_id": project.id, "evaluatee_id": member1.id, "score": 90, "comment": "Great work"}
+        ]
+    }
+    client.post("/api/v1/evaluations/pm-evaluations/", headers=pm_headers, json=evaluation_data)
+    
+    response_in_progress = client.get(f"/api/v1/evaluations/pm-evaluations/{project.id}", headers=pm_headers)
+    
+    # 6. Assert (In progress)
+    assert response_in_progress.status_code == 200
+    details_in_progress = response_in_progress.json()
+    assert details_in_progress["status"] == "IN_PROGRESS"
+    
+    evaluated_member = next(p for p in details_in_progress["members_to_evaluate"] if p["evaluatee_id"] == member1.id)
+    unevaluated_member = next(p for p in details_in_progress["members_to_evaluate"] if p["evaluatee_id"] == member2.id)
+    
+    assert evaluated_member["score"] == 90
+    assert evaluated_member["comment"] == "Great work"
+    assert unevaluated_member["score"] is None

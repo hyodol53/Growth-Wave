@@ -30,6 +30,8 @@ from .evaluation import (
     MyEvaluationTask,
     PeerEvaluationTarget,
     PeerEvaluationDetail,
+    PmEvaluationTarget,
+    PmEvaluationDetail,
 )
 from .report import GrowthAndCultureReport
 from .retrospective import RetrospectiveCreateRequest, RetrospectiveResponse

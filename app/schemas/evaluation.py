@@ -215,3 +215,17 @@ class PeerEvaluationDetail(BaseModel):
     project_name: str
     status: str # "NOT_STARTED", "IN_PROGRESS", "COMPLETED"
     peers_to_evaluate: List[PeerEvaluationTarget]
+
+
+class PmEvaluationTarget(BaseModel):
+    evaluatee_id: int
+    evaluatee_name: str
+    score: Optional[int] = None
+    comment: Optional[str] = None
+
+
+class PmEvaluationDetail(BaseModel):
+    project_id: int
+    project_name: str
+    status: str # "NOT_STARTED", "IN_PROGRESS", "COMPLETED"
+    members_to_evaluate: List[PmEvaluationTarget]

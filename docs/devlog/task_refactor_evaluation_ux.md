@@ -98,9 +98,10 @@
 
 ## 3. 완료된 작업 내역 (백엔드)
 
-- **신규 API 2종 개발 완료**
+- **신규 API 3종 개발 완료**
   - `GET /api/v1/evaluations/my-tasks`
   - `GET /api/v1/evaluations/peer-evaluations/{project_id}`
+  - `GET /api/v1/evaluations/pm-evaluations/{project_id}`
 - **기존 API 2종 수정 완료**
   - `POST /api/v1/evaluations/peer-evaluations/`: `comment` 필드 추가 및 UPSERT 기능 구현
   - `POST /api/v1/evaluations/pm-evaluations/`: `comment` 필드 추가 및 UPSERT 기능 구현
