@@ -1,46 +1,25 @@
-
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Card, CardContent, CardActions, Button } from '@mui/material';
-import { GridLegacy as Grid } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
+import { Box, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import * as api from '../services/api';
-import type { User, ProjectHistoryItem } from '../schemas/user';
-import type { ProjectMemberDetails } from '../schemas/project';
-import type { PeerEvaluationCreate, PmEvaluationCreate, QualitativeEvaluationCreate } from '../schemas/evaluation';
-import QualitativeEvaluationDialog from '../components/QualitativeEvaluationDialog';
-import PmEvaluationDialog from '../components/PmEvaluationDialog';
-import PeerEvaluationDialog from '../components/PeerEvaluationDialog';
+import type { User } from '../schemas/user';
+import type { MyEvaluationTask, PeerEvaluationData, PmEvaluationData, PeerEvaluationSubmit, PmEvaluationSubmit } from '../schemas/evaluation';
 
-interface EvaluationTask {
-    type: 'PEER' | 'PM' | 'QUALITATIVE';
-    title: string;
-    description: string;
-    targetCount: number;
-    action: () => void;
-}
+import QualitativeEvaluationCard from '../components/QualitativeEvaluationCard';
+import PeerEvaluationGrid from '../components/PeerEvaluationGrid';
+import PmEvaluationGrid from '../components/PmEvaluationGrid';
 
-// Helper type for project data with members
-interface ProjectWithMembers {
-    id: number;
-    name: string;
-    members: ProjectMemberDetails[];
-}
 
 const MyEvaluationsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [tasks, setTasks] = useState<EvaluationTask[]>([]);
+  const [evaluationTasks, setEvaluationTasks] = useState<MyEvaluationTask[]>([]);
+  const [selectedProject, setSelectedProject] = useState<MyEvaluationTask | null>(null);
   
-  // Data from API
-  const [subordinates, setSubordinates] = useState<User[]>([]);
-  // const [projectsWithMembers, setProjectsWithMembers] = useState<ProjectWithMembers[]>([]);
+  const [peerEvaluationData, setPeerEvaluationData] = useState<PeerEvaluationData | null>(null);
+  const [pmEvaluationData, setPmEvaluationData] = useState<PmEvaluationData | null>(null);
+  const [isProjectDataLoading, setIsProjectDataLoading] = useState(false);
 
-  // Dialog states
-  const [qualitativeOpen, setQualitativeOpen] = useState(false);
-  const [pmOpen, setPmOpen] = useState(false);
-  const [peerOpen, setPeerOpen] = useState(false);
-  
-  // Data for dialogs
-  const [activeProject, setActiveProject] = useState<ProjectWithMembers | null>(null);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -49,77 +28,12 @@ const MyEvaluationsPage: React.FC = () => {
             const userRes = await api.auth.getCurrentUser();
             setCurrentUser(userRes);
 
-            const newTasks: EvaluationTask[] = [];
-
-            // 1. Fetch subordinates for Qualitative Evaluation
-            if (userRes.role === 'team_lead' || userRes.role === 'dept_head') {
-                const subRes = await api.getMySubordinates();
-                const subordinatesData = subRes.data;
-                setSubordinates(subordinatesData);
-                if (subordinatesData.length > 0) {
-                    newTasks.push({
-                        type: 'QUALITATIVE',
-                        title: '정성평가',
-                        description: `내 부서/팀원 ${subordinatesData.length}명에 대한 정성평가를 진행합니다.`,
-                        targetCount: subordinatesData.length,
-                        action: () => setQualitativeOpen(true)
-                    });
-                }
-            }
-
-            // 2. Fetch user's projects and their members for Peer and PM evaluations
-            const historyRes = await api.getUserHistory();
-            const myProjects = historyRes.data.history;
-            const allProjects = Object.values(myProjects).flatMap(entry => entry.projects);
-
-            const projectsData: ProjectWithMembers[] = await Promise.all(
-                allProjects.map(async (proj: ProjectHistoryItem) => {
-                    const membersRes = await api.getProjectMembers(proj.project_id);
-                    return {
-                        id: proj.project_id,
-                        name: proj.project_name,
-                        members: membersRes.data,
-                    };
-                })
-            );
-            // setProjectsWithMembers(projectsData);
-
-            // 3. Create evaluation tasks based on fetched project data
-            for (const project of projectsData) {
-                const meAsMember = project.members.find(m => m.user_id === userRes.id);
-                if (!meAsMember) continue;
-
-                // Task for Peer Evaluation
-                const peerEvaluatees = project.members.filter(m => m.user_id !== userRes.id);
-                if (peerEvaluatees.length > 0) {
-                    newTasks.push({
-                        type: 'PEER',
-                        title: `동료평가 (${project.name})`,
-                        description: `${project.name} 동료 ${peerEvaluatees.length}명에 대한 동료평가를 진행합니다.`,
-                        targetCount: peerEvaluatees.length,
-                        action: () => { setActiveProject(project); setPeerOpen(true); }
-                    });
-                }
-
-                // Task for PM Evaluation (if user is PM of this project)
-                if (meAsMember.is_pm) {
-                    const pmEvaluatees = project.members.filter(m => m.user_id !== userRes.id);
-                     if (pmEvaluatees.length > 0) {
-                        newTasks.push({
-                            type: 'PM',
-                            title: `PM 평가 (${project.name})`,
-                            description: `${project.name} 멤버 ${pmEvaluatees.length}명에 대한 PM평가를 진행합니다.`,
-                            targetCount: pmEvaluatees.length,
-                            action: () => { setActiveProject(project); setPmOpen(true); }
-                        });
-                    }
-                }
-            }
-
-            setTasks(newTasks);
+            const tasksRes = await api.evaluations.getMyTasks();
+            setEvaluationTasks(tasksRes.data);
 
         } catch (error) {
             console.error("Failed to fetch initial data", error);
+            alert('초기 데이터 로딩에 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -128,92 +42,105 @@ const MyEvaluationsPage: React.FC = () => {
     fetchInitialData();
   }, []);
 
-  const handleSubmitQualitative = async (data: QualitativeEvaluationCreate) => {
+  const fetchProjectEvaluationData = async (project: MyEvaluationTask) => {
+    setIsProjectDataLoading(true);
+    setPeerEvaluationData(null);
+    setPmEvaluationData(null);
     try {
-        await api.createQualitativeEvaluations(data);
-        alert('정성평가가 성공적으로 제출되었습니다.');
-        setQualitativeOpen(false);
-    } catch (err) {
-        alert('정성평가 제출에 실패했습니다.');
-        console.error(err);
+        if (project.user_role_in_project === 'MEMBER') {
+            const res = await api.evaluations.getPeerEvaluations(project.project_id);
+            setPeerEvaluationData(res.data);
+        } else if (project.user_role_in_project === 'PM') {
+            const res = await api.evaluations.getPmEvaluations(project.project_id);
+            setPmEvaluationData(res.data);
+        }
+    } catch (error) {
+        console.error(`Failed to fetch evaluation data for project ${project.project_id}`, error);
+        alert(`${project.project_name} 평가 데이터 로딩에 실패했습니다.`);
+    } finally {
+        setIsProjectDataLoading(false);
     }
   };
 
-  const handleSubmitPm = async (data: PmEvaluationCreate) => {
-    try {
-        await api.createPmEvaluations(data);
-        alert('PM 평가가 성공적으로 제출되었습니다.');
-        setPmOpen(false);
-    } catch (err) {
-        alert('PM 평가 제출에 실패했습니다.');
-        console.error(err);
+  const handleProjectChange = async (event: SelectChangeEvent<number>) => {
+    const projectId = event.target.value as number;
+    const project = evaluationTasks.find(t => t.project_id === projectId) || null;
+    setSelectedProject(project);
+    if (project) {
+        await fetchProjectEvaluationData(project);
     }
   };
 
-  const handleSubmitPeer = async (data: PeerEvaluationCreate) => {
+  const handlePeerSubmit = async (formData: PeerEvaluationSubmit) => {
     try {
-        await api.createPeerEvaluations(data);
-        alert('동료평가가 성공적으로 제출되었습니다.');
-        setPeerOpen(false);
-    } catch (err) {
-        alert('동료평가 제출에 실패했습니다.');
-        console.error(err);
+      await api.evaluations.submitPeerEvaluations(formData);
+      alert('동료평가가 성공적으로 제출되었습니다.');
+      if (selectedProject) {
+        await fetchProjectEvaluationData(selectedProject);
+      }
+    } catch (error) {
+      console.error('Failed to submit peer evaluations', error);
+      alert('동료평가 제출에 실패했습니다.');
     }
   };
+
+  const handlePmSubmit = async (formData: PmEvaluationSubmit) => {
+    try {
+      await api.evaluations.submitPmEvaluations(formData);
+      alert('PM 평가가 성공적으로 제출되었습니다.');
+       if (selectedProject) {
+        await fetchProjectEvaluationData(selectedProject);
+      }
+    } catch (error) {
+      console.error('Failed to submit PM evaluations', error);
+      alert('PM 평가 제출에 실패했습니다.');
+    }
+  };
+
 
   return (
     <Box sx={{ width: '100%' }}>
       <Typography variant="h4" gutterBottom>내 평가 (2025-H1)</Typography>
-      <Typography variant="subtitle1" gutterBottom>진행해야 할 평가 목록</Typography>
       
       {loading ? (
         <CircularProgress />
       ) : (
-        <Grid container spacing={3} sx={{ mt: 2 }}>
-            {tasks.length > 0 ? tasks.map((task, index) => (
-                <Grid xs={12} md={6} lg={4} key={index}>
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h6">{task.title}</Typography>
-                            <Typography color="text.secondary" sx={{mt: 1}}>{task.description}</Typography>
-                        </CardContent>
-                        <CardActions>
-                            <Button size="small" variant="contained" onClick={task.action}>평가 시작하기</Button>
-                        </CardActions>
-                    </Card>
-                </Grid>
-            )) : (
-                <Grid xs={12}>
-                    <Typography sx={{p: 3}}>진행해야 할 평가가 없습니다.</Typography>
-                </Grid>
+        <>
+            {(currentUser?.role === 'team_lead' || currentUser?.role === 'dept_head') && (
+                <Box sx={{ mb: 4 }}>
+                    <Typography variant="h5" gutterBottom>정성평가</Typography>
+                    <QualitativeEvaluationCard />
+                </Box>
             )}
-        </Grid>
-      )}
 
-      {/* Dialogs */}
-      <QualitativeEvaluationDialog 
-        open={qualitativeOpen}
-        onClose={() => setQualitativeOpen(false)}
-        onSubmit={handleSubmitQualitative}
-        evaluatees={subordinates}
-      />
-      {activeProject && currentUser && (
-          <>
-            <PmEvaluationDialog 
-                open={pmOpen}
-                onClose={() => setPmOpen(false)}
-                onSubmit={handleSubmitPm}
-                project={activeProject}
-                evaluatees={activeProject.members.filter(m => m.user_id !== currentUser.id)}
-            />
-            <PeerEvaluationDialog
-                open={peerOpen}
-                onClose={() => setPeerOpen(false)}
-                onSubmit={handleSubmitPeer}
-                project={activeProject}
-                evaluatees={activeProject.members.filter(m => m.user_id !== currentUser.id)}
-            />
-          </>
+            <Box>
+                <Typography variant="h5" gutterBottom>프로젝트 평가</Typography>
+                
+                <FormControl fullWidth sx={{mb: 3}}>
+                    <InputLabel id="project-select-label">프로젝트 선택</InputLabel>
+                    <Select
+                        labelId="project-select-label"
+                        value={selectedProject?.project_id || ''}
+                        label="프로젝트 선택"
+                        onChange={handleProjectChange}
+                        disabled={evaluationTasks.length === 0}
+                    >
+                        {evaluationTasks.map((task) => (
+                            <MenuItem key={task.project_id} value={task.project_id}>
+                                {task.project_name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+
+                {isProjectDataLoading ? <CircularProgress /> : (
+                    <>
+                        {peerEvaluationData && <PeerEvaluationGrid data={peerEvaluationData} onSubmit={handlePeerSubmit} />}
+                        {pmEvaluationData && <PmEvaluationGrid data={pmEvaluationData} onSubmit={handlePmSubmit} />}
+                    </>
+                )}
+            </Box>
+        </>
       )}
     </Box>
   );

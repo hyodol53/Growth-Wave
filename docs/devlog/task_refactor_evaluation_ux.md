@@ -96,6 +96,26 @@
 #### 2. `POST /api/v1/evaluations/pm-evaluations/`
 - **수정 사항:** `peer-evaluations`와 동일하게 **`comment` 필드 추가** 및 **생성/수정(UPSERT) 기능**이 필요합니다.
 
+## 3. 프론트엔드 구현 내용
+
+요청된 UX 개선 사항과 API 명세에 맞춰 프론트엔드 구현을 완료했습니다.
+
+1.  **`MyEvaluationsPage.tsx` 리팩토링:**
+    -   기존의 다이얼로그 기반 평가 로직을 모두 제거하고, 페이지 내에서 모든 평가가 이루어지도록 구조를 변경했습니다.
+    -   정성평가(`QualitativeEvaluationCard`)와 프로젝트 평가 영역을 시각적으로 분리했습니다.
+    -   `useEffect` 훅에서 `getMyTasks` API를 호출하여 평가할 프로젝트 목록을 가져와 드롭다운 메뉴를 동적으로 생성합니다.
+    -   프로젝트 선택 시(`handleProjectChange`), 사용자의 역할에 따라 `getPeerEvaluations` 또는 `getPmEvaluations` API를 호출하여 해당 프로젝트의 평가 데이터를 비동기적으로 불러옵니다.
+
+2.  **신규 컴포넌트 생성 및 구현:**
+    -   `PeerEvaluationGrid.tsx` 및 `PmEvaluationGrid.tsx`:
+        -   API로부터 받은 평가 데이터를 props로 받아 Material-UI의 `Table` 컴포넌트를 사용해 평가 그리드를 렌더링합니다.
+        -   사용자가 입력하는 점수와 코멘트는 내부 `useState`로 관리됩니다.
+        -   `onSubmit` prop으로 받은 함수를 통해, 사용자가 입력한 평가 데이터를 부모 컴포넌트(`MyEvaluationsPage`)로 전달하여 최종 제출합니다.
+
+3.  **UX 개선 사항 반영:**
+    -   평가 데이터의 `status` 값('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED')을 확인합니다.
+    -   `status` 값에 따라 제출 버튼의 텍스트를 '제출' 또는 '수정 제출'로 동적으로 변경하여, 사용자에게 현재 상태를 명확하게 인지시킵니다.
+
 ## 3. 완료된 작업 내역 (백엔드)
 
 - **신규 API 3종 개발 완료**

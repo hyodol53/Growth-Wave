@@ -12,7 +12,7 @@ import { UserRole } from '../schemas/user';
 import { AxiosError } from 'axios';
 
 const HistoryPage: React.FC = () => {
-  const [history, setHistory] = useState<UserHistoryResponse | null>(null);
+  const [history, setHistory] = useState<UserHistoryResponse['history'] | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

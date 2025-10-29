@@ -78,6 +78,8 @@ export interface FinalEvaluation {
     grade: string | null;
 }
 
+export type FinalEvaluationHistory = FinalEvaluation;
+
 export interface PeerFeedback {
     id: number;
     evaluator_id: number;
@@ -99,29 +101,177 @@ export interface GradeAdjustment {
 }
 
 export interface GradeAdjustmentRequest {
+
     adjustments: GradeAdjustment[];
+
 }
 
-export interface PeerEvaluationCreate {
+
+
+// For submitting evaluations (POST)
+
+export interface PeerEvaluationSubmit {
+
     evaluations: {
+
         project_id: number;
+
         evaluatee_id: number;
+
         score: number;
-        feedback: string;
+
+        comment?: string;
+
     }[];
+
 }
 
-export interface PmEvaluationCreate {
+
+
+export interface PmEvaluationSubmit {
+
     evaluations: {
+
         project_id: number;
+
         evaluatee_id: number;
+
         score: number;
+
+        comment?: string;
+
     }[];
+
 }
+
+
 
 export interface QualitativeEvaluationCreate {
+
     evaluations: {
+
         evaluatee_id: number;
+
         score: number;
+
     }[];
+
 }
+
+
+
+// For fetching evaluation data (GET)
+
+interface PeerToEvaluate {
+
+    evaluatee_id: number;
+
+    evaluatee_name: string;
+
+    score: number | null;
+
+    comment: string | null;
+
+}
+
+
+
+export interface PeerEvaluationData {
+
+    project_id: number;
+
+    project_name: string;
+
+    status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+
+    peers_to_evaluate: PeerToEvaluate[];
+
+}
+
+
+
+
+
+
+
+// Assuming PM evaluation data has a similar structure
+
+
+
+export interface PmEvaluationData {
+
+
+
+    project_id: number;
+
+
+
+    project_name: string;
+
+
+
+    status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+
+
+
+    members_to_evaluate: MemberToEvaluate[];
+
+
+
+}
+
+
+
+
+
+
+
+interface MemberToEvaluate {
+
+
+
+    evaluatee_id: number;
+
+
+
+    evaluatee_name: string;
+
+
+
+    score: number | null;
+
+
+
+    comment: string | null;
+
+
+
+}
+
+
+
+
+
+
+
+export interface MyEvaluationTask {
+
+
+
+    project_id: number;
+
+
+
+    project_name: string;
+
+
+
+    user_role_in_project: 'PM' | 'MEMBER';
+
+
+
+}
+
+
+
+

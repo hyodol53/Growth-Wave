@@ -2,9 +2,16 @@ import axios from 'axios';
 
 import type { User, UserCreate, UserUpdate, UserHistoryResponse } from '../schemas/user';
 import type { OrganizationCreate, OrganizationUpdate } from '../schemas/organization';
-import type { ProjectCreate, ProjectUpdate, ProjectMemberDetails } from '../schemas/project';
+import type { ProjectCreate, ProjectUpdate } from '../schemas/project';
 import type { ProjectMemberAdd, ProjectMemberDetail } from '../schemas/project_member';
-import type { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate, PeerEvaluationCreate, PmEvaluationCreate, QualitativeEvaluationCreate, ManagerEvaluationView, GradeAdjustmentRequest } from '../schemas/evaluation';
+import type { 
+    EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, 
+    DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, 
+    EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate, 
+    ManagerEvaluationView, GradeAdjustmentRequest, MyEvaluationTask, 
+    PeerEvaluationData, PmEvaluationData, PeerEvaluationSubmit, 
+    PmEvaluationSubmit, QualitativeEvaluationCreate 
+} from '../schemas/evaluation';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -160,15 +167,25 @@ export const deleteProject = (projectId: number) => api.delete(`/projects/${proj
 // Evaluation APIs
 // =============================================================================
 
-// Data fetching for evaluation page
-export const getUserHistory = () => api.get<{ history: UserHistoryResponse }>('/users/me/history');
-export const getProjectMembers = (projectId: number) => api.get<ProjectMemberDetails[]>(`/projects/${projectId}/members`);
-export const getMySubordinates = () => api.get<User[]>('/users/me/subordinates');
+export const evaluations = {
+  // Fetching data for "My Evaluations" page
+  getMyTasks: () => api.get<MyEvaluationTask[]>('/evaluations/my-tasks'),
+  getPeerEvaluations: (projectId: number) => api.get<PeerEvaluationData>(`/evaluations/peer-evaluations/${projectId}`),
+  getPmEvaluations: (projectId: number) => api.get<PmEvaluationData>(`/evaluations/pm-evaluations/${projectId}`), // Assuming this exists
 
-// Submitting evaluations
-export const createPeerEvaluations = (data: PeerEvaluationCreate) => api.post('/evaluations/peer-evaluations/', data);
-export const createPmEvaluations = (data: PmEvaluationCreate) => api.post('/evaluations/pm-evaluations/', data);
-export const createQualitativeEvaluations = (data: QualitativeEvaluationCreate) => api.post('/evaluations/qualitative-evaluations/', data);
+  // Submitting evaluations
+  submitPeerEvaluations: (data: PeerEvaluationSubmit) => api.post('/evaluations/peer-evaluations/', data),
+  submitPmEvaluations: (data: PmEvaluationSubmit) => api.post('/evaluations/pm-evaluations/', data),
+  submitQualitativeEvaluations: (data: QualitativeEvaluationCreate) => api.post('/evaluations/qualitative-evaluations/', data),
+};
+
+// User History
+export const getUserHistory = () => api.get<UserHistoryResponse>('/users/me/history');
+
+
+// For backward compatibility if needed elsewhere, can be cleaned up later.
+export const getMySubordinates = () => api.get<User[]>('/users/me/subordinates');
+export const createQualitativeEvaluations = evaluations.submitQualitativeEvaluations;
 
 // Evaluation Settings
 // Evaluation Periods

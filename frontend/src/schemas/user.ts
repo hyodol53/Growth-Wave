@@ -36,19 +36,40 @@ export interface UserCreate {
     password?: string;
 }
 
-export type UserUpdate = Partial<UserCreate>;
+export interface UserUpdate extends Partial<UserCreate> {}
+
 
 
 // Based on backend GET /api/v1/users/me/history response
+
 export interface ProjectHistoryItem {
+
     project_id: number;
+
     project_name: string;
+
     participation_weight: number;
+
+    is_pm: boolean;
+
 }
+
+
 
 export interface UserHistoryEntry {
+
+    evaluation_period: string;
+
     final_evaluation: FinalEvaluation | null;
+
     projects: ProjectHistoryItem[];
+
 }
 
-export type UserHistoryResponse = Record<string, UserHistoryEntry>;
+
+
+export type UserHistoryResponse = {
+
+    history: Record<string, UserHistoryEntry>;
+
+};
