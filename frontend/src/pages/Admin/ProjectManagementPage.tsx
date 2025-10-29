@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Container, Typography, Button, Paper } from '@mui/material';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
+import PeopleIcon from '@mui/icons-material/People';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
@@ -12,6 +12,7 @@ import type { User } from '../../schemas/user';
 import type { Organization } from '../../schemas/organization';
 
 import ProjectDialog from '../../components/Admin/ProjectDialog';
+import ProjectMembersDialog from '../../components/Admin/ProjectMembersDialog';
 
 const ProjectManagementPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -22,6 +23,8 @@ const ProjectManagementPage: React.FC = () => {
   // Dialog states
   const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
+  const [selectedProjectForMembers, setSelectedProjectForMembers] = useState<Project | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -45,7 +48,7 @@ const ProjectManagementPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  // --- Handlers for Dialogs ---
+  // --- Handlers for Project Dialog ---
   const handleOpenProjectDialog = (project: Project | null) => {
     setEditingProject(project);
     setIsProjectDialogOpen(true);
@@ -53,6 +56,17 @@ const ProjectManagementPage: React.FC = () => {
   const handleCloseProjectDialog = () => {
     setEditingProject(null);
     setIsProjectDialogOpen(false);
+  };
+
+  // --- Handlers for Members Dialog ---
+  const handleOpenMembersDialog = (project: Project) => {
+    setSelectedProjectForMembers(project);
+    setIsMembersDialogOpen(true);
+  };
+
+  const handleCloseMembersDialog = () => {
+    setSelectedProjectForMembers(null);
+    setIsMembersDialogOpen(false);
   };
 
   // --- API Action Handlers ---
@@ -99,6 +113,7 @@ const ProjectManagementPage: React.FC = () => {
       headerName: 'Actions',
       width: 150,
       getActions: (params) => [
+        <GridActionsCellItem icon={<PeopleIcon />} label="Manage Members" onClick={() => handleOpenMembersDialog(params.row as Project)} />,
         <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => handleOpenProjectDialog(params.row as Project)} />,
         <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDeleteProject(params.id as number)} />,
       ],
@@ -114,6 +129,13 @@ const ProjectManagementPage: React.FC = () => {
         project={editingProject}
         users={users}
         organizations={organizations}
+      />
+
+      <ProjectMembersDialog
+        open={isMembersDialogOpen}
+        onClose={handleCloseMembersDialog}
+        project={selectedProjectForMembers}
+        allUsers={users}
       />
 
       <Box sx={{ my: 4 }}>

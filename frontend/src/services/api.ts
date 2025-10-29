@@ -3,6 +3,7 @@ import axios from 'axios';
 import type { User, UserCreate, UserUpdate, UserHistoryResponse } from '../schemas/user';
 import type { OrganizationCreate, OrganizationUpdate } from '../schemas/organization';
 import type { ProjectCreate, ProjectUpdate, ProjectMemberDetails } from '../schemas/project';
+import type { ProjectMemberAdd, ProjectMemberDetail } from '../schemas/project_member';
 import type { EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate, PeerEvaluationCreate, PmEvaluationCreate, QualitativeEvaluationCreate, ManagerEvaluationView, GradeAdjustmentRequest } from '../schemas/evaluation';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
@@ -125,6 +126,20 @@ export const auth = {
   },
   deleteProject: async (id: number) => {
     const response = await api.delete(`/projects/${id}`);
+    return response.data;
+  },
+
+  // Project Members
+  getProjectMembers: async (projectId: number): Promise<ProjectMemberDetail[]> => {
+    const response = await api.get(`/projects/${projectId}/members`);
+    return response.data;
+  },
+  addProjectMember: async (projectId: number, memberData: ProjectMemberAdd) => {
+    const response = await api.post(`/projects/${projectId}/members`, memberData);
+    return response.data;
+  },
+  removeProjectMember: async (projectId: number, userId: number) => {
+    const response = await api.delete(`/projects/${projectId}/members/${userId}`);
     return response.data;
   },
 
