@@ -88,11 +88,11 @@ const EvaluationSettingsPage: React.FC = () => {
   const handleAddNewPeriod = () => { setEditingPeriod(null); setPeriodDialogOpen(true); };
   const handleEditPeriod = (period: EvaluationPeriod) => { setEditingPeriod(period); setPeriodDialogOpen(true); };
   const handleDeletePeriod = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this evaluation period?')) {
+    if (window.confirm('이 평가 기간을 정말로 삭제하시겠습니까?')) {
       try {
         await api.deleteEvaluationPeriod(id);
         fetchPeriods();
-      } catch (error) { console.error("Failed to delete evaluation period", error); alert('Failed to delete evaluation period'); }
+      } catch (error) { console.error("Failed to delete evaluation period", error); alert('평가 기간 삭제에 실패했습니다.'); }
     }
   };
   const handleSavePeriod = async (data: EvaluationPeriodCreate | EvaluationPeriodUpdate) => {
@@ -104,18 +104,18 @@ const EvaluationSettingsPage: React.FC = () => {
       }
       fetchPeriods();
       setPeriodDialogOpen(false);
-    } catch (error) { console.error("Failed to save evaluation period", error); alert('Failed to save evaluation period'); }
+    } catch (error) { console.error("Failed to save evaluation period", error); alert('평가 기간 저장에 실패했습니다.'); }
   };
 
   // Ratio Handlers
   const handleAddNewRatio = () => { setEditingRatio(null); setRatioDialogOpen(true); };
   const handleEditRatio = (ratio: DepartmentGradeRatio) => { setEditingRatio(ratio); setRatioDialogOpen(true); };
   const handleDeleteRatio = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this grade ratio?')) {
+    if (window.confirm('이 등급 비율을 정말로 삭제하시겠습니까?')) {
       try {
         await api.deleteDepartmentGradeRatio(id);
         fetchRatios();
-      } catch (error) { console.error("Failed to delete grade ratio", error); alert('Failed to delete grade ratio'); }
+      } catch (error) { console.error("Failed to delete grade ratio", error); alert('등급 비율 삭제에 실패했습니다.'); }
     }
   };
   const handleSaveRatio = async (data: DepartmentGradeRatioCreate | DepartmentGradeRatioUpdate) => {
@@ -127,18 +127,18 @@ const EvaluationSettingsPage: React.FC = () => {
       }
       fetchRatios();
       setRatioDialogOpen(false);
-    } catch (error) { console.error("Failed to save grade ratio", error); alert('Failed to save grade ratio'); }
+    } catch (error) { console.error("Failed to save grade ratio", error); alert('등급 비율 저장에 실패했습니다.'); }
   };
 
   // Weight Handlers
   const handleAddNewWeight = () => { setEditingWeight(null); setWeightDialogOpen(true); };
   const handleEditWeight = (weight: EvaluationWeight) => { setEditingWeight(weight); setWeightDialogOpen(true); };
   const handleDeleteWeight = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this evaluation weight?')) {
+    if (window.confirm('이 평가 가중치를 정말로 삭제하시겠습니까?')) {
       try {
         await api.deleteEvaluationWeight(id);
         fetchWeights();
-      } catch (error) { console.error("Failed to delete evaluation weight", error); alert('Failed to delete evaluation weight'); }
+      } catch (error) { console.error("Failed to delete evaluation weight", error); alert('평가 가중치 삭제에 실패했습니다.'); }
     }
   };
   const handleSaveWeight = async (data: EvaluationWeightCreate | EvaluationWeightUpdate) => {
@@ -150,23 +150,23 @@ const EvaluationSettingsPage: React.FC = () => {
       }
       fetchWeights();
       setWeightDialogOpen(false);
-    } catch (error) { console.error("Failed to save evaluation weight", error); alert('Failed to save evaluation weight'); }
+    } catch (error) { console.error("Failed to save evaluation weight", error); alert('평가 가중치 저장에 실패했습니다.'); }
   };
 
   const periodColumns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'name', headerName: 'Period Name', width: 150 },
-    { field: 'start_date', headerName: 'Start Date', width: 150, type: 'date', valueGetter: (value) => value ? new Date(value) : null },
-    { field: 'end_date', headerName: 'End Date', width: 150, type: 'date', valueGetter: (value) => value ? new Date(value) : null },
-    { field: 'is_active', headerName: 'Active', width: 120, type: 'boolean' },
+    { field: 'name', headerName: '기간 이름', width: 150 },
+    { field: 'start_date', headerName: '시작일', width: 150, type: 'date', valueGetter: (value) => value ? new Date(value) : null },
+    { field: 'end_date', headerName: '종료일', width: 150, type: 'date', valueGetter: (value) => value ? new Date(value) : null },
+    { field: 'is_active', headerName: '활성', width: 120, type: 'boolean' },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: '작업',
       width: 150,
       renderCell: (params) => (
         <>
-          <Button size="small" onClick={() => handleEditPeriod(params.row)}>Edit</Button>
-          <Button size="small" color="secondary" onClick={() => handleDeletePeriod(params.id as number)}>Delete</Button>
+          <Button size="small" onClick={() => handleEditPeriod(params.row)}>수정</Button>
+          <Button size="small" color="secondary" onClick={() => handleDeletePeriod(params.id as number)}>삭제</Button>
         </>
       ),
     },
@@ -174,18 +174,18 @@ const EvaluationSettingsPage: React.FC = () => {
 
   const ratioColumns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'department_grade', headerName: 'Dept. Grade', width: 120 },
-    { field: 's_ratio', headerName: 'S-Ratio (%)', width: 120, type: 'number' },
-    { field: 'a_ratio', headerName: 'A-Ratio (%)', width: 120, type: 'number' },
-    { field: 'b_ratio', headerName: 'B-Ratio (%)', width: 120, type: 'number' },
+    { field: 'department_grade', headerName: '부서 등급', width: 120 },
+    { field: 's_ratio', headerName: 'S-비율 (%)', width: 120, type: 'number' },
+    { field: 'a_ratio', headerName: 'A-비율 (%)', width: 120, type: 'number' },
+    { field: 'b_ratio', headerName: 'B-비율 (%)', width: 120, type: 'number' },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: '작업',
       width: 150,
       renderCell: (params) => (
         <>
-          <Button size="small" onClick={() => handleEditRatio(params.row)}>Edit</Button>
-          <Button size="small" color="secondary" onClick={() => handleDeleteRatio(params.id as number)}>Delete</Button>
+          <Button size="small" onClick={() => handleEditRatio(params.row)}>수정</Button>
+          <Button size="small" color="secondary" onClick={() => handleDeleteRatio(params.id as number)}>삭제</Button>
         </>
       ),
     },
@@ -193,17 +193,17 @@ const EvaluationSettingsPage: React.FC = () => {
 
   const weightColumns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'user_role', headerName: 'User Role', width: 150 },
-    { field: 'item', headerName: 'Evaluation Item', width: 200 },
-    { field: 'weight', headerName: 'Weight (%)', width: 120, type: 'number' },
+    { field: 'user_role', headerName: '사용자 역할', width: 150 },
+    { field: 'item', headerName: '평가 항목', width: 200 },
+    { field: 'weight', headerName: '가중치 (%)', width: 120, type: 'number' },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: '작업',
       width: 150,
       renderCell: (params) => (
         <>
-          <Button size="small" onClick={() => handleEditWeight(params.row)}>Edit</Button>
-          <Button size="small" color="secondary" onClick={() => handleDeleteWeight(params.id as number)}>Delete</Button>
+          <Button size="small" onClick={() => handleEditWeight(params.row)}>수정</Button>
+          <Button size="small" color="secondary" onClick={() => handleDeleteWeight(params.id as number)}>삭제</Button>
         </>
       ),
     },
@@ -211,12 +211,12 @@ const EvaluationSettingsPage: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Typography variant="h4" gutterBottom>Evaluation Settings</Typography>
+      <Typography variant="h4" gutterBottom>평가 설정</Typography>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={tabIndex} onChange={handleTabChange} aria-label="evaluation settings tabs">
-          <Tab label="Evaluation Periods" />
-          <Tab label="Grade Ratios" />
-          <Tab label="Evaluation Weights" />
+          <Tab label="평가 기간" />
+          <Tab label="등급 비율" />
+          <Tab label="평가 가중치" />
         </Tabs>
       </Box>
 
@@ -224,7 +224,7 @@ const EvaluationSettingsPage: React.FC = () => {
         <>
           <TabPanel value={tabIndex} index={0}>
             <Box sx={{ mb: 2 }}>
-                <Button variant="contained" onClick={handleAddNewPeriod}>Add New Period</Button>
+                <Button variant="contained" onClick={handleAddNewPeriod}>새 기간 추가</Button>
             </Box>
             <Box sx={{ height: 600, width: '100%' }}>
               <DataGrid 
@@ -243,7 +243,7 @@ const EvaluationSettingsPage: React.FC = () => {
           </TabPanel>
           <TabPanel value={tabIndex} index={1}>
             <Box sx={{ mb: 2 }}>
-                <Button variant="contained" onClick={handleAddNewRatio}>Add New Ratio</Button>
+                <Button variant="contained" onClick={handleAddNewRatio}>새 비율 추가</Button>
             </Box>
             <Box sx={{ height: 600, width: '100%' }}>
               <DataGrid 
@@ -262,7 +262,7 @@ const EvaluationSettingsPage: React.FC = () => {
           </TabPanel>
           <TabPanel value={tabIndex} index={2}>
             <Box sx={{ mb: 2 }}>
-                <Button variant="contained" onClick={handleAddNewWeight}>Add New Weight</Button>
+                <Button variant="contained" onClick={handleAddNewWeight}>새 가중치 추가</Button>
             </Box>
             <Box sx={{ height: 600, width: '100%' }}>
               <DataGrid 

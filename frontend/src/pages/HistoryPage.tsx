@@ -29,9 +29,9 @@ const HistoryPage: React.FC = () => {
         setCurrentUser(userRes);
       } catch (err) {
         if (err instanceof AxiosError) {
-          setError(err.response?.data?.detail || 'Failed to fetch history data.');
+          setError(err.response?.data?.detail || '이력 데이터를 불러오는데 실패했습니다.');
         } else {
-          setError('An unexpected error occurred.');
+          setError('예상치 못한 오류가 발생했습니다.');
         }
         console.error(err);
       } finally {
@@ -48,7 +48,7 @@ const HistoryPage: React.FC = () => {
     <ListItem key={project.project_id}>
       <ListItemText
         primary={project.project_name}
-        secondary={`Participation: ${project.participation_weight}%`}
+        secondary={`참여 비중: ${project.participation_weight}%`}
       />
     </ListItem>
   );
@@ -64,14 +64,14 @@ const HistoryPage: React.FC = () => {
   const sortedPeriods = history ? Object.keys(history).sort((a, b) => b.localeCompare(a)) : [];
 
   if (sortedPeriods.length === 0) {
-    return <Typography>No evaluation history found.</Typography>;
+    return <Typography>평가 이력이 없습니다.</Typography>;
   }
 
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          My Evaluation History
+          내 평가 이력
         </Typography>
         {sortedPeriods.map((period) => {
           const entry = history![period];
@@ -86,35 +86,35 @@ const HistoryPage: React.FC = () => {
                 <Grid container spacing={2}>
                   <Grid xs={12} md={6}>
                     <Paper sx={{ p: 2 }}>
-                      <Typography variant="h6" gutterBottom>Evaluation Result</Typography>
+                      <Typography variant="h6" gutterBottom>평가 결과</Typography>
                       <Typography variant="body1">
-                        <strong>Final Grade:</strong> {finalEval?.grade || 'Not Graded'}
+                        <strong>최종 등급:</strong> {finalEval?.grade || '등급 없음'}
                       </Typography>
                       {isManager && finalEval && (
                          <>
                            <Divider sx={{ my: 1 }} />
-                           <Typography variant="body2">Peer Score: {finalEval.peer_score.toFixed(2)}</Typography>
-                           <Typography variant="body2">PM Score: {finalEval.pm_score.toFixed(2)}</Typography>
-                           <Typography variant="body2">Qualitative Score: {finalEval.qualitative_score.toFixed(2)}</Typography>
-                           <Typography variant="body2" sx={{fontWeight: 'bold'}}>Final Score: {finalEval.final_score.toFixed(2)}</Typography>
+                           <Typography variant="body2">동료 평가 점수: {finalEval.peer_score.toFixed(2)}</Typography>
+                           <Typography variant="body2">PM 평가 점수: {finalEval.pm_score.toFixed(2)}</Typography>
+                           <Typography variant="body2">정성 평가 점수: {finalEval.qualitative_score.toFixed(2)}</Typography>
+                           <Typography variant="body2" sx={{fontWeight: 'bold'}}>최종 점수: {finalEval.final_score.toFixed(2)}</Typography>
                          </>
                       )}
                        {!isManager && finalEval && (
                          <>
                           <Divider sx={{ my: 1 }} />
-                          <Typography variant="body2">PM Score: {finalEval.pm_score.toFixed(2)}</Typography>
+                          <Typography variant="body2">PM 평가 점수: {finalEval.pm_score.toFixed(2)}</Typography>
                          </>
                        )}
                     </Paper>
                   </Grid>
                   <Grid xs={12} md={6}>
                     <Paper sx={{ p: 2 }}>
-                      <Typography variant="h6" gutterBottom>Projects</Typography>
+                      <Typography variant="h6" gutterBottom>프로젝트</Typography>
                       <List dense>
                         {entry.projects.length > 0 ? (
                           entry.projects.map(renderProjectItem)
                         ) : (
-                          <ListItem><ListItemText primary="No projects in this period." /></ListItem>
+                          <ListItem><ListItemText primary="이 기간에 참여한 프로젝트가 없습니다." /></ListItem>
                         )}
                       </List>
                     </Paper>

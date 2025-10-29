@@ -22,7 +22,7 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
 
   const handleUpload = useCallback(async () => {
     if (!selectedFile) {
-      setError('Please select a JSON file first.');
+      setError('먼저 JSON 파일을 선택해주세요.');
       return;
     }
 
@@ -36,7 +36,7 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
       // Construct a user-friendly success message from the result object
       const orgs = result.organizations || { created: 0, updated: 0 };
       const users = result.users || { created: 0, updated: 0 };
-      const successMsg = `Sync successful! Orgs (Created: ${orgs.created}, Updated: ${orgs.updated}), Users (Created: ${users.created}, Updated: ${users.updated}).`;
+      const successMsg = `동기화 성공! 조직 (생성: ${orgs.created}개, 업데이트: ${orgs.updated}개), 사용자 (생성: ${users.created}명, 업데이트: ${users.updated}명).`;
 
       setSuccess(successMsg);
       setSelectedFile(null);
@@ -44,7 +44,7 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
       onSyncSuccess();
     } catch (err: any) {
       console.error('Sync failed:', err);
-      setError(err.response?.data?.detail || 'An unknown error occurred during synchronization.');
+      setError(err.response?.data?.detail || '동기화 중 알 수 없는 오류가 발생했습니다.');
     } finally {
       setIsUploading(false);
     }
@@ -53,10 +53,10 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
   return (
     <Box sx={{ border: '1px dashed grey', p: 2, borderRadius: 1, mt: 2, mb: 2 }}>
       <Typography variant="h6" gutterBottom>
-        Sync with JSON
+        JSON으로 동기화
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Upload a JSON file to synchronize the entire organization chart and user list.
+        JSON 파일을 업로드하여 전체 조직도와 사용자 목록을 동기화합니다.
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Input
@@ -72,7 +72,7 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
           disabled={!selectedFile || isUploading}
           startIcon={isUploading ? <CircularProgress size={20} color="inherit" /> : null}
         >
-          {isUploading ? 'Syncing...' : 'Sync Now'}
+          {isUploading ? '동기화 중...' : '지금 동기화'}
         </Button>
       </Box>
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
@@ -82,3 +82,4 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
 };
 
 export default OrgSync;
+

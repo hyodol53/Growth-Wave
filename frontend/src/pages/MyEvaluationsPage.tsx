@@ -163,7 +163,7 @@ const MyEvaluationsPage: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Typography variant="h4" gutterBottom>My Evaluations (2025-H1)</Typography>
+      <Typography variant="h4" gutterBottom>내 평가 (2025-H1)</Typography>
       <Typography variant="subtitle1" gutterBottom>진행해야 할 평가 목록</Typography>
       
       {loading ? (

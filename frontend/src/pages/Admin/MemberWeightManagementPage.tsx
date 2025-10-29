@@ -45,18 +45,18 @@ const MemberWeightManagementPage: React.FC = () => {
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'full_name', headerName: 'Name', width: 200 },
-    { field: 'email', headerName: 'Email', width: 250 },
-    { field: 'role', headerName: 'Role', width: 150 },
+    { field: 'full_name', headerName: '이름', width: 200 },
+    { field: 'email', headerName: '이메일', width: 250 },
+    { field: 'role', headerName: '역할', width: 150 },
     {
       field: 'actions',
       type: 'actions',
-      headerName: 'Manage Weights',
+      headerName: '참여 비중 관리',
       width: 150,
       getActions: (params) => [
         <GridActionsCellItem 
           icon={<AccountTreeIcon />} 
-          label="Manage Project Weights" 
+          label="프로젝트 참여 비중 관리" 
           onClick={() => handleOpenWeightsDialog(params.row as User)} 
         />,
       ],
@@ -75,10 +75,10 @@ const MemberWeightManagementPage: React.FC = () => {
 
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Member Project Weight Management
+          멤버 프로젝트 참여 비중 관리
         </Typography>
         <Typography variant="body1" gutterBottom>
-          Manage the project participation weights for your subordinates. The total weight for each member across all their projects must be 100%.
+          부서원의 프로젝트 참여 비중을 관리합니다. 각 멤버의 모든 프로젝트 참여 비중의 합은 반드시 100%여야 합니다.
         </Typography>
         <Paper sx={{ height: 600, width: '100%', mt: 2 }}>
           <DataGrid

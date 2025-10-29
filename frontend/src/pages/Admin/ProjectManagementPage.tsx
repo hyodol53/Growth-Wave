@@ -38,7 +38,7 @@ const ProjectManagementPage: React.FC = () => {
       setUsers(usersData);
       setOrganizations(orgsData);
     } catch (error) {
-      console.error("Failed to fetch data", error);
+      console.error("데이터를 불러오는데 실패했습니다.", error);
     } finally {
       setLoading(false);
     }
@@ -67,6 +67,7 @@ const ProjectManagementPage: React.FC = () => {
   const handleCloseMembersDialog = () => {
     setSelectedProjectForMembers(null);
     setIsMembersDialogOpen(false);
+    // Optionally refresh data if weights might affect other views
   };
 
   // --- API Action Handlers ---
@@ -85,37 +86,37 @@ const ProjectManagementPage: React.FC = () => {
   };
 
   const handleDeleteProject = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this project?')) {
+    if (window.confirm('이 프로젝트를 정말로 삭제하시겠습니까?')) {
       try {
         await auth.deleteProject(id);
         fetchData(); // Refresh data
       } catch (error) {
-        console.error('Failed to delete project', error);
+        console.error('프로젝트 삭제에 실패했습니다.', error);
       }
     }
   };
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'name', headerName: 'Project Name', width: 250 },
+    { field: 'name', headerName: '프로젝트 이름', width: 250 },
     {
       field: 'pm_id',
-      headerName: 'Project Manager',
+      headerName: '프로젝트 매니저',
       width: 180,
-      valueGetter: (_value, row) => users.find(u => u.id === row.pm_id)?.full_name || 'N/A',
+      valueGetter: (_value, row) => users.find(u => u.id === row.pm_id)?.full_name || '없음',
     },
 
-    { field: 'start_date', headerName: 'Start Date', width: 120 },
-    { field: 'end_date', headerName: 'End Date', width: 120 },
+    { field: 'start_date', headerName: '시작일', width: 120 },
+    { field: 'end_date', headerName: '종료일', width: 120 },
     {
       field: 'actions',
       type: 'actions',
-      headerName: 'Actions',
+      headerName: '작업',
       width: 150,
       getActions: (params) => [
-        <GridActionsCellItem icon={<PeopleIcon />} label="Manage Members" onClick={() => handleOpenMembersDialog(params.row as Project)} />,
-        <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => handleOpenProjectDialog(params.row as Project)} />,
-        <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDeleteProject(params.id as number)} />,
+        <GridActionsCellItem icon={<PeopleIcon />} label="멤버 관리" onClick={() => handleOpenMembersDialog(params.row as Project)} />,
+        <GridActionsCellItem icon={<EditIcon />} label="수정" onClick={() => handleOpenProjectDialog(params.row as Project)} />,
+        <GridActionsCellItem icon={<DeleteIcon />} label="삭제" onClick={() => handleDeleteProject(params.id as number)} />,
       ],
     },
   ];
@@ -140,11 +141,11 @@ const ProjectManagementPage: React.FC = () => {
 
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Project Management
+          프로젝트 관리
         </Typography>
         <Box sx={{ mb: 2 }}>
           <Button variant="contained" onClick={() => handleOpenProjectDialog(null)} disabled={loading}>
-            Create Project
+            프로젝트 생성
           </Button>
         </Box>
         <Paper sx={{ height: 700, width: '100%' }}>

@@ -120,7 +120,7 @@ const OrganizationManagementPage: React.FC = () => {
   };
 
   const handleDeleteOrganization = async (orgId: number) => {
-    if (window.confirm("Are you sure you want to delete this organization?")) {
+    if (window.confirm("이 조직을 정말로 삭제하시겠습니까?")) {
       try {
         await auth.deleteOrganization(orgId);
         fetchData();
@@ -141,7 +141,7 @@ const OrganizationManagementPage: React.FC = () => {
   };
 
   const handleDeleteUser = async (userId: number) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
+    if (window.confirm("이 사용자를 정말로 삭제하시겠습니까?")) {
       try {
         await auth.deleteUser(userId);
         fetchData();
@@ -166,24 +166,24 @@ const OrganizationManagementPage: React.FC = () => {
 
   const userColumns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'full_name', headerName: 'Full Name', width: 150 },
-    { field: 'username', headerName: 'Username', width: 130 },
-    { field: 'email', headerName: 'Email', width: 180 },
-    { field: 'role', headerName: 'Role', width: 110 },
+    { field: 'full_name', headerName: '이름', width: 150 },
+    { field: 'username', headerName: '사용자 이름', width: 130 },
+    { field: 'email', headerName: '이메일', width: 180 },
+    { field: 'role', headerName: '역할', width: 110 },
     {
       field: 'organization',
-      headerName: 'Organization',
+      headerName: '조직',
       width: 130,
-      valueGetter: (_value, row) => organizations.find(org => org.id === row.organization_id)?.name || 'N/A',
+      valueGetter: (_value, row) => organizations.find(org => org.id === row.organization_id)?.name || '없음',
     },
     {
         field: 'actions',
         type: 'actions',
-        headerName: 'Actions',
+        headerName: '작업',
         width: 100,
         getActions: (params) => [
-            <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => handleOpenUserDialog(params.row as User)} />,
-            <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDeleteUser(params.id as number)} />,
+            <GridActionsCellItem icon={<EditIcon />} label="수정" onClick={() => handleOpenUserDialog(params.row as User)} />,
+            <GridActionsCellItem icon={<DeleteIcon />} label="삭제" onClick={() => handleDeleteUser(params.id as number)} />,
         ]
     }
   ];
@@ -210,19 +210,19 @@ const OrganizationManagementPage: React.FC = () => {
       />
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Organization and User Management
+          조직 및 사용자 관리
         </Typography>
         <OrgSync onSyncSuccess={fetchData} />
         <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
-            <Button variant="contained" onClick={() => handleOpenOrgDialog(null)}>Add Organization</Button>
-            <Button variant="contained" onClick={() => handleOpenUserDialog(null)}>Add User</Button>
+            <Button variant="contained" onClick={() => handleOpenOrgDialog(null)}>조직 추가</Button>
+            <Button variant="contained" onClick={() => handleOpenUserDialog(null)}>사용자 추가</Button>
         </Box>
         <Grid container spacing={3}>
           <Grid xs={12} md={4}>
             <Paper sx={{ p: 2, minHeight: 600 }}>
-              <Typography variant="h6" gutterBottom>Organizations</Typography>
+              <Typography variant="h6" gutterBottom>조직</Typography>
               <SimpleTreeView
-                aria-label="organization tree"
+                aria-label="조직 트리"
                 slots={{ 
                   collapseIcon: ExpandMoreIcon, 
                   expandIcon: ChevronRightIcon 
@@ -237,7 +237,7 @@ const OrganizationManagementPage: React.FC = () => {
           <Grid xs={12} md={8}>
             <Paper sx={{ height: 650, width: '100%' }}>
               <Typography variant="h6" gutterBottom sx={{ p: 2 }}>
-                Users {selectedOrgId ? `in "${organizations.find(o => o.id === selectedOrgId)?.name}"` : ''}
+                사용자 {selectedOrgId ? `(${organizations.find(o => o.id === selectedOrgId)?.name})` : ''}
               </Typography>
               <DataGrid
                 rows={filteredUsers}

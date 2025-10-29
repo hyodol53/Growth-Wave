@@ -36,15 +36,15 @@ const FinalGradeAdjustmentPage: React.FC = () => {
         const combinedData: UserEvaluationData[] = results.map((item: User & { result: ManagerEvaluationView }) => ({
           ...item,
           final_score: item.result.final_evaluation?.final_score ?? null,
-          current_grade: item.result.final_evaluation?.grade ?? 'N/A',
+          current_grade: item.result.final_evaluation?.grade ?? '없음',
         }));
 
         setUsers(combinedData);
       } catch (err) {
         if (err instanceof AxiosError) {
-          setError(err.response?.data?.detail || 'Failed to fetch data.');
+          setError(err.response?.data?.detail || '데이터를 불러오는데 실패했습니다.');
         } else {
-          setError('An unexpected error occurred.');
+          setError('예상치 못한 오류가 발생했습니다.');
         }
         console.error(err);
       } finally {
@@ -64,7 +64,7 @@ const FinalGradeAdjustmentPage: React.FC = () => {
     const bPlusCount = grades.filter(g => g === 'B+').length;
     const bMinusCount = grades.filter(g => g === 'B-').length;
     if (bPlusCount !== bMinusCount) {
-      return `The number of B+ grades (${bPlusCount}) must equal the number of B- grades (${bMinusCount}).`;
+      return `B+ 등급(${bPlusCount}명)과 B- 등급(${bMinusCount}명)의 인원수는 동일해야 합니다.`;
     }
     return null;
   }, [adjustedGrades]);
@@ -84,32 +84,32 @@ const FinalGradeAdjustmentPage: React.FC = () => {
 
     try {
       await adjustGrades({ adjustments });
-      setSuccess('Grades adjusted successfully!');
+      setSuccess('등급이 성공적으로 조정되었습니다!');
       setAdjustedGrades({});
       // Optionally re-fetch data here
     } catch (err) {
       if (err instanceof AxiosError) {
-        setError(err.response?.data?.detail || 'Failed to save changes.');
+        setError(err.response?.data?.detail || '변경사항 저장에 실패했습니다.');
       } else {
-        setError('An unexpected error occurred while saving.');
+        setError('저장 중 예상치 못한 오류가 발생했습니다.');
       }
       console.error(err);
     }
   };
 
   const columns: GridColDef[] = [
-    { field: 'full_name', headerName: 'Name', width: 180 },
-    { field: 'username', headerName: 'Username', width: 150 },
+    { field: 'full_name', headerName: '이름', width: 180 },
+    { field: 'username', headerName: '사용자 이름', width: 150 },
     { 
       field: 'final_score', 
-      headerName: 'Final Score', 
+      headerName: '최종 점수', 
       width: 120,
-      valueGetter: (_value, row) => row.final_score?.toFixed(2) ?? 'N/A',
+      valueGetter: (_value, row) => row.final_score?.toFixed(2) ?? '없음',
     },
-    { field: 'current_grade', headerName: 'Current Grade', width: 130 },
+    { field: 'current_grade', headerName: '현재 등급', width: 130 },
     {
       field: 'adjusted_grade',
-      headerName: 'Adjusted Grade',
+      headerName: '조정 등급',
       width: 150,
       editable: true,
       type: 'singleSelect',
@@ -122,7 +122,7 @@ const FinalGradeAdjustmentPage: React.FC = () => {
             onChange={(e) => handleGradeChange(params.id as number, e.target.value)}
             style={{ width: '100%', border: 'none', background: 'transparent' }}
           >
-            {['S', 'A', 'B+', 'B', 'B-', 'C', 'D', 'N/A'].map(g => <option key={g} value={g}>{g}</option>)}
+            {['S', 'A', 'B+', 'B', 'B-', 'C', 'D', '없음'].map(g => <option key={g} value={g}>{g}</option>)}
           </select>
         );
       },
@@ -133,7 +133,7 @@ const FinalGradeAdjustmentPage: React.FC = () => {
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Final Grade Adjustment
+          최종 등급 조정
         </Typography>
         {error && <Alert severity="error">{error}</Alert>}
         <Box sx={{ height: 600, width: '100%', mt: 2 }}>
@@ -151,7 +151,7 @@ const FinalGradeAdjustmentPage: React.FC = () => {
             disabled={Object.keys(adjustedGrades).length === 0 || !!validationError}
             onClick={handleSaveChanges}
           >
-            Save Changes
+            변경사항 저장
           </Button>
         </Box>
         {validationError && <Alert severity="warning" sx={{ mt: 2 }}>{validationError}</Alert>}

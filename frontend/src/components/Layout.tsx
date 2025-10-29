@@ -58,18 +58,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, [handleLogout]);
 
   const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-    { text: 'My Profile', icon: <AccountCircleIcon />, path: '/profile' },
-    { text: 'My Evaluations', icon: <AssessmentIcon />, path: '/evaluations' },
-    { text: 'My History', icon: <SummarizeIcon />, path: '/history' },
+    { text: '대시보드', icon: <DashboardIcon />, path: '/' },
+    { text: '내 프로필', icon: <AccountCircleIcon />, path: '/profile' },
+    { text: '내 평가', icon: <AssessmentIcon />, path: '/evaluations' },
+    { text: '내 이력', icon: <SummarizeIcon />, path: '/history' },
   ];
 
   const managementMenuItems = [
-    { text: 'Organization', icon: <AdminPanelSettingsIcon />, path: '/admin/organizations', roles: ['admin'] },
-    { text: 'Projects', icon: <BusinessCenterIcon />, path: '/admin/projects', roles: ['admin', 'dept_head'] },
-    { text: 'Member Weights', icon: <AccountTreeIcon />, path: '/admin/member-weights', roles: ['admin', 'dept_head'] },
-    { text: 'Grade Adjustment', icon: <TuneIcon />, path: '/admin/grade-adjustment', roles: ['admin', 'dept_head'] },
-    { text: 'Evaluation Settings', icon: <TuneIcon />, path: '/admin/evaluation-settings', roles: ['admin'] },
+    { text: '조직 관리', icon: <AdminPanelSettingsIcon />, path: '/admin/organizations', roles: ['admin'] },
+    { text: '프로젝트 관리', icon: <BusinessCenterIcon />, path: '/admin/projects', roles: ['admin', 'dept_head'] },
+    { text: '참여 비중 설정', icon: <AccountTreeIcon />, path: '/admin/member-weights', roles: ['admin', 'dept_head'] },
+    { text: '등급 조정', icon: <TuneIcon />, path: '/admin/grade-adjustment', roles: ['admin', 'dept_head'] },
+    { text: '평가 설정', icon: <TuneIcon />, path: '/admin/evaluation-settings', roles: ['admin'] },
   ];
 
   return (
@@ -84,7 +84,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             Growth-Wave
           </Typography>
           <Typography sx={{ mr: 2 }}>{user?.full_name || user?.username}</Typography>
-          <Button color="inherit" onClick={handleLogout}>Logout</Button>
+          <Button color="inherit" onClick={handleLogout}>로그아웃</Button>
         </Toolbar>
       </AppBar>
       <Drawer
@@ -110,7 +110,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {(user?.role === 'admin' || user?.role === 'dept_head') && (
             <List>
               <ListItem disablePadding>
-                 <Typography sx={{ pl: 2, pt: 1, pb: 1, fontWeight: 'bold', color: 'text.secondary' }}>Management</Typography>
+                 <Typography sx={{ pl: 2, pt: 1, pb: 1, fontWeight: 'bold', color: 'text.secondary' }}>관리</Typography>
               </ListItem>
               {managementMenuItems.map((item) => (
                 item.roles.includes(user.role) && (
