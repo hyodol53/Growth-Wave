@@ -27,11 +27,16 @@ api.interceptors.request.use(
   }
 );
 
-interface ProjectMemberWeightsPayload {
+export interface UserProjectWeight {
   project_id: number;
+  project_name: string;
+  participation_weight: number;
+}
+
+export interface UserProjectWeightsUpdate {
   weights: {
-    user_id: number;
-    weight: number;
+    project_id: number;
+    participation_weight: number;
   }[];
 }
 
@@ -123,9 +128,13 @@ export const auth = {
     return response.data;
   },
 
-  // Project Members
-  setProjectMemberWeights: async (data: ProjectMemberWeightsPayload) => {
-    const response = await api.post('/projects/members/weights', data);
+  // User Project Weights
+  getUserProjectWeights: async (userId: number): Promise<UserProjectWeight[]> => {
+    const response = await api.get(`/users/${userId}/project-weights`);
+    return response.data;
+  },
+  updateUserProjectWeights: async (userId: number, data: UserProjectWeightsUpdate): Promise<UserProjectWeight[]> => {
+    const response = await api.put(`/users/${userId}/project-weights`, data);
     return response.data;
   },
 };

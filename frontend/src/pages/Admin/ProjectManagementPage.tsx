@@ -5,7 +5,6 @@ import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import GroupAddIcon from '@mui/icons-material/GroupAdd';
 
 import { auth } from '../../services/api';
 import type { Project, ProjectCreate, ProjectUpdate } from '../../schemas/project';
@@ -13,12 +12,6 @@ import type { User } from '../../schemas/user';
 import type { Organization } from '../../schemas/organization';
 
 import ProjectDialog from '../../components/Admin/ProjectDialog';
-import ProjectMemberDialog from '../../components/Admin/ProjectMemberDialog';
-
-interface MemberSaveData {
-  user_id: number;
-  weight: number;
-}
 
 const ProjectManagementPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -29,8 +22,6 @@ const ProjectManagementPage: React.FC = () => {
   // Dialog states
   const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
-  const [managingMembersFor, setManagingMembersFor] = useState<Project | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -64,15 +55,6 @@ const ProjectManagementPage: React.FC = () => {
     setIsProjectDialogOpen(false);
   };
 
-  const handleOpenMemberDialog = (project: Project) => {
-    setManagingMembersFor(project);
-    setIsMemberDialogOpen(true);
-  };
-  const handleCloseMemberDialog = () => {
-    setManagingMembersFor(null);
-    setIsMemberDialogOpen(false);
-  };
-
   // --- API Action Handlers ---
   const handleSaveProject = async (data: ProjectCreate | ProjectUpdate) => {
     try {
@@ -96,20 +78,6 @@ const ProjectManagementPage: React.FC = () => {
       } catch (error) {
         console.error('Failed to delete project', error);
       }
-    }
-  };
-
-  const handleSaveMembers = async (members: MemberSaveData[]) => {
-    if (!managingMembersFor) return;
-    try {
-      await auth.setProjectMemberWeights({ 
-        project_id: managingMembersFor.id, 
-        weights: members
-      });
-      handleCloseMemberDialog();
-      // No need to fetchData() as this doesn't change the project list view
-    } catch (error) {
-      console.error('Failed to save project members', error);
     }
   };
 
@@ -138,7 +106,6 @@ const ProjectManagementPage: React.FC = () => {
       getActions: (params) => [
         <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => handleOpenProjectDialog(params.row as Project)} />,
         <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDeleteProject(params.id as number)} />,
-        <GridActionsCellItem icon={<GroupAddIcon />} label="Manage Members" onClick={() => handleOpenMemberDialog(params.row as Project)} />,
       ],
     },
   ];
@@ -153,15 +120,6 @@ const ProjectManagementPage: React.FC = () => {
         users={users}
         organizations={organizations}
       />
-      {managingMembersFor && (
-        <ProjectMemberDialog 
-          open={isMemberDialogOpen}
-          onClose={handleCloseMemberDialog}
-          onSave={handleSaveMembers}
-          project={managingMembersFor}
-          allUsers={users}
-        />
-      )}
 
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
