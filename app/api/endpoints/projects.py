@@ -36,11 +36,16 @@ def create_project(
             detail=f"Project Manager with id {project_in.pm_id} not found.",
         )
 
-    if current_user.role == "dept_head" and pm_user.organization_id != current_user.organization_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Department heads can only create projects with a PM from their own department.",
-        )
+    if current_user.role == "dept_head":
+        subordinate_ids = {
+            user.id for user in crud_user.user.get_subordinates(db, user_id=current_user.id)
+        }
+        subordinate_ids.add(current_user.id)
+        if pm_user.id not in subordinate_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Department heads can only create projects with a PM from their own department or sub-departments.",
+            )
     project = crud_project.project.create(db=db, obj_in=project_in)
 
     # Automatically add the PM as a project member
@@ -95,26 +100,32 @@ def update_project(
     project = crud_project.project.get(db=db, id=project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    # Authorization check: Dept heads can only manage projects where the PM is in their department.
-    if current_user.role == "dept_head" and project.pm.organization_id != current_user.organization_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Department heads can only manage projects where the PM is in their own department.",
-        )
+    if current_user.role == "dept_head":
+        subordinate_ids = {
+            user.id for user in crud_user.user.get_subordinates(db, user_id=current_user.id)
+        }
+        subordinate_ids.add(current_user.id)
 
-    # If the PM is being updated, ensure the new PM is also in the same department
-    if project_in.pm_id is not None:
-        new_pm_user = crud_user.user.get(db, id=project_in.pm_id)
-        if not new_pm_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"New Project Manager with id {project_in.pm_id} not found.",
-            )
-        if current_user.role == "dept_head" and new_pm_user.organization_id != current_user.organization_id:
+        # Authorization check: Dept heads can only manage projects where the PM is their subordinate.
+        if project.pm.id not in subordinate_ids:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Department heads can only assign a PM from their own department.",
+                detail="Department heads can only manage projects where the PM is in their own department or sub-departments.",
             )
+
+        # If the PM is being updated, ensure the new PM is also a subordinate
+        if project_in.pm_id is not None and project_in.pm_id != project.pm_id:
+            new_pm_user = crud_user.user.get(db, id=project_in.pm_id)
+            if not new_pm_user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"New Project Manager with id {project_in.pm_id} not found.",
+                )
+            if new_pm_user.id not in subordinate_ids:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Department heads can only assign a PM from their own department or sub-departments.",
+                )
 
     project = crud_project.project.update(db=db, db_obj=project, obj_in=project_in)
     return project
@@ -132,12 +143,17 @@ def delete_project(
     project = crud_project.project.get(db=db, id=project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    # Authorization check: Dept heads can only manage projects where the PM is in their department.
-    if current_user.role == "dept_head" and project.pm.organization_id != current_user.organization_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Department heads can only delete projects where the PM is in their own department.",
-        )
+    # Authorization check: Dept heads can only manage projects where the PM is their subordinate.
+    if current_user.role == "dept_head":
+        subordinate_ids = {
+            user.id for user in crud_user.user.get_subordinates(db, user_id=current_user.id)
+        }
+        subordinate_ids.add(current_user.id)
+        if project.pm.id not in subordinate_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Department heads can only delete projects where the PM is in their own department or sub-departments.",
+            )
     project = crud_project.project.remove(db=db, id=project_id)
     return project
 
@@ -194,17 +210,22 @@ def add_project_member(
 
     # Authorization for Dept Head
     if current_user.role == "dept_head":
-        # Check if the project is managed by the current user's department
-        if project.pm and project.pm.organization_id != current_user.organization_id:
+        subordinate_ids = {
+            user.id for user in crud_user.user.get_subordinates(db, user_id=current_user.id)
+        }
+        subordinate_ids.add(current_user.id)
+
+        # Check if the project's PM is a subordinate of the current user
+        if project.pm and project.pm.id not in subordinate_ids:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Dept heads can only add members to projects managed by their department.",
+                detail="Dept heads can only add members to projects managed by their subordinates.",
             )
-        # Check if the user to be added is in the current user's department
-        if user_to_add.organization_id != current_user.organization_id:
+        # Check if the user to be added is a subordinate of the current user
+        if user_to_add.id not in subordinate_ids:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Dept heads can only add members from their own department.",
+                detail="Dept heads can only add members from their own department or sub-departments.",
             )
 
     # Check if member already exists
