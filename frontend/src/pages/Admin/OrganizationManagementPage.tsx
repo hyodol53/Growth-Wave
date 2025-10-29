@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Container, Typography, Paper, Button, IconButton } from '@mui/material';
+import { Box, Typography, Paper, Button, IconButton } from '@mui/material';
 import { GridLegacy as Grid } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem, type TreeItemProps } from '@mui/x-tree-view/TreeItem';
@@ -165,15 +165,16 @@ const OrganizationManagementPage: React.FC = () => {
   );
 
   const userColumns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'full_name', headerName: '이름', width: 150 },
-    { field: 'username', headerName: '사용자 이름', width: 130 },
-    { field: 'email', headerName: '이메일', width: 180 },
-    { field: 'role', headerName: '역할', width: 110 },
+    { field: 'id', headerName: 'ID', flex: 0.1, minWidth: 70 },
+    { field: 'full_name', headerName: '이름', flex: 0.2, minWidth: 150 },
+    { field: 'username', headerName: '사용자 이름', flex: 0.2, minWidth: 130 },
+    { field: 'email', headerName: '이메일', flex: 0.3, minWidth: 180 },
+    { field: 'role', headerName: '역할', flex: 0.15, minWidth: 110 },
     {
       field: 'organization',
       headerName: '조직',
-      width: 130,
+      flex: 0.15,
+      minWidth: 130,
       valueGetter: (_value, row) => organizations.find(org => org.id === row.organization_id)?.name || '없음',
     },
     {
@@ -193,7 +194,7 @@ const OrganizationManagementPage: React.FC = () => {
     : users;
 
   return (
-    <Container maxWidth="xl">
+    <Box>
       <OrganizationDialog 
         open={isOrgDialogOpen}
         onClose={handleCloseOrgDialog}
@@ -217,48 +218,50 @@ const OrganizationManagementPage: React.FC = () => {
             <Button variant="contained" onClick={() => handleOpenOrgDialog(null)}>조직 추가</Button>
             <Button variant="contained" onClick={() => handleOpenUserDialog(null)}>사용자 추가</Button>
         </Box>
-        <Grid container spacing={3}>
-          <Grid xs={12} md={4}>
-            <Paper sx={{ p: 2, minHeight: 600 }}>
+        <Paper sx={{ p: 2 }}>
+          <Grid container spacing={3}>
+            <Grid xs={12} md={4}>
               <Typography variant="h6" gutterBottom>조직</Typography>
-              <SimpleTreeView
-                aria-label="조직 트리"
-                slots={{ 
-                  collapseIcon: ExpandMoreIcon, 
-                  expandIcon: ChevronRightIcon 
-                }}
-                sx={{ flexGrow: 1, overflowY: 'auto' }}
-                onSelectedItemsChange={handleOrgSelect}
-              >
-                {renderTree(orgTree)}
-              </SimpleTreeView>
-            </Paper>
-          </Grid>
-          <Grid xs={12} md={8}>
-            <Paper sx={{ height: 650, width: '100%' }}>
-              <Typography variant="h6" gutterBottom sx={{ p: 2 }}>
+              <Box sx={{ height: 600, overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px' }}>
+                <SimpleTreeView
+                  aria-label="조직 트리"
+                  slots={{ 
+                    collapseIcon: ExpandMoreIcon, 
+                    expandIcon: ChevronRightIcon 
+                  }}
+                  sx={{ flexGrow: 1, p: 1 }}
+                  onSelectedItemsChange={handleOrgSelect}
+                >
+                  {renderTree(orgTree)}
+                </SimpleTreeView>
+              </Box>
+            </Grid>
+            <Grid xs={12} md={8}>
+              <Typography variant="h6" gutterBottom>
                 사용자 {selectedOrgId ? `(${organizations.find(o => o.id === selectedOrgId)?.name})` : ''}
               </Typography>
-              <DataGrid
-                rows={filteredUsers}
-                columns={userColumns}
-                loading={loading}
-                initialState={{
-                    pagination: {
-                      paginationModel: {
-                        pageSize: 10,
+              <Box sx={{ height: 600, width: '100%' }}>
+                <DataGrid
+                  rows={filteredUsers}
+                  columns={userColumns}
+                  loading={loading}
+                  initialState={{
+                      pagination: {
+                        paginationModel: {
+                          pageSize: 10,
+                        },
                       },
-                    },
-                  }}
-                pageSizeOptions={[5, 10, 20]}
-                checkboxSelection
-                disableRowSelectionOnClick
-              />
-            </Paper>
+                    }}
+                  pageSizeOptions={[5, 10, 20]}
+                  checkboxSelection
+                  disableRowSelectionOnClick
+                />
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
+        </Paper>
       </Box>
-    </Container>
+    </Box>
   );
 };
 
