@@ -213,10 +213,12 @@ const OrganizationManagementPage: React.FC = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           조직 및 사용자 관리
         </Typography>
-        <OrgSync onSyncSuccess={fetchData} />
-        <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <OrgSync onSyncSuccess={fetchData} />
+          <Box sx={{ display: 'flex', gap: 1 }}>
             <Button variant="contained" onClick={() => handleOpenOrgDialog(null)}>조직 추가</Button>
             <Button variant="contained" onClick={() => handleOpenUserDialog(null)}>사용자 추가</Button>
+          </Box>
         </Box>
         <Paper sx={{ p: 2 }}>
           <Grid container spacing={3}>

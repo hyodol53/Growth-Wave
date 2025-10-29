@@ -11,6 +11,7 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -18,6 +19,10 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
       setError(null);
       setSuccess(null);
     }
+  };
+
+  const handleSelectFileClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleUpload = useCallback(async () => {
@@ -51,7 +56,7 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
   }, [selectedFile, onSyncSuccess]);
 
   return (
-    <Box sx={{ border: '1px dashed grey', p: 2, borderRadius: 1, mt: 2, mb: 2 }}>
+    <Box sx={{ border: '1px dashed grey', p: 2, borderRadius: 1 }}>
       <Typography variant="h6" gutterBottom>
         JSON으로 동기화
       </Typography>
@@ -59,12 +64,19 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
         JSON 파일을 업로드하여 전체 조직도와 사용자 목록을 동기화합니다.
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Input
+        <Button variant="outlined" onClick={handleSelectFileClick}>
+          파일 선택
+        </Button>
+        <input
           type="file"
+          accept=".json"
+          ref={fileInputRef}
           onChange={handleFileChange}
-          inputProps={{ accept: '.json' }}
-          disableUnderline
+          style={{ display: 'none' }}
         />
+        <Typography variant="body2" sx={{ flexGrow: 1 }}>
+          {selectedFile ? selectedFile.name : '선택된 파일 없음'}
+        </Typography>
         <Button
           variant="contained"
           color="secondary"
