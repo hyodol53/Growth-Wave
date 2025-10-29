@@ -56,14 +56,14 @@ def create_project(
 @router.get("/", response_model=List[Project])
 def read_projects(
     db: Session = Depends(get_db),
-    skip: int = 0,
-    limit: int = 100,
-    current_user: UserModel = Depends(deps.get_current_user),
+    current_user: UserModel = Depends(deps.get_current_admin_or_dept_head_user),
 ) -> Any:
     """
-    Retrieve projects.
+    Retrieve projects based on user role.
+    - Admins can see all projects.
+    - Dept Heads can see projects where the PM is one of their subordinates.
     """
-    projects = crud_project.project.get_multi(db, skip=skip, limit=limit)
+    projects = crud_project.project.get_multi_for_user(db, user=current_user)
     return projects
 
 @router.get("/{project_id}", response_model=Project)
@@ -194,14 +194,16 @@ def add_project_member(
 
     # Authorization for Dept Head
     if current_user.role == "dept_head":
-        if project.pm.organization_id != current_user.organization_id:
+        # Check if the project is managed by the current user's department
+        if project.pm and project.pm.organization_id != current_user.organization_id:
             raise HTTPException(
-                status_code=403,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Dept heads can only add members to projects managed by their department.",
             )
+        # Check if the user to be added is in the current user's department
         if user_to_add.organization_id != current_user.organization_id:
             raise HTTPException(
-                status_code=403,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Dept heads can only add members from their own department.",
             )
 

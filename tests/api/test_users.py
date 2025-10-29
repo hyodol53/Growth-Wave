@@ -349,10 +349,67 @@ def test_update_user_project_weights_unauthorized(client: TestClient, db: Sessio
 
     # Act
     response = client.put(
-        f"/api/v1/users/{subordinate.id}/project-weights", 
-        headers=manager_token_headers, 
+        f"/api/v1/users/{subordinate.id}/project-weights",
+        headers=manager_token_headers,
         json=update_payload
     )
+
+    # Assert
+    assert response.status_code == 403
+
+
+# --- Tests for GET /users/ ---
+
+def test_read_users_by_admin(client: TestClient, db: Session):
+    # Arrange
+    admin = create_random_user(db, role="admin")
+    create_random_user(db) # user 1
+    create_random_user(db) # user 2
+    admin_token_headers = authentication_token_from_username(client=client, username=admin.username, db=db)
+
+    # Act
+    response = client.get("/api/v1/users/", headers=admin_token_headers)
+
+    # Assert
+    assert response.status_code == 200
+    users = response.json()
+    # Total users = admin + user1 + user2 + default admin/user from conftest
+    assert len(users) >= 3 
+
+def test_read_users_by_dept_head(client: TestClient, db: Session):
+    # Arrange
+    center = create_random_organization(db, name="Center_for_users_test", level=1)
+    dept = create_random_organization(db, name="Dept_for_users_test", level=2, parent_id=center.id)
+    team = create_random_organization(db, name="Team_for_users_test", level=3, parent_id=dept.id)
+    other_dept = create_random_organization(db, name="Other_Dept_for_users_test", level=2, parent_id=center.id)
+
+    dept_head = create_random_user(db, role="dept_head", organization_id=dept.id)
+    team_lead = create_random_user(db, role="team_lead", organization_id=team.id)
+    employee = create_random_user(db, role="employee", organization_id=team.id)
+    other_dept_user = create_random_user(db, role="employee", organization_id=other_dept.id)
+    
+    dept_head_token_headers = authentication_token_from_username(client=client, username=dept_head.username, db=db)
+
+    # Act
+    response = client.get("/api/v1/users/", headers=dept_head_token_headers)
+
+    # Assert
+    assert response.status_code == 200
+    subordinates = response.json()
+    assert len(subordinates) == 2 # team_lead + employee
+    subordinate_ids = {s["id"] for s in subordinates}
+    assert team_lead.id in subordinate_ids
+    assert employee.id in subordinate_ids
+    assert dept_head.id not in subordinate_ids
+    assert other_dept_user.id not in subordinate_ids
+
+def test_read_users_by_team_lead_forbidden(client: TestClient, db: Session):
+    # Arrange
+    team_lead = create_random_user(db, role="team_lead")
+    team_lead_token_headers = authentication_token_from_username(client=client, username=team_lead.username, db=db)
+
+    # Act
+    response = client.get("/api/v1/users/", headers=team_lead_token_headers)
 
     # Assert
     assert response.status_code == 403

@@ -185,3 +185,89 @@ def test_delete_project_by_admin_success(client: TestClient, db: Session):
     # Verify deletion
     response = client.get(f"/api/v1/projects/{project.id}", headers=token_headers)
     assert response.status_code == 404
+
+
+# --- Tests for GET /projects/ ---
+
+def test_read_projects_by_admin(client: TestClient, db: Session):
+    # Arrange
+    admin = create_random_user(db, role="admin")
+    org = create_random_organization(db)
+    pm = create_random_user(db, organization_id=org.id)
+    create_random_project(db, pm_id=pm.id)
+    create_random_project(db, pm_id=pm.id)
+    admin_token_headers = authentication_token_from_username(client=client, username=admin.username, db=db)
+
+    # Act
+    response = client.get("/api/v1/projects/", headers=admin_token_headers)
+
+    # Assert
+    assert response.status_code == 200
+    assert len(response.json()) >= 2
+
+def test_read_projects_by_dept_head(client: TestClient, db: Session):
+    # Arrange
+    # Dept A
+    dept_a = create_random_organization(db, name="Dept A")
+    dept_head_a = create_random_user(db, role="dept_head", organization_id=dept_a.id)
+    pm_a = create_random_user(db, organization_id=dept_a.id)
+    project_a = create_random_project(db, name="Project A", pm_id=pm_a.id)
+
+    # Dept B
+    dept_b = create_random_organization(db, name="Dept B")
+    pm_b = create_random_user(db, organization_id=dept_b.id)
+    project_b = create_random_project(db, name="Project B", pm_id=pm_b.id)
+
+    dept_head_a_token_headers = authentication_token_from_username(client=client, username=dept_head_a.username, db=db)
+
+    # Act
+    response = client.get("/api/v1/projects/", headers=dept_head_a_token_headers)
+
+    # Assert
+    assert response.status_code == 200
+    projects = response.json()
+    assert len(projects) == 1
+    assert projects[0]["id"] == project_a.id
+    assert projects[0]["name"] == "Project A"
+
+def test_read_projects_by_employee_forbidden(client: TestClient, db: Session):
+    # Arrange
+    employee = create_random_user(db, role="employee")
+    employee_token_headers = authentication_token_from_username(client=client, username=employee.username, db=db)
+
+    # Act
+    response = client.get("/api/v1/projects/", headers=employee_token_headers)
+
+    # Assert
+    assert response.status_code == 403
+
+
+# --- Tests for POST /projects/{project_id}/members ---
+
+def test_add_project_member_by_admin_success(client: TestClient, db: Session):
+    # Arrange
+    admin = create_random_user(db, role="admin")
+    admin_token_headers = authentication_token_from_username(client=client, username=admin.username, db=db)
+
+    # Dept A
+    dept_a = create_random_organization(db, name="Dept A")
+    pm_a = create_random_user(db, organization_id=dept_a.id)
+    project_a = create_random_project(db, name="Project A", pm_id=pm_a.id)
+
+    # Dept B
+    dept_b = create_random_organization(db, name="Dept B")
+    user_b = create_random_user(db, organization_id=dept_b.id)
+
+    # Act
+    add_member_payload = {"user_id": user_b.id}
+    response = client.post(
+        f"/api/v1/projects/{project_a.id}/members",
+        headers=admin_token_headers,
+        json=add_member_payload,
+    )
+
+    # Assert
+    assert response.status_code == 200 # Assuming 200, could be 201
+    member_data = response.json()
+    assert member_data["user_id"] == user_b.id
+    assert member_data["project_id"] == project_a.id
