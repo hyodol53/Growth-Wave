@@ -142,7 +142,7 @@ class EvaluationPeriodInDB(EvaluationPeriodBase):
     model_config = ConfigDict(from_attributes=True)
 
 class EvaluationPeriod(EvaluationPeriodInDB):
-    pass
+    is_active: Optional[bool] = None
 
 
 # DepartmentGradeRatio Schemas

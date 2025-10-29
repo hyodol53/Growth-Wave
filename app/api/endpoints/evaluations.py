@@ -424,7 +424,21 @@ def read_evaluation_periods(
     Retrieve evaluation periods. (Admin only)
     """
     evaluation_periods = crud.evaluation_period.get_multi(db, skip=skip, limit=limit)
-    return evaluation_periods
+    today = datetime.date.today()
+    
+    response_periods = []
+    for period in evaluation_periods:
+        is_active = period.start_date <= today <= period.end_date
+        response_periods.append(
+            schemas.EvaluationPeriod(
+                id=period.id,
+                name=period.name,
+                start_date=period.start_date,
+                end_date=period.end_date,
+                is_active=is_active,
+            )
+        )
+    return response_periods
 
 
 @router.put("/evaluation-periods/{period_id}", response_model=schemas.EvaluationPeriod)
