@@ -116,8 +116,13 @@ def read_my_subordinates(
     current_user: UserModel = Depends(deps.get_current_user),
 ):
     """
-    Retrieve all subordinates for the current user (team_lead or dept_head).
+    Retrieve all subordinates for the current user.
+    - Admins can retrieve all users.
+    - Team leads and department heads can retrieve their own subordinates.
     """
+    if current_user.role == UserRole.ADMIN:
+        return user_crud.user.get_multi(db)
+
     if current_user.role not in [UserRole.TEAM_LEAD, UserRole.DEPT_HEAD]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
