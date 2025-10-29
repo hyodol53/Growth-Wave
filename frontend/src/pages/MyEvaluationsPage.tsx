@@ -70,7 +70,7 @@ const MyEvaluationsPage: React.FC = () => {
             // 2. Fetch user's projects and their members for Peer and PM evaluations
             const historyRes = await api.getUserHistory();
             const myProjects = historyRes.data;
-            const allProjects = Object.values(myProjects).flatMap(entry => entry.projects);
+            const allProjects = myProjects.history.flatMap(entry => entry.projects);
 
             const projectsData: ProjectWithMembers[] = await Promise.all(
                 allProjects.map(async (proj: ProjectHistoryItem) => {

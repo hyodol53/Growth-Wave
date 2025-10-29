@@ -25,7 +25,7 @@ const HistoryPage: React.FC = () => {
           getUserHistory(),
           auth.getCurrentUser()
         ]);
-        setHistory(historyRes.data);
+        setHistory(historyRes.data.history);
         setCurrentUser(userRes);
       } catch (err) {
         if (err instanceof AxiosError) {
