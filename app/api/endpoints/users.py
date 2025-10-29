@@ -85,6 +85,18 @@ def read_current_user(
     return current_user
 
 
+@router.get("/", response_model=List[User])
+def read_users(
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(deps.get_current_admin_user),
+):
+    """
+    Retrieve all users. (Admin only)
+    """
+    users = user_crud.user.get_multi(db)
+    return users
+
+
 @router.get("/me/subordinates", response_model=List[User])
 def read_my_subordinates(
     *,
