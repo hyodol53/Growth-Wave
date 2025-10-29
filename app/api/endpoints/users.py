@@ -92,12 +92,20 @@ def read_current_user(
 @router.get("/", response_model=List[User])
 def read_users(
     db: Session = Depends(get_db),
-    current_user: UserModel = Depends(deps.get_current_admin_user),
+    current_user: UserModel = Depends(deps.get_current_admin_or_dept_head_user),
 ):
     """
-    Retrieve all users. (Admin only)
+    Retrieve users.
+    - Admins can retrieve all users.
+    - Department Heads can retrieve their subordinates.
     """
-    users = user_crud.user.get_multi(db)
+    if current_user.role == UserRole.ADMIN:
+        users = user_crud.user.get_multi(db)
+    elif current_user.role == UserRole.DEPT_HEAD:
+        users = user_crud.user.get_subordinates(db, user_id=current_user.id)
+    else:
+        # This case should not be reached due to the dependency check
+        users = []
     return users
 
 
