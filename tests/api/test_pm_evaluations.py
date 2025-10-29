@@ -1,10 +1,12 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from app.core.config import settings
+import datetime
 from tests.utils.user import create_random_user, authentication_token_from_username
 from tests.utils.project import create_random_project
 from tests.utils.project_member import create_project_member
 from tests.utils.organization import create_random_organization
+from tests.utils.evaluation import create_random_evaluation_period
 from app.models.user import UserRole
 
 def test_create_pm_evaluations_success(client: TestClient, db: Session) -> None:
@@ -14,6 +16,9 @@ def test_create_pm_evaluations_success(client: TestClient, db: Session) -> None:
     project = create_random_project(db, pm_id=pm_user.id)
     create_project_member(db, project_id=project.id, user_id=pm_user.id, is_pm=True)
     create_project_member(db, project_id=project.id, user_id=member_user.id)
+
+    today = datetime.date.today()
+    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
 
     login_data = {
         "username": pm_user.username,
@@ -44,6 +49,9 @@ def test_create_pm_evaluations_not_a_pm(client: TestClient, db: Session) -> None
     create_project_member(db, project_id=project.id, user_id=non_pm_user.id, is_pm=False)
     create_project_member(db, project_id=project.id, user_id=member_user.id)
 
+    today = datetime.date.today()
+    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
+
     login_data = {
         "username": non_pm_user.username,
         "password": "password"
@@ -60,7 +68,7 @@ def test_create_pm_evaluations_not_a_pm(client: TestClient, db: Session) -> None
     response = client.post(f"{settings.API_V1_STR}/evaluations/pm-evaluations/", headers=headers, json=data)
     assert response.status_code == 403
     content = response.json()
-    assert content["detail"] == "User is not a Project Manager for this project."
+    assert content["detail"] == f"User is not a Project Manager for project {project.id}."
 
 def test_create_pm_evaluations_score_out_of_range(client: TestClient, db: Session) -> None:
     pm_user = create_random_user(db, password="password")
@@ -69,6 +77,9 @@ def test_create_pm_evaluations_score_out_of_range(client: TestClient, db: Sessio
     project = create_random_project(db, pm_id=pm_user.id)
     create_project_member(db, project_id=project.id, user_id=pm_user.id, is_pm=True)
     create_project_member(db, project_id=project.id, user_id=member_user.id)
+
+    today = datetime.date.today()
+    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
 
     login_data = {
         "username": pm_user.username,
@@ -95,6 +106,9 @@ def test_create_pm_self_evaluation_as_admin(client: TestClient, db: Session) -> 
     project = create_random_project(db, pm_id=pm_user.id) # PM needs a project context
     headers = authentication_token_from_username(client=client, username=admin_user.username, db=db)
 
+    today = datetime.date.today()
+    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
+
     data = {"project_id": project.id, "evaluatee_id": pm_user.id, "score": 98}
     response = client.post(f"{settings.API_V1_STR}/evaluations/pm-self-evaluation/", headers=headers, json=data)
     
@@ -110,6 +124,9 @@ def test_create_pm_self_evaluation_not_admin(client: TestClient, db: Session) ->
     org = create_random_organization(db)
     project = create_random_project(db, pm_id=pm_user.id)
     headers = authentication_token_from_username(client=client, username=normal_user.username, db=db)
+
+    today = datetime.date.today()
+    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
 
     data = {"project_id": project.id, "evaluatee_id": pm_user.id, "score": 98}
     response = client.post(f"{settings.API_V1_STR}/evaluations/pm-self-evaluation/", headers=headers, json=data)

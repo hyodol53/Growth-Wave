@@ -57,6 +57,7 @@ class CRUDPmEvaluation(CRUDBase[PmEvaluation, PmEvaluationCreate, PmEvaluationBa
             project_id=obj_in.project_id,
             evaluatee_id=obj_in.evaluatee_id,
             score=obj_in.score,
+            comment=obj_in.comment,
             evaluator_id=evaluator_id,
             evaluation_period=evaluation_period,
         )
@@ -64,6 +65,56 @@ class CRUDPmEvaluation(CRUDBase[PmEvaluation, PmEvaluationCreate, PmEvaluationBa
         db.commit()
         db.refresh(db_obj)
         return db_obj
+
+    def get_by_evaluator_and_evaluatee(
+        self, db: Session, *, project_id: int, evaluator_id: int, evaluatee_id: int, evaluation_period: str
+    ) -> PmEvaluation | None:
+        return (
+            db.query(PmEvaluation)
+            .filter(
+                PmEvaluation.project_id == project_id,
+                PmEvaluation.evaluator_id == evaluator_id,
+                PmEvaluation.evaluatee_id == evaluatee_id,
+                PmEvaluation.evaluation_period == evaluation_period,
+            )
+            .first()
+        )
+
+    def upsert_multi(
+        self, db: Session, *, evaluations: List[PmEvaluationBase], evaluator_id: int, evaluation_period: str
+    ) -> List[PmEvaluation]:
+        upserted_objs = []
+        for evaluation in evaluations:
+            existing_eval = self.get_by_evaluator_and_evaluatee(
+                db,
+                project_id=evaluation.project_id,
+                evaluator_id=evaluator_id,
+                evaluatee_id=evaluation.evaluatee_id,
+                evaluation_period=evaluation_period,
+            )
+            if existing_eval:
+                # Update existing evaluation
+                existing_eval.score = evaluation.score
+                existing_eval.comment = evaluation.comment
+                db.add(existing_eval)
+                upserted_objs.append(existing_eval)
+            else:
+                # Create new evaluation
+                new_eval = PmEvaluation(
+                    project_id=evaluation.project_id,
+                    evaluatee_id=evaluation.evaluatee_id,
+                    score=evaluation.score,
+                    comment=evaluation.comment,
+                    evaluator_id=evaluator_id,
+                    evaluation_period=evaluation_period,
+                )
+                db.add(new_eval)
+                upserted_objs.append(new_eval)
+
+        db.commit()
+        for obj in upserted_objs:
+            db.refresh(obj)
+        return upserted_objs
 
     def create_multi(
         self, db: Session, *, evaluations: List[PmEvaluationBase], evaluator_id: int, evaluation_period: str
@@ -73,6 +124,7 @@ class CRUDPmEvaluation(CRUDBase[PmEvaluation, PmEvaluationCreate, PmEvaluationBa
                 project_id=evaluation.project_id,
                 evaluatee_id=evaluation.evaluatee_id,
                 score=evaluation.score,
+                comment=evaluation.comment,
                 evaluator_id=evaluator_id,
                 evaluation_period=evaluation_period,
             )

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, Enum as SQLAlchemyEnum, ForeignKey, Date
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.core.database import Base
 from app.models.user import UserRole
 import enum
@@ -22,13 +22,13 @@ class EvaluationWeight(Base):
 class PeerEvaluation(Base):
     __tablename__ = "peer_evaluations"
 
-    id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
-    evaluator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    evaluatee_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    score = Column(Integer, nullable=False)
-    evaluation_period = Column(String, nullable=False)
-    feedback = Column(String, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    project_id: Mapped[int] = mapped_column(Integer, ForeignKey("projects.id"), nullable=False)
+    evaluator_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    evaluatee_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    score: Mapped[int] = mapped_column(Integer, nullable=False)
+    evaluation_period: Mapped[str] = mapped_column(String, nullable=False)
+    comment: Mapped[str | None] = mapped_column(String, nullable=True)
 
     project = relationship("Project")
     evaluator = relationship("User", foreign_keys=lambda: PeerEvaluation.evaluator_id)
@@ -39,12 +39,13 @@ class PeerEvaluation(Base):
 class PmEvaluation(Base):
     __tablename__ = "pm_evaluations"
 
-    id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
-    evaluator_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # PM
-    evaluatee_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    score = Column(Integer, nullable=False)
-    evaluation_period = Column(String, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    project_id: Mapped[int] = mapped_column(Integer, ForeignKey("projects.id"), nullable=False)
+    evaluator_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)  # PM
+    evaluatee_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    score: Mapped[int] = mapped_column(Integer, nullable=False)
+    evaluation_period: Mapped[str] = mapped_column(String, nullable=False)
+    comment: Mapped[str | None] = mapped_column(String, nullable=True)
 
     project = relationship("Project")
     evaluator = relationship("User", foreign_keys=lambda: PmEvaluation.evaluator_id)

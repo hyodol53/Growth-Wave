@@ -110,7 +110,7 @@ def test_read_subordinate_evaluation_as_dept_head(
     crud.peer_evaluation.peer_evaluation.create_multi(
         db,
         evaluations=[
-            PeerEvaluationBase(project_id=1, evaluatee_id=subordinate.id, score=80, feedback="Great team player!")
+            PeerEvaluationBase(project_id=1, evaluatee_id=subordinate.id, score=80, comment="Great team player!")
         ],
         evaluator_id=peer.id,
         evaluation_period=period,

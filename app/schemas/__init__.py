@@ -27,6 +27,9 @@ from .evaluation import (
     MyEvaluationResult,
     PmScoreResult,
     ManagerEvaluationView,
+    MyEvaluationTask,
+    PeerEvaluationTarget,
+    PeerEvaluationDetail,
 )
 from .report import GrowthAndCultureReport
 from .retrospective import RetrospectiveCreateRequest, RetrospectiveResponse

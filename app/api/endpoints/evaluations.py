@@ -93,59 +93,68 @@ def create_evaluation_weight(
     return evaluation_weight
 
 @router.post("/peer-evaluations/", response_model=List[schemas.PeerEvaluation])
-def create_peer_evaluations(
+def create_or_update_peer_evaluations(
     *,
     db: Session = Depends(deps.get_db),
     evaluations_in: schemas.PeerEvaluationCreate,
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Create new peer evaluations for a user.
+    Create or update peer evaluations for a user.
     """
+    active_period = crud.evaluation_period.get_active_period(db)
+    if not active_period:
+        raise HTTPException(status_code=400, detail="No active evaluation period.")
+
     # FR-A-3.1: The average of the scores given cannot exceed 70.
-    total_score = sum(e.score for e in evaluations_in.evaluations)
-    if total_score / len(evaluations_in.evaluations) > 70:
-        raise HTTPException(
-            status_code=400,
-            detail="Average score cannot exceed 70.",
-        )
+    if evaluations_in.evaluations:
+        total_score = sum(e.score for e in evaluations_in.evaluations)
+        if total_score / len(evaluations_in.evaluations) > 70:
+            raise HTTPException(
+                status_code=400,
+                detail="Average score cannot exceed 70.",
+            )
 
     # TODO: Add more validation
     # - Check if the evaluator and evaluatee are in the same project.
-    # - Check if the evaluation period is active.
-    # - Check for duplicate evaluations.
 
-    evaluation_period = f"{datetime.date.today().year}-H{1 if datetime.date.today().month <= 6 else 2}"
-
-    return crud.peer_evaluation.peer_evaluation.create_multi(
-        db, evaluations=evaluations_in.evaluations, evaluator_id=current_user.id, evaluation_period=evaluation_period
+    return crud.peer_evaluation.peer_evaluation.upsert_multi(
+        db,
+        evaluations=evaluations_in.evaluations,
+        evaluator_id=current_user.id,
+        evaluation_period=active_period.name,
     )
 
 @router.post("/pm-evaluations/", response_model=List[schemas.PmEvaluation])
-def create_pm_evaluations(
+def create_or_update_pm_evaluations(
     *,
     db: Session = Depends(deps.get_db),
     evaluations_in: schemas.PmEvaluationCreate,
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Create new PM evaluations for project members.
+    Create or update PM evaluations for project members.
     """
-    # TODO: Add more validation
-    # - Check if the evaluation period is active.
-    # - Check for duplicate evaluations.
+    active_period = crud.evaluation_period.get_active_period(db)
+    if not active_period:
+        raise HTTPException(status_code=400, detail="No active evaluation period.")
 
-    for evaluation in evaluations_in.evaluations:
-        # Check if the evaluator is a PM of the project
+    if not evaluations_in.evaluations:
+        return []
+
+    # Validate all projects first
+    project_ids = {e.project_id for e in evaluations_in.evaluations}
+    for project_id in project_ids:
         project_member = crud.project_member.project_member.get_by_user_and_project(
-            db, user_id=current_user.id, project_id=evaluation.project_id
+            db, user_id=current_user.id, project_id=project_id
         )
         if not project_member or not project_member.is_pm:
             raise HTTPException(
                 status_code=403,
-                detail="User is not a Project Manager for this project.",
+                detail=f"User is not a Project Manager for project {project_id}.",
             )
 
+    for evaluation in evaluations_in.evaluations:
         # Check if the score is valid
         if not 0 <= evaluation.score <= 100:
             raise HTTPException(
@@ -153,10 +162,11 @@ def create_pm_evaluations(
                 detail="Score must be between 0 and 100.",
             )
 
-    evaluation_period = f"{datetime.date.today().year}-H{1 if datetime.date.today().month <= 6 else 2}"
-
-    return crud.pm_evaluation.pm_evaluation.create_multi(
-        db, evaluations=evaluations_in.evaluations, evaluator_id=current_user.id, evaluation_period=evaluation_period
+    return crud.pm_evaluation.pm_evaluation.upsert_multi(
+        db,
+        evaluations=evaluations_in.evaluations,
+        evaluator_id=current_user.id,
+        evaluation_period=active_period.name,
     )
 
 
@@ -274,6 +284,99 @@ def delete_evaluation_weight(
         raise HTTPException(status_code=404, detail="Evaluation weight not found")
     evaluation_weight = crud.evaluation.evaluation_weight.remove(db=db, id=id)
     return evaluation_weight
+
+
+@router.get("/peer-evaluations/{project_id}", response_model=schemas.PeerEvaluationDetail)
+def read_peer_evaluation_details(
+    *,
+    db: Session = Depends(deps.get_db),
+    project_id: int,
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Get details for conducting a peer evaluation for a specific project.
+    """
+    active_period = crud.evaluation_period.get_active_period(db)
+    if not active_period:
+        raise HTTPException(status_code=400, detail="No active evaluation period.")
+
+    project = crud.project.project.get(db, id=project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found.")
+
+    project_members = crud.project_member.project_member.get_multi_by_project_with_user_details(
+        db, project_id=project_id
+    )
+    
+    peers_to_evaluate = []
+    evaluated_count = 0
+    for member in project_members:
+        if member.user_id == current_user.id:
+            continue
+
+        existing_eval = crud.peer_evaluation.peer_evaluation.get_by_evaluator_and_evaluatee(
+            db,
+            project_id=project_id,
+            evaluator_id=current_user.id,
+            evaluatee_id=member.user_id,
+            evaluation_period=active_period.name,
+        )
+
+        target = schemas.PeerEvaluationTarget(
+            evaluatee_id=member.user_id,
+            evaluatee_name=member.full_name,
+            score=existing_eval.score if existing_eval else None,
+            comment=existing_eval.comment if existing_eval else None,
+        )
+        peers_to_evaluate.append(target)
+        if existing_eval:
+            evaluated_count += 1
+
+    status = "NOT_STARTED"
+    if evaluated_count > 0:
+        status = "IN_PROGRESS"
+    if evaluated_count == len(peers_to_evaluate) and evaluated_count > 0:
+        status = "COMPLETED"
+
+    return schemas.PeerEvaluationDetail(
+        project_id=project.id,
+        project_name=project.name,
+        status=status,
+        peers_to_evaluate=peers_to_evaluate,
+    )
+
+
+@router.get("/my-tasks", response_model=List[schemas.MyEvaluationTask])
+def my_evaluation_tasks(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Get all projects the current user needs to evaluate in the active period.
+    """
+    active_period = crud.evaluation_period.get_active_period(db)
+    if not active_period:
+        return []
+
+    project_memberships = crud.project_member.project_member.get_multi_by_user_and_period(
+        db,
+        user_id=current_user.id,
+        start_date=active_period.start_date,
+        end_date=active_period.end_date,
+    )
+
+    tasks = []
+    for pm in project_memberships:
+        if pm.project:
+            tasks.append(
+                schemas.MyEvaluationTask(
+                    project_id=pm.project_id,
+                    project_name=pm.project.name,
+                    user_role_in_project="PM" if pm.is_pm else "MEMBER",
+                )
+            )
+    return tasks
 
 
 @router.get("/me", response_model=schemas.MyEvaluationResult)

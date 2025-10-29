@@ -12,12 +12,12 @@ class CRUDPeerEvaluation(CRUDBase[PeerEvaluation, PeerEvaluationCreate, PeerEval
         Gets all non-empty feedback strings for an evaluatee for a specific period.
         """
         return (
-            db.query(PeerEvaluation.feedback)
+            db.query(PeerEvaluation.comment)
             .filter(
                 PeerEvaluation.evaluatee_id == evaluatee_id,
                 PeerEvaluation.evaluation_period == evaluation_period,
-                PeerEvaluation.feedback.isnot(None),
-                PeerEvaluation.feedback != "",
+                PeerEvaluation.comment.isnot(None),
+                PeerEvaluation.comment != "",
             )
             .all()
         )
@@ -35,6 +35,56 @@ class CRUDPeerEvaluation(CRUDBase[PeerEvaluation, PeerEvaluationCreate, PeerEval
             .all()
         )
 
+    def get_by_evaluator_and_evaluatee(
+        self, db: Session, *, project_id: int, evaluator_id: int, evaluatee_id: int, evaluation_period: str
+    ) -> PeerEvaluation | None:
+        return (
+            db.query(PeerEvaluation)
+            .filter(
+                PeerEvaluation.project_id == project_id,
+                PeerEvaluation.evaluator_id == evaluator_id,
+                PeerEvaluation.evaluatee_id == evaluatee_id,
+                PeerEvaluation.evaluation_period == evaluation_period,
+            )
+            .first()
+        )
+
+    def upsert_multi(
+        self, db: Session, *, evaluations: List[PeerEvaluationBase], evaluator_id: int, evaluation_period: str
+    ) -> List[PeerEvaluation]:
+        upserted_objs = []
+        for evaluation in evaluations:
+            existing_eval = self.get_by_evaluator_and_evaluatee(
+                db,
+                project_id=evaluation.project_id,
+                evaluator_id=evaluator_id,
+                evaluatee_id=evaluation.evaluatee_id,
+                evaluation_period=evaluation_period,
+            )
+            if existing_eval:
+                # Update existing evaluation
+                existing_eval.score = evaluation.score
+                existing_eval.comment = evaluation.comment
+                db.add(existing_eval)
+                upserted_objs.append(existing_eval)
+            else:
+                # Create new evaluation
+                new_eval = PeerEvaluation(
+                    project_id=evaluation.project_id,
+                    evaluatee_id=evaluation.evaluatee_id,
+                    score=evaluation.score,
+                    comment=evaluation.comment,
+                    evaluator_id=evaluator_id,
+                    evaluation_period=evaluation_period,
+                )
+                db.add(new_eval)
+                upserted_objs.append(new_eval)
+        
+        db.commit()
+        for obj in upserted_objs:
+            db.refresh(obj)
+        return upserted_objs
+
     def create_multi(
         self, db: Session, *, evaluations: List[PeerEvaluationBase], evaluator_id: int, evaluation_period: str
     ) -> List[PeerEvaluation]:
@@ -43,7 +93,7 @@ class CRUDPeerEvaluation(CRUDBase[PeerEvaluation, PeerEvaluationCreate, PeerEval
                 project_id=evaluation.project_id,
                 evaluatee_id=evaluation.evaluatee_id,
                 score=evaluation.score,
-                feedback=evaluation.feedback,
+                comment=evaluation.comment,
                 evaluator_id=evaluator_id,
                 evaluation_period=evaluation_period,
             )

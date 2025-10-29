@@ -29,7 +29,7 @@ class PeerEvaluationBase(BaseModel):
     project_id: int
     evaluatee_id: int
     score: int
-    feedback: Optional[str] = None
+    comment: Optional[str] = None
 
 class PeerEvaluationCreate(BaseModel):
     evaluations: List[PeerEvaluationBase]
@@ -49,6 +49,7 @@ class PmEvaluationBase(BaseModel):
     project_id: int
     evaluatee_id: int
     score: int
+    comment: Optional[str] = None
 
 class PmEvaluationCreate(BaseModel):
     evaluations: List[PmEvaluationBase]
@@ -195,8 +196,22 @@ class ManagerEvaluationView(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Schemas for Evaluation UX Improvement
+class MyEvaluationTask(BaseModel):
+    project_id: int
+    project_name: str
+    user_role_in_project: str # "PM" or "MEMBER"
 
 
+class PeerEvaluationTarget(BaseModel):
+    evaluatee_id: int
+    evaluatee_name: str
+    score: Optional[int] = None
+    comment: Optional[str] = None
 
 
-
+class PeerEvaluationDetail(BaseModel):
+    project_id: int
+    project_name: str
+    status: str # "NOT_STARTED", "IN_PROGRESS", "COMPLETED"
+    peers_to_evaluate: List[PeerEvaluationTarget]
