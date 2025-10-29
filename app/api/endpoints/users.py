@@ -1,4 +1,3 @@
-
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,7 +6,12 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.user import User as UserModel, UserRole
 from app.schemas.user import User, UserCreate, UserUpdate, UserHistoryResponse
+from app.schemas.project_member import (
+    ProjectMemberWeightDetail,
+    UserProjectWeightsUpdate,
+)
 from app.crud import user as user_crud
+from app.crud import project_member as project_member_crud
 from app.api import deps
 
 
@@ -139,3 +143,56 @@ def read_user_history(
     Retrieve a specific user's history. (Admin or Manager of the user only)
     """
     return user_crud.user.get_user_history(db, user_id=user_to_view.id)
+
+
+@router.get(
+    "/{user_id}/project-weights",
+    response_model=List[ProjectMemberWeightDetail],
+)
+def read_user_project_weights(
+    *,
+    db: Session = Depends(deps.get_db),
+    user_to_view: UserModel = Depends(deps.get_user_as_subordinate),
+):
+    """
+    Retrieve a specific user's project participation weights.
+    (Admin or Manager of the user only)
+    """
+    weights = project_member_crud.project_member.get_multi_by_user_with_project_details(
+        db, user_id=user_to_view.id
+    )
+    return weights
+
+
+@router.put(
+    "/{user_id}/project-weights",
+    response_model=List[ProjectMemberWeightDetail],
+)
+def update_user_project_weights(
+    *,
+    weights_in: UserProjectWeightsUpdate,
+    db: Session = Depends(deps.get_db),
+    user_to_view: UserModel = Depends(deps.get_user_as_subordinate),
+):
+    """
+    Update a specific user's project participation weights.
+    The sum of weights must be 100.
+    (Admin or Manager of the user only)
+    """
+    # Validate that the sum of weights is 100
+    total_weight = sum(w.participation_weight for w in weights_in.weights)
+    if total_weight != 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Participation weights must sum to 100.",
+        )
+
+    # Overwrite the weights in the database
+    project_member_crud.project_member.overwrite_user_project_weights(
+        db, user_id=user_to_view.id, weights=weights_in.weights
+    )
+
+    # Return the updated list of weights
+    return project_member_crud.project_member.get_multi_by_user_with_project_details(
+        db, user_id=user_to_view.id
+    )

@@ -1,4 +1,3 @@
-
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -237,3 +236,123 @@ def test_read_my_subordinates_as_employee(client: TestClient, db: Session):
     # 3. Assertions
     assert response.status_code == 403
     assert "You do not have permission" in response.json()["detail"]
+
+
+# --- Tests for Project Member Weights ---
+
+def test_read_user_project_weights_by_manager(client: TestClient, db: Session):
+    # Arrange
+    dept = create_random_organization(db)
+    manager = create_random_user(db, role="dept_head", organization_id=dept.id)
+    subordinate = create_random_user(db, organization_id=dept.id)
+    project1 = create_random_project(db, owner_org_id=dept.id)
+    project2 = create_random_project(db, owner_org_id=dept.id)
+    create_project_member(db, user_id=subordinate.id, project_id=project1.id, participation_weight=60)
+    create_project_member(db, user_id=subordinate.id, project_id=project2.id, participation_weight=40)
+    manager_token_headers = authentication_token_from_username(client=client, username=manager.username, db=db)
+
+    # Act
+    response = client.get(f"/api/v1/users/{subordinate.id}/project-weights", headers=manager_token_headers)
+
+    # Assert
+    assert response.status_code == 200
+    weights = response.json()
+    assert len(weights) == 2
+    weights_dict = {w["project_id"]: w["participation_weight"] for w in weights}
+    assert weights_dict[project1.id] == 60
+    assert weights_dict[project2.id] == 40
+
+def test_read_user_project_weights_unauthorized(client: TestClient, db: Session):
+    # Arrange
+    dept1 = create_random_organization(db)
+    dept2 = create_random_organization(db)
+    manager = create_random_user(db, role="dept_head", organization_id=dept1.id)
+    subordinate = create_random_user(db, organization_id=dept2.id) # In another department
+    manager_token_headers = authentication_token_from_username(client=client, username=manager.username, db=db)
+
+    # Act
+    response = client.get(f"/api/v1/users/{subordinate.id}/project-weights", headers=manager_token_headers)
+
+    # Assert
+    assert response.status_code == 403
+
+def test_update_user_project_weights_by_manager(client: TestClient, db: Session):
+    # Arrange
+    dept = create_random_organization(db)
+    manager = create_random_user(db, role="dept_head", organization_id=dept.id)
+    subordinate = create_random_user(db, organization_id=dept.id)
+    project1 = create_random_project(db, owner_org_id=dept.id)
+    project2 = create_random_project(db, owner_org_id=dept.id)
+    create_project_member(db, user_id=subordinate.id, project_id=project1.id, participation_weight=60)
+    create_project_member(db, user_id=subordinate.id, project_id=project2.id, participation_weight=40)
+    manager_token_headers = authentication_token_from_username(client=client, username=manager.username, db=db)
+    update_payload = {
+        "weights": [
+            {"project_id": project1.id, "participation_weight": 50},
+            {"project_id": project2.id, "participation_weight": 50}
+        ]
+    }
+
+    # Act
+    response = client.put(
+        f"/api/v1/users/{subordinate.id}/project-weights", 
+        headers=manager_token_headers, 
+        json=update_payload
+    )
+
+    # Assert
+    assert response.status_code == 200
+    updated_weights = response.json()
+    weights_dict = {w["project_id"]: w["participation_weight"] for w in updated_weights}
+    assert weights_dict[project1.id] == 50
+    assert weights_dict[project2.id] == 50
+
+def test_update_user_project_weights_invalid_sum(client: TestClient, db: Session):
+    # Arrange
+    dept = create_random_organization(db)
+    manager = create_random_user(db, role="dept_head", organization_id=dept.id)
+    subordinate = create_random_user(db, organization_id=dept.id)
+    project1 = create_random_project(db, owner_org_id=dept.id)
+    create_project_member(db, user_id=subordinate.id, project_id=project1.id, participation_weight=100)
+    manager_token_headers = authentication_token_from_username(client=client, username=manager.username, db=db)
+    update_payload = {
+        "weights": [
+            {"project_id": project1.id, "participation_weight": 99}
+        ]
+    }
+
+    # Act
+    response = client.put(
+        f"/api/v1/users/{subordinate.id}/project-weights", 
+        headers=manager_token_headers, 
+        json=update_payload
+    )
+
+    # Assert
+    assert response.status_code == 400
+    assert "must sum to 100" in response.json()["detail"]
+
+def test_update_user_project_weights_unauthorized(client: TestClient, db: Session):
+    # Arrange
+    dept1 = create_random_organization(db)
+    dept2 = create_random_organization(db)
+    manager = create_random_user(db, role="dept_head", organization_id=dept1.id)
+    subordinate = create_random_user(db, organization_id=dept2.id)
+    project1 = create_random_project(db, owner_org_id=dept2.id)
+    create_project_member(db, user_id=subordinate.id, project_id=project1.id, participation_weight=100)
+    manager_token_headers = authentication_token_from_username(client=client, username=manager.username, db=db)
+    update_payload = {
+        "weights": [
+            {"project_id": project1.id, "participation_weight": 100}
+        ]
+    }
+
+    # Act
+    response = client.put(
+        f"/api/v1/users/{subordinate.id}/project-weights", 
+        headers=manager_token_headers, 
+        json=update_payload
+    )
+
+    # Assert
+    assert response.status_code == 403

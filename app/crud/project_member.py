@@ -7,15 +7,24 @@ from app.crud.base import CRUDBase
 from app.models.project_member import ProjectMember
 from app.models.project import Project
 from app.models.user import User
-from app.schemas.project_member import ProjectMemberCreate, ProjectMemberUpdate
+from app.schemas.project_member import (
+    ProjectMemberCreate,
+    ProjectMemberUpdate,
+    ProjectWeight,
+)
 
-class CRUDProjectMember(CRUDBase[ProjectMember, ProjectMemberCreate, ProjectMemberUpdate]):
+
+class CRUDProjectMember(
+    CRUDBase[ProjectMember, ProjectMemberCreate, ProjectMemberUpdate]
+):
     def get_by_user_and_project(
         self, db: Session, *, user_id: int, project_id: int
     ) -> Optional[ProjectMember]:
         return (
             db.query(ProjectMember)
-            .filter(ProjectMember.user_id == user_id, ProjectMember.project_id == project_id)
+            .filter(
+                ProjectMember.user_id == user_id, ProjectMember.project_id == project_id
+            )
             .first()
         )
 
@@ -36,7 +45,9 @@ class CRUDProjectMember(CRUDBase[ProjectMember, ProjectMemberCreate, ProjectMemb
             .all()
         )
 
-    def get_multi_by_project_with_user_details(self, db: Session, *, project_id: int) -> list:
+    def get_multi_by_project_with_user_details(
+        self, db: Session, *, project_id: int
+    ) -> list:
         return (
             db.query(
                 ProjectMember.user_id.label("user_id"),
@@ -48,5 +59,47 @@ class CRUDProjectMember(CRUDBase[ProjectMember, ProjectMemberCreate, ProjectMemb
             .filter(ProjectMember.project_id == project_id)
             .all()
         )
+
+    def get_multi_by_user_with_project_details(
+        self, db: Session, *, user_id: int
+    ) -> list:
+        """
+        Fetches all project memberships for a user, including project names.
+        """
+        return (
+            db.query(
+                Project.id.label("project_id"),
+                Project.name.label("project_name"),
+                ProjectMember.participation_weight.label("participation_weight"),
+            )
+            .join(Project, ProjectMember.project_id == Project.id)
+            .filter(ProjectMember.user_id == user_id)
+            .all()
+        )
+
+    def overwrite_user_project_weights(
+        self, db: Session, *, user_id: int, weights: List[ProjectWeight]
+    ) -> List[ProjectMember]:
+        """
+        Updates participation weights for a user's existing project memberships.
+        This function does not create or delete memberships, only updates weights.
+        """
+        # Fetch existing memberships in a dictionary for quick access
+        existing_memberships = {
+            m.project_id: m
+            for m in self.get_multi_by_user(db=db, user_id=user_id)
+        }
+
+        updated_memberships = []
+        for weight_info in weights:
+            membership = existing_memberships.get(weight_info.project_id)
+            if membership:
+                membership.participation_weight = weight_info.participation_weight
+                db.add(membership)
+                updated_memberships.append(membership)
+
+        db.commit()
+        return updated_memberships
+
 
 project_member = CRUDProjectMember(ProjectMember)

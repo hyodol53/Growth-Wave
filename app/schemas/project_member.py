@@ -33,14 +33,20 @@ class ProjectMemberInDB(ProjectMemberInDBBase):
     pass
 
 
-# Schema for updating a user's weights across multiple projects
+# Schema for a single project's weight
 class ProjectWeight(BaseModel):
     project_id: int
     participation_weight: int
 
-class ProjectMemberWeightsUpdate(BaseModel):
-    user_id: int
+# Schema for updating a user's weights across multiple projects
+class UserProjectWeightsUpdate(BaseModel):
     weights: List[ProjectWeight]
+
+# Schema for returning a user's project weight with project name
+class ProjectMemberWeightDetail(BaseModel):
+    project_id: int
+    project_name: str
+    participation_weight: int
 
 
 class ProjectMemberDetail(BaseModel):
