@@ -101,5 +101,24 @@ class CRUDProjectMember(
         db.commit()
         return updated_memberships
 
+    def add_member_with_auto_weight(
+        self, db: Session, *, user_id: int, project_id: int, is_pm: bool
+    ) -> ProjectMember:
+        # Calculate current total weight for the user
+        current_memberships = self.get_multi_by_user(db=db, user_id=user_id)
+        total_weight = sum(m.participation_weight for m in current_memberships)
+
+        # New weight is the remaining percentage, with a floor of 0
+        new_weight = max(0, 100 - total_weight)
+
+        # Create the new project member record
+        create_schema = ProjectMemberCreate(
+            user_id=user_id,
+            project_id=project_id,
+            is_pm=is_pm,
+            participation_weight=new_weight,
+        )
+        return self.create(db=db, obj_in=create_schema)
+
 
 project_member = CRUDProjectMember(ProjectMember)

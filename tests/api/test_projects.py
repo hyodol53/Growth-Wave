@@ -5,6 +5,7 @@ from app.models.user import UserRole
 from tests.utils.user import create_random_user, authentication_token_from_username
 from tests.utils.organization import create_random_organization
 from tests.utils.project import create_random_project
+from app.crud import project_member as crud_pm
 
 def test_create_project_by_dept_head_success(client: TestClient, db: Session):
     # Setup: Org A, Dept Head A, User A (as PM)
@@ -22,6 +23,14 @@ def test_create_project_by_dept_head_success(client: TestClient, db: Session):
     created_project = response.json()
     assert created_project["name"] == "Project A"
     assert created_project["pm"]["id"] == pm_user_a.id
+
+    # Verify that the PM was added to project_members
+    pm_membership = crud_pm.project_member.get_by_user_and_project(
+        db, user_id=pm_user_a.id, project_id=created_project["id"]
+    )
+    assert pm_membership is not None
+    assert pm_membership.is_pm is True
+    assert pm_membership.participation_weight == 100
 
 def test_create_project_by_dept_head_forbidden(client: TestClient, db: Session):
     # Setup: Org A and B, Dept Head A, User B (as PM)
@@ -55,6 +64,14 @@ def test_create_project_by_admin_success(client: TestClient, db: Session):
     created_project = response.json()
     assert created_project["name"] == "Admin Project"
     assert created_project["pm"]["id"] == pm_user_b.id
+
+    # Verify that the PM was added to project_members
+    pm_membership = crud_pm.project_member.get_by_user_and_project(
+        db, user_id=pm_user_b.id, project_id=created_project["id"]
+    )
+    assert pm_membership is not None
+    assert pm_membership.is_pm is True
+    assert pm_membership.participation_weight == 100
 
 def test_create_project_with_nonexistent_pm(client: TestClient, db: Session):
     # Setup

@@ -13,6 +13,11 @@ class ProjectMemberBase(BaseModel):
 class ProjectMemberCreate(ProjectMemberBase):
     pass
 
+# Schema for adding a member to a project via API
+class ProjectMemberAdd(BaseModel):
+    user_id: int
+    is_pm: bool = False
+
 # Properties to receive on item update
 class ProjectMemberUpdate(BaseModel):
     participation_weight: int
