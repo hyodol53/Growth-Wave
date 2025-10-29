@@ -30,6 +30,9 @@ class User(Base):
     # Project memberships for this user
     project_memberships = relationship("ProjectMember", back_populates="user", cascade="all, delete-orphan")
 
+    # Projects managed by this user (as PM)
+    projects_managed = relationship("Project", back_populates="pm", foreign_keys="[Project.pm_id]")
+
     # Praises received by this user
     praises_received = relationship(
         "Praise",

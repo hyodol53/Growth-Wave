@@ -43,9 +43,13 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
         owner_org_id: project.owner_org_id || 0,
       });
     } else {
-      setFormData(initialFormData);
+      setFormData({
+        ...initialFormData,
+        pm_id: users[0]?.id || 0,
+        owner_org_id: organizations[0]?.id || 0,
+      });
     }
-  }, [project, open]);
+  }, [project, open, users, organizations]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<number>) => {
     const { name, value } = e.target;
@@ -112,7 +116,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               <Select
                 labelId="pm-select-label"
                 name="pm_id"
-                value={formData.pm_id || ''}
+                value={formData.pm_id}
                 label="Project Manager"
                 onChange={handleChange}
               >
@@ -128,7 +132,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               <Select
                 labelId="org-select-label"
                 name="owner_org_id"
-                value={formData.owner_org_id || ''}
+                value={formData.owner_org_id}
                 label="Owning Organization"
                 onChange={handleChange}
               >

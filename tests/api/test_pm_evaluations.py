@@ -11,7 +11,7 @@ def test_create_pm_evaluations_success(client: TestClient, db: Session) -> None:
     pm_user = create_random_user(db, password="password")
     member_user = create_random_user(db)
     org = create_random_organization(db)
-    project = create_random_project(db, owner_org_id=org.id)
+    project = create_random_project(db, pm_id=pm_user.id)
     create_project_member(db, project_id=project.id, user_id=pm_user.id, is_pm=True)
     create_project_member(db, project_id=project.id, user_id=member_user.id)
 
@@ -39,7 +39,8 @@ def test_create_pm_evaluations_not_a_pm(client: TestClient, db: Session) -> None
     non_pm_user = create_random_user(db, password="password")
     member_user = create_random_user(db)
     org = create_random_organization(db)
-    project = create_random_project(db, owner_org_id=org.id)
+    pm = create_random_user(db)
+    project = create_random_project(db, pm_id=pm.id)
     create_project_member(db, project_id=project.id, user_id=non_pm_user.id, is_pm=False)
     create_project_member(db, project_id=project.id, user_id=member_user.id)
 
@@ -65,7 +66,7 @@ def test_create_pm_evaluations_score_out_of_range(client: TestClient, db: Sessio
     pm_user = create_random_user(db, password="password")
     member_user = create_random_user(db)
     org = create_random_organization(db)
-    project = create_random_project(db, owner_org_id=org.id)
+    project = create_random_project(db, pm_id=pm_user.id)
     create_project_member(db, project_id=project.id, user_id=pm_user.id, is_pm=True)
     create_project_member(db, project_id=project.id, user_id=member_user.id)
 
@@ -91,7 +92,7 @@ def test_create_pm_self_evaluation_as_admin(client: TestClient, db: Session) -> 
     admin_user = create_random_user(db, role=UserRole.ADMIN, password="password")
     pm_user = create_random_user(db, role=UserRole.TEAM_LEAD)
     org = create_random_organization(db)
-    project = create_random_project(db, owner_org_id=org.id) # PM needs a project context
+    project = create_random_project(db, pm_id=pm_user.id) # PM needs a project context
     headers = authentication_token_from_username(client=client, username=admin_user.username, db=db)
 
     data = {"project_id": project.id, "evaluatee_id": pm_user.id, "score": 98}
@@ -107,7 +108,7 @@ def test_create_pm_self_evaluation_not_admin(client: TestClient, db: Session) ->
     normal_user = create_random_user(db, password="password")
     pm_user = create_random_user(db, role=UserRole.TEAM_LEAD)
     org = create_random_organization(db)
-    project = create_random_project(db, owner_org_id=org.id)
+    project = create_random_project(db, pm_id=pm_user.id)
     headers = authentication_token_from_username(client=client, username=normal_user.username, db=db)
 
     data = {"project_id": project.id, "evaluatee_id": pm_user.id, "score": 98}

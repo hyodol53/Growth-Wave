@@ -12,9 +12,9 @@ class Project(Base):
     start_date = Column(Date, nullable=True)
     end_date = Column(Date, nullable=True)
 
-    # A project is owned/managed by an organization (e.g., a '실')
-    owner_org_id = Column(Integer, ForeignKey("organizations.id"))
-    owner_org = relationship("Organization", back_populates="projects")
+    # The project is managed by a Project Manager (PM)
+    pm_id = Column(Integer, ForeignKey("users.id"))
+    pm = relationship("User", back_populates="projects_managed")
 
     # Members associated with this project
     project_members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")

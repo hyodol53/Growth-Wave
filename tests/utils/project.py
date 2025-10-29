@@ -9,7 +9,7 @@ from datetime import date
 def create_random_project(
     db: Session, 
     *, 
-    owner_org_id: int, 
+    pm_id: int, 
     name: Optional[str] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None
@@ -18,7 +18,7 @@ def create_random_project(
         name = random_lower_string()
     project_in = ProjectCreate(
         name=name, 
-        owner_org_id=owner_org_id, 
+        pm_id=pm_id, 
         start_date=start_date, 
         end_date=end_date
     )

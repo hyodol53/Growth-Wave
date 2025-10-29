@@ -17,7 +17,8 @@ def test_get_collaboration_network_data_by_project(
     user2 = create_random_user(db)
     user3 = create_random_user(db)
     org = create_random_organization(db)
-    project = create_random_project(db, owner_org_id=org.id)
+    pm = create_random_user(db, organization_id=org.id)
+    project = create_random_project(db, pm_id=pm.id)
 
     create_random_interaction(db, source_user=user1, target_user=user2, project=project, type=InteractionType.JIRA_COMMENT)
     create_random_interaction(db, source_user=user2, target_user=user3, project=project, type=InteractionType.BITBUCKET_PR_REVIEW)
@@ -58,7 +59,8 @@ def test_get_collaboration_network_data_by_organization(
     db.add(user3)
     db.commit()
 
-    project = create_random_project(db, owner_org_id=org1.id)
+    pm = create_random_user(db, organization_id=org1.id)
+    project = create_random_project(db, pm_id=pm.id)
 
     create_random_interaction(db, source_user=user1, target_user=user2, project=project, type=InteractionType.JIRA_MENTION)
     create_random_interaction(db, source_user=user1, target_user=user3, project=project, type=InteractionType.JIRA_MENTION)

@@ -30,8 +30,8 @@ def test_calculate_final_evaluations_as_dept_head(
     )
 
     # Projects
-    project1 = create_random_project(db, owner_org_id=dept_head.organization_id)
-    project2 = create_random_project(db, owner_org_id=dept_head.organization_id)
+    project1 = create_random_project(db, pm_id=team_lead.id)
+    project2 = create_random_project(db, pm_id=team_lead.id)
     # Define a consistent evaluation period for the test
     test_evaluation_period = f"{datetime.date.today().year}-H{1 if datetime.date.today().month <= 6 else 2}"
 
@@ -93,7 +93,7 @@ def test_calculate_final_evaluations_for_pm(
     
     admin_headers = authentication_token_from_username(client=client, username=admin_user.username, db=db)
 
-    project = create_random_project(db, owner_org_id=dept_head.organization_id)
+    project = create_random_project(db, pm_id=pm_user.id)
     test_evaluation_period = f"{datetime.date.today().year}-H{1 if datetime.date.today().month <= 6 else 2}"
 
     create_project_member(db, project_id=project.id, user_id=pm_user.id, participation_weight=100.0, is_pm=True)

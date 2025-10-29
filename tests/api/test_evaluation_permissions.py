@@ -27,9 +27,9 @@ def test_read_my_evaluation_result(
     employee = create_random_user(db, role=UserRole.EMPLOYEE)
     pm = create_random_user(db, role=UserRole.TEAM_LEAD)
     
-    # Create organization and project
+    # Create organization and project, assigning the PM
     org = create_random_organization(db)
-    project_in = ProjectCreate(name=random_lower_string(), owner_org_id=org.id)
+    project_in = ProjectCreate(name=random_lower_string(), pm_id=pm.id)
     project = crud.project.project.create(db, obj_in=project_in)
     
     # Add users to project

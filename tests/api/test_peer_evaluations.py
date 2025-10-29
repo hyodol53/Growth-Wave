@@ -11,7 +11,7 @@ def test_create_peer_evaluations_success(client: TestClient, db: Session) -> Non
     user2 = create_random_user(db)
     user3 = create_random_user(db)
     org = create_random_organization(db)
-    project = create_random_project(db, owner_org_id=org.id)
+    project = create_random_project(db, pm_id=user1.id)
     create_project_member(db, project_id=project.id, user_id=user1.id)
     create_project_member(db, project_id=project.id, user_id=user2.id)
     create_project_member(db, project_id=project.id, user_id=user3.id)
@@ -44,7 +44,7 @@ def test_create_peer_evaluations_avg_score_too_high(client: TestClient, db: Sess
     user2 = create_random_user(db)
     user3 = create_random_user(db)
     org = create_random_organization(db)
-    project = create_random_project(db, owner_org_id=org.id)
+    project = create_random_project(db, pm_id=user1.id)
     create_project_member(db, project_id=project.id, user_id=user1.id)
     create_project_member(db, project_id=project.id, user_id=user2.id)
     create_project_member(db, project_id=project.id, user_id=user3.id)
@@ -72,7 +72,8 @@ def test_create_peer_evaluations_unauthenticated(client: TestClient, db: Session
     user2 = create_random_user(db)
     user3 = create_random_user(db)
     org = create_random_organization(db)
-    project = create_random_project(db, owner_org_id=org.id)
+    pm = create_random_user(db)
+    project = create_random_project(db, pm_id=pm.id)
     data = {
         "evaluations": [
             {"project_id": project.id, "evaluatee_id": user2.id, "score": 60},

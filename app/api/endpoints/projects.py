@@ -24,11 +24,18 @@ def create_project(
     """
     Create new project. (Dept Head or Admin only)
     """
-    # A dept_head can only create a project within their own department
-    if current_user.role == "dept_head" and project_in.owner_org_id != current_user.organization_id:
+    # A dept_head can only create projects where the PM is in their own department.
+    pm_user = crud_user.user.get(db, id=project_in.pm_id)
+    if not pm_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project Manager with id {project_in.pm_id} not found.",
+        )
+
+    if current_user.role == "dept_head" and pm_user.organization_id != current_user.organization_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Department heads can only create projects for their own department.",
+            detail="Department heads can only create projects with a PM from their own department.",
         )
     project = crud_project.project.create(db=db, obj_in=project_in)
     return project
@@ -75,12 +82,27 @@ def update_project(
     project = crud_project.project.get(db=db, id=project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    # Authorization check
-    if current_user.role == "dept_head" and project.owner_org_id != current_user.organization_id:
+    # Authorization check: Dept heads can only manage projects where the PM is in their department.
+    if current_user.role == "dept_head" and project.pm.organization_id != current_user.organization_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Department heads can only update projects in their own department.",
+            detail="Department heads can only manage projects where the PM is in their own department.",
         )
+
+    # If the PM is being updated, ensure the new PM is also in the same department
+    if project_in.pm_id is not None:
+        new_pm_user = crud_user.user.get(db, id=project_in.pm_id)
+        if not new_pm_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"New Project Manager with id {project_in.pm_id} not found.",
+            )
+        if current_user.role == "dept_head" and new_pm_user.organization_id != current_user.organization_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Department heads can only assign a PM from their own department.",
+            )
+
     project = crud_project.project.update(db=db, db_obj=project, obj_in=project_in)
     return project
 
@@ -97,11 +119,11 @@ def delete_project(
     project = crud_project.project.get(db=db, id=project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    # Authorization check
-    if current_user.role == "dept_head" and project.owner_org_id != current_user.organization_id:
+    # Authorization check: Dept heads can only manage projects where the PM is in their department.
+    if current_user.role == "dept_head" and project.pm.organization_id != current_user.organization_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Department heads can only delete projects in their own department.",
+            detail="Department heads can only delete projects where the PM is in their own department.",
         )
     project = crud_project.project.remove(db=db, id=project_id)
     return project

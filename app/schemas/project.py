@@ -1,25 +1,29 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
+from typing import Optional
 from datetime import date
+
+from app.schemas.user import User
 
 
 # Shared properties
 class ProjectBase(BaseModel):
     name: str
     description: Optional[str] = None
-    owner_org_id: int
+    pm_id: int
     start_date: Optional[date] = None
     end_date: Optional[date] = None
+
 
 # Properties to receive on item creation
 class ProjectCreate(ProjectBase):
     pass
 
+
 # Properties to receive on item update
 class ProjectUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    owner_org_id: Optional[int] = None
+    pm_id: Optional[int] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
 
@@ -33,7 +37,8 @@ class ProjectInDBBase(ProjectBase):
 
 # Properties to return to client
 class Project(ProjectInDBBase):
-    pass
+    pm: User
+
 
 # Properties properties stored in DB
 class ProjectInDB(ProjectInDBBase):
