@@ -31,17 +31,17 @@ def test_create_peer_evaluations_success(client: TestClient, db: Session) -> Non
 
     data = {
         "evaluations": [
-            {"project_id": project.id, "evaluatee_id": user2.id, "score": 60, "comment": "Good teamwork!"},
-            {"project_id": project.id, "evaluatee_id": user3.id, "score": 80, "comment": "Very helpful."},
+            {"project_id": project.id, "evaluatee_id": user2.id, "scores": [10, 10, 10, 10, 10, 5, 5], "comment": "Good teamwork!"},
+            {"project_id": project.id, "evaluatee_id": user3.id, "scores": [20, 20, 10, 10, 10, 5, 5], "comment": "Very helpful."},
         ]
     }
     response = client.post(f"{settings.API_V1_STR}/evaluations/peer-evaluations/", headers=headers, json=data)
     assert response.status_code == 200
     content = response.json()
     assert len(content) == 2
-    assert content[0]["score"] == 60
+    assert content[0]["scores"] == [10, 10, 10, 10, 10, 5, 5]
     assert content[0]["comment"] == "Good teamwork!"
-    assert content[1]["score"] == 80
+    assert content[1]["scores"] == [20, 20, 10, 10, 10, 5, 5]
     assert content[1]["comment"] == "Very helpful."
 
 def test_create_peer_evaluations_avg_score_too_high(client: TestClient, db: Session) -> None:
@@ -67,8 +67,8 @@ def test_create_peer_evaluations_avg_score_too_high(client: TestClient, db: Sess
 
     data = {
         "evaluations": [
-            {"project_id": project.id, "evaluatee_id": user2.id, "score": 71},
-            {"project_id": project.id, "evaluatee_id": user3.id, "score": 71},
+            {"project_id": project.id, "evaluatee_id": user2.id, "scores": [11, 10, 10, 10, 10, 10, 10]},
+            {"project_id": project.id, "evaluatee_id": user3.id, "scores": [11, 10, 10, 10, 10, 10, 10]},
         ]
     }
     response = client.post(f"{settings.API_V1_STR}/evaluations/peer-evaluations/", headers=headers, json=data)

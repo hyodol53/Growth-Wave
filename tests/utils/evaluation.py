@@ -32,18 +32,23 @@ def create_random_peer_evaluation(
     evaluator_id: int, 
     evaluatee_id: int, 
     project_id: int, 
-    score: float = 70.0,
+    score: int = 70,
     comment: str = "Good job!",
     evaluation_period: str = "2025-H1"
 ) -> PeerEvaluation:
+    max_scores = [20, 20, 10, 10, 10, 10, 20]
+    scores = [int(s * score / 100) for s in max_scores]
+    diff = score - sum(scores)
+    scores[0] += diff
+
     peer_eval_base = PeerEvaluationBase(
         project_id=project_id,
         evaluatee_id=evaluatee_id,
-        score=score,
+        scores=scores,
         comment=comment
     )
     peer_eval_in = PeerEvaluationCreate(evaluations=[peer_eval_base])
-    return crud.peer_evaluation.peer_evaluation.create_multi(
+    return crud.peer_evaluation.peer_evaluation.upsert_multi(
         db, evaluations=peer_eval_in.evaluations, evaluator_id=evaluator_id, evaluation_period=evaluation_period
     )[0]
 

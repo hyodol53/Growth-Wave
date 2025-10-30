@@ -33,19 +33,20 @@
     {
       "evaluatee_id": 10,
       "evaluatee_name": "김동료",
-      "score": 85,
+      "scores": [15, 18, 8, 9, 7, 8, 18],
       "comment": "항상 적극적으로 도와주셔서 감사합니다."
     },
     {
       "evaluatee_id": 12,
       "evaluatee_name": "박동료",
-      "score": null,
+      "scores": [],
       "comment": null
     }
   ]
 }
 ```
 
+- **`scores`**: 각 항목별 점수 배열을 반환합니다. 아직 평가하지 않은 경우 빈 배열 `[]`을 반환합니다.
 - **`status`**: 평가 진행 상태를 나타냅니다.
   - `"NOT_STARTED"`: 평가를 한 명도 진행하지 않음
   - `"IN_PROGRESS"`: 일부 동료에 대해서만 평가를 진행함

@@ -71,13 +71,13 @@ def test_get_peer_evaluation_details(client: TestClient, db: Session) -> None:
     assert details["project_id"] == project.id
     assert details["status"] == "NOT_STARTED"
     assert len(details["peers_to_evaluate"]) == 2
-    assert details["peers_to_evaluate"][0]["score"] is None
+    assert details["peers_to_evaluate"][0]["scores"] == []
 
     # 4. Action (In progress)
     # Evaluator evaluates evaluatee1
     evaluation_data = {
         "evaluations": [
-            {"project_id": project.id, "evaluatee_id": evaluatee1.id, "score": 60, "comment": "Good"}
+            {"project_id": project.id, "evaluatee_id": evaluatee1.id, "scores": [10, 10, 10, 10, 10, 5, 5], "comment": "Good"}
         ]
     }
     client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_headers, json=evaluation_data)
@@ -92,9 +92,9 @@ def test_get_peer_evaluation_details(client: TestClient, db: Session) -> None:
     evaluated_peer = next(p for p in details_in_progress["peers_to_evaluate"] if p["evaluatee_id"] == evaluatee1.id)
     unevaluated_peer = next(p for p in details_in_progress["peers_to_evaluate"] if p["evaluatee_id"] == evaluatee2.id)
     
-    assert evaluated_peer["score"] == 60
+    assert evaluated_peer["scores"] == [10, 10, 10, 10, 10, 5, 5]
     assert evaluated_peer["comment"] == "Good"
-    assert unevaluated_peer["score"] is None
+    assert unevaluated_peer["scores"] == []
 
 def test_upsert_peer_evaluations(client: TestClient, db: Session) -> None:
     # 1. Setup
@@ -112,27 +112,27 @@ def test_upsert_peer_evaluations(client: TestClient, db: Session) -> None:
     # 2. Action (Create)
     create_data = {
         "evaluations": [
-            {"project_id": project.id, "evaluatee_id": evaluatee.id, "score": 65, "comment": "Initial feedback"}
+            {"project_id": project.id, "evaluatee_id": evaluatee.id, "scores": [15, 10, 10, 10, 10, 5, 5], "comment": "Initial feedback"}
         ]
     }
     response_create = client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_headers, json=create_data)
     
     # 3. Assert (Create)
     assert response_create.status_code == 200
-    assert response_create.json()[0]["score"] == 65
+    assert response_create.json()[0]["scores"] == [15, 10, 10, 10, 10, 5, 5]
     assert response_create.json()[0]["comment"] == "Initial feedback"
 
     # 4. Action (Update)
     update_data = {
         "evaluations": [
-            {"project_id": project.id, "evaluatee_id": evaluatee.id, "score": 68, "comment": "Updated feedback"}
+            {"project_id": project.id, "evaluatee_id": evaluatee.id, "scores": [18, 10, 10, 10, 10, 5, 5], "comment": "Updated feedback"}
         ]
     }
     response_update = client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_headers, json=update_data)
 
     # 5. Assert (Update)
     assert response_update.status_code == 200
-    assert response_update.json()[0]["score"] == 68
+    assert response_update.json()[0]["scores"] == [18, 10, 10, 10, 10, 5, 5]
     assert response_update.json()[0]["comment"] == "Updated feedback"
 
 def test_upsert_pm_evaluations(client: TestClient, db: Session) -> None:

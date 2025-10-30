@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, Enum as SQLAlchemyEnum, ForeignKey, Date
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from typing import List
+
 from app.core.database import Base
 from app.models.user import UserRole
 import enum
@@ -26,13 +28,31 @@ class PeerEvaluation(Base):
     project_id: Mapped[int] = mapped_column(Integer, ForeignKey("projects.id"), nullable=False)
     evaluator_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
     evaluatee_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    score: Mapped[int] = mapped_column(Integer, nullable=False)
+    score_1: Mapped[int] = mapped_column(Integer, nullable=False)
+    score_2: Mapped[int] = mapped_column(Integer, nullable=False)
+    score_3: Mapped[int] = mapped_column(Integer, nullable=False)
+    score_4: Mapped[int] = mapped_column(Integer, nullable=False)
+    score_5: Mapped[int] = mapped_column(Integer, nullable=False)
+    score_6: Mapped[int] = mapped_column(Integer, nullable=False)
+    score_7: Mapped[int] = mapped_column(Integer, nullable=False)
     evaluation_period: Mapped[str] = mapped_column(String, nullable=False)
     comment: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    project = relationship("Project")
+    project = relationship("Project", back_populates="peer_evaluations")
     evaluator = relationship("User", foreign_keys=lambda: PeerEvaluation.evaluator_id)
     evaluatee = relationship("User", foreign_keys=lambda: PeerEvaluation.evaluatee_id)
+
+    @property
+    def scores(self) -> List[int]:
+        return [
+            self.score_1,
+            self.score_2,
+            self.score_3,
+            self.score_4,
+            self.score_5,
+            self.score_6,
+            self.score_7,
+        ]
 
     __table_args__ = {'extend_existing': True}
 
@@ -47,7 +67,7 @@ class PmEvaluation(Base):
     evaluation_period: Mapped[str] = mapped_column(String, nullable=False)
     comment: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    project = relationship("Project")
+    project = relationship("Project", back_populates="pm_evaluations")
     evaluator = relationship("User", foreign_keys=lambda: PmEvaluation.evaluator_id)
     evaluatee = relationship("User", foreign_keys=lambda: PmEvaluation.evaluatee_id)
 

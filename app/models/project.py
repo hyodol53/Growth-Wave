@@ -18,3 +18,5 @@ class Project(Base):
 
     # Members associated with this project
     project_members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
+    peer_evaluations = relationship("PeerEvaluation", back_populates="project")
+    pm_evaluations = relationship("PmEvaluation", back_populates="project")

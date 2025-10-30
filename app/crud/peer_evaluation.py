@@ -61,10 +61,22 @@ class CRUDPeerEvaluation(CRUDBase[PeerEvaluation, PeerEvaluationCreate, PeerEval
                 evaluatee_id=evaluation.evaluatee_id,
                 evaluation_period=evaluation_period,
             )
+
+            update_data = {
+                "score_1": evaluation.scores[0],
+                "score_2": evaluation.scores[1],
+                "score_3": evaluation.scores[2],
+                "score_4": evaluation.scores[3],
+                "score_5": evaluation.scores[4],
+                "score_6": evaluation.scores[5],
+                "score_7": evaluation.scores[6],
+                "comment": evaluation.comment,
+            }
+
             if existing_eval:
                 # Update existing evaluation
-                existing_eval.score = evaluation.score
-                existing_eval.comment = evaluation.comment
+                for key, value in update_data.items():
+                    setattr(existing_eval, key, value)
                 db.add(existing_eval)
                 upserted_objs.append(existing_eval)
             else:
@@ -72,10 +84,9 @@ class CRUDPeerEvaluation(CRUDBase[PeerEvaluation, PeerEvaluationCreate, PeerEval
                 new_eval = PeerEvaluation(
                     project_id=evaluation.project_id,
                     evaluatee_id=evaluation.evaluatee_id,
-                    score=evaluation.score,
-                    comment=evaluation.comment,
                     evaluator_id=evaluator_id,
                     evaluation_period=evaluation_period,
+                    **update_data
                 )
                 db.add(new_eval)
                 upserted_objs.append(new_eval)
@@ -84,25 +95,5 @@ class CRUDPeerEvaluation(CRUDBase[PeerEvaluation, PeerEvaluationCreate, PeerEval
         for obj in upserted_objs:
             db.refresh(obj)
         return upserted_objs
-
-    def create_multi(
-        self, db: Session, *, evaluations: List[PeerEvaluationBase], evaluator_id: int, evaluation_period: str
-    ) -> List[PeerEvaluation]:
-        db_objs = [
-            PeerEvaluation(
-                project_id=evaluation.project_id,
-                evaluatee_id=evaluation.evaluatee_id,
-                score=evaluation.score,
-                comment=evaluation.comment,
-                evaluator_id=evaluator_id,
-                evaluation_period=evaluation_period,
-            )
-            for evaluation in evaluations
-        ]
-        db.add_all(db_objs)
-        db.commit()
-        for db_obj in db_objs:
-            db.refresh(db_obj)
-        return db_objs
 
 peer_evaluation = CRUDPeerEvaluation(PeerEvaluation)

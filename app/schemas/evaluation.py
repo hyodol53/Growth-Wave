@@ -28,7 +28,7 @@ class EvaluationWeight(EvaluationWeightInDB):
 class PeerEvaluationBase(BaseModel):
     project_id: int
     evaluatee_id: int
-    score: int
+    scores: List[int]
     comment: Optional[str] = None
 
 class PeerEvaluationCreate(BaseModel):
@@ -206,7 +206,7 @@ class MyEvaluationTask(BaseModel):
 class PeerEvaluationTarget(BaseModel):
     evaluatee_id: int
     evaluatee_name: str
-    score: Optional[int] = None
+    scores: List[int]
     comment: Optional[str] = None
 
 

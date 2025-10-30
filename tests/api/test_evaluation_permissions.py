@@ -107,10 +107,10 @@ def test_read_subordinate_evaluation_as_dept_head(
     )
     # Create peer feedback
     peer = create_random_user(db)
-    crud.peer_evaluation.peer_evaluation.create_multi(
+    crud.peer_evaluation.peer_evaluation.upsert_multi(
         db,
         evaluations=[
-            PeerEvaluationBase(project_id=1, evaluatee_id=subordinate.id, score=80, comment="Great team player!")
+            PeerEvaluationBase(project_id=1, evaluatee_id=subordinate.id, scores=[20, 20, 10, 10, 10, 5, 5], comment="Great team player!")
         ],
         evaluator_id=peer.id,
         evaluation_period=period,

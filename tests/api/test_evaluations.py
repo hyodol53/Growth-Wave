@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from tests.utils.user import create_random_user, authentication_token_from_username
+from tests.utils.project import create_random_project, add_user_to_project
 import datetime
 
 def test_create_evaluation_weight_superuser(client: TestClient, db: Session) -> None:
@@ -226,3 +227,85 @@ def test_delete_department_grade_ratio_superuser(client: TestClient, db: Session
     # Verify it's gone by listing all and checking it's not there.
     list_response = client.get("/api/v1/evaluations/department-grade-ratios/", headers=superuser_token_headers)
     assert created_id not in [item['id'] for item in list_response.json()]
+
+def test_create_or_update_peer_evaluations(client: TestClient, db: Session) -> None:
+    # 1. Setup: Create users, project, evaluation period
+    evaluator = create_random_user(db, role="employee")
+    evaluatee1 = create_random_user(db, role="employee")
+    evaluatee2 = create_random_user(db, role="employee")
+    pm_user = create_random_user(db, role="team_lead")
+    project = create_random_project(db, pm_id=pm_user.id)
+    add_user_to_project(db, user_id=evaluator.id, project_id=project.id)
+    add_user_to_project(db, user_id=evaluatee1.id, project_id=project.id)
+    add_user_to_project(db, user_id=evaluatee2.id, project_id=project.id)
+
+    admin_user = create_random_user(db, role="admin")
+    superuser_token_headers = authentication_token_from_username(client=client, username=admin_user.username, db=db)
+    today = datetime.date.today()
+    # Make sure the active period covers the current date
+    period_data = {"name": f"{today.year}-H{1 if today.month <= 6 else 2}", "start_date": (today - datetime.timedelta(days=1)).isoformat(), "end_date": (today + datetime.timedelta(days=1)).isoformat()}
+    client.post("/api/v1/evaluations/evaluation-periods/", headers=superuser_token_headers, json=period_data)
+
+    evaluator_token_headers = authentication_token_from_username(client=client, username=evaluator.username, db=db)
+
+    # 2. Test valid peer evaluation submission
+    valid_data = {
+        "evaluations": [
+            {"project_id": project.id, "evaluatee_id": evaluatee1.id, "scores": [10, 10, 5, 5, 5, 5, 10], "comment": "Good work"},
+            {"project_id": project.id, "evaluatee_id": evaluatee2.id, "scores": [15, 15, 7, 7, 7, 7, 12], "comment": "Excellent"}
+        ]
+    }
+    # Average score is (50 + 70) / 2 = 60 <= 70. This is valid.
+    response = client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_token_headers, json=valid_data)
+    assert response.status_code == 200
+    content = response.json()
+    assert len(content) == 2
+    assert content[0]["evaluatee_id"] == evaluatee1.id
+    assert content[0]["scores"][0] == 10
+    assert sum(content[0]["scores"]) == 50
+
+    # 3. Test invalid: incorrect number of scores
+    invalid_scores_data = {
+        "evaluations": [
+            {"project_id": project.id, "evaluatee_id": evaluatee1.id, "scores": [10, 10, 5, 5, 5], "comment": "Wrong scores"}
+        ]
+    }
+    response = client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_token_headers, json=invalid_scores_data)
+    assert response.status_code == 400
+    assert "must have exactly 7 scores" in response.json()["detail"]
+
+    # 4. Test invalid: score out of range
+    out_of_range_data = {
+        "evaluations": [
+            {"project_id": project.id, "evaluatee_id": evaluatee1.id, "scores": [25, 10, 5, 5, 5, 5, 10], "comment": "Score too high"}
+        ]
+    }
+    response = client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_token_headers, json=out_of_range_data)
+    assert response.status_code == 400
+    assert "is out of range" in response.json()["detail"]
+
+    # 5. Test invalid: average score > 70
+    high_average_data = {
+        "evaluations": [
+            {"project_id": project.id, "evaluatee_id": evaluatee1.id, "scores": [20, 20, 10, 10, 10, 10, 20]}, # 100
+            {"project_id": project.id, "evaluatee_id": evaluatee2.id, "scores": [10, 10, 5, 5, 5, 5, 10]}  # 50
+        ]
+    } # Average is 75 > 70
+    response = client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_token_headers, json=high_average_data)
+    assert response.status_code == 400
+    assert "Average score cannot exceed 70" in response.json()["detail"]
+
+    # 6. Test UPSERT functionality
+    upsert_data = {
+        "evaluations": [
+            {"project_id": project.id, "evaluatee_id": evaluatee1.id, "scores": [5, 5, 2, 2, 2, 2, 5], "comment": "Updated comment"}
+        ]
+    } # Total score 23
+    response = client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_token_headers, json=upsert_data)
+    assert response.status_code == 200
+    content = response.json()
+    assert len(content) == 1
+    assert content[0]["evaluatee_id"] == evaluatee1.id
+    assert content[0]["scores"][0] == 5
+    assert content[0]["comment"] == "Updated comment"
+    assert sum(content[0]["scores"]) == 23

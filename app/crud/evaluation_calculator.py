@@ -42,7 +42,7 @@ def calculate_and_store_final_scores(
                 peer_evals = crud.peer_evaluation.peer_evaluation.get_by_project_and_evaluatee(
                     db, project_id=membership.project_id, evaluatee_id=evaluatee.id, evaluation_period=evaluation_period
                 )
-                avg_peer_score = mean(e.score for e in peer_evals) if peer_evals else 0
+                avg_peer_score = mean(sum(e.scores) for e in peer_evals) if peer_evals else 0
                 total_weighted_peer_score += avg_peer_score * project_weight
     else:
         # For non-PMs, calculate as before
@@ -54,7 +54,7 @@ def calculate_and_store_final_scores(
                 peer_evals = crud.peer_evaluation.peer_evaluation.get_by_project_and_evaluatee(
                     db, project_id=membership.project_id, evaluatee_id=evaluatee.id, evaluation_period=evaluation_period
                 )
-                avg_peer_score = mean(e.score for e in peer_evals) if peer_evals else 0
+                avg_peer_score = mean(sum(e.scores) for e in peer_evals) if peer_evals else 0
                 total_weighted_peer_score += avg_peer_score * project_weight
         
                 # PM evaluations for the project

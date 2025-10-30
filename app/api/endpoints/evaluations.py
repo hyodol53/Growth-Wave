@@ -92,6 +92,8 @@ def create_evaluation_weight(
     evaluation_weight = crud.evaluation.evaluation_weight.create(db, obj_in=evaluation_weight_in)
     return evaluation_weight
 
+MAX_SCORES = [20, 20, 10, 10, 10, 10, 20]
+
 @router.post("/peer-evaluations/", response_model=List[schemas.PeerEvaluation])
 def create_or_update_peer_evaluations(
     *,
@@ -106,10 +108,26 @@ def create_or_update_peer_evaluations(
     if not active_period:
         raise HTTPException(status_code=400, detail="No active evaluation period.")
 
-    # FR-A-3.1: The average of the scores given cannot exceed 70.
     if evaluations_in.evaluations:
-        total_score = sum(e.score for e in evaluations_in.evaluations)
-        if total_score / len(evaluations_in.evaluations) > 70:
+        total_score_sum = 0
+        for e in evaluations_in.evaluations:
+            if len(e.scores) != 7:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Evaluation for evaluatee {e.evaluatee_id} must have exactly 7 scores.",
+                )
+            
+            for i, score in enumerate(e.scores):
+                if not 0 <= score <= MAX_SCORES[i]:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Score at index {i} for evaluatee {e.evaluatee_id} is out of range (0-{MAX_SCORES[i]}).",
+                    )
+            
+            total_score_sum += sum(e.scores)
+
+        # FR-A-3.1: The average of the scores given cannot exceed 70.
+        if len(evaluations_in.evaluations) > 0 and (total_score_sum / len(evaluations_in.evaluations)) > 70:
             raise HTTPException(
                 status_code=400,
                 detail="Average score cannot exceed 70.",
@@ -396,7 +414,7 @@ def read_peer_evaluation_details(
         target = schemas.PeerEvaluationTarget(
             evaluatee_id=member.user_id,
             evaluatee_name=member.full_name,
-            score=existing_eval.score if existing_eval else None,
+            scores=existing_eval.scores if existing_eval else [],
             comment=existing_eval.comment if existing_eval else None,
         )
         peers_to_evaluate.append(target)
