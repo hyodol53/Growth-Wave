@@ -109,69 +109,37 @@ export interface GradeAdjustmentRequest {
 
 
 // For submitting evaluations (POST)
-
 export interface PeerEvaluationSubmit {
-
     evaluations: {
-
         project_id: number;
-
         evaluatee_id: number;
-
-        score: number;
-
+        scores: number[];
         comment?: string;
-
     }[];
-
 }
-
-
 
 export interface PmEvaluationSubmit {
-
     evaluations: {
-
         project_id: number;
-
         evaluatee_id: number;
-
         score: number;
-
         comment?: string;
-
     }[];
-
 }
-
-
 
 export interface QualitativeEvaluationCreate {
-
     evaluations: {
-
         evaluatee_id: number;
-
         score: number;
-
     }[];
-
 }
 
-
-
 // For fetching evaluation data (GET)
-
 interface PeerToEvaluate {
-
     evaluatee_id: number;
-
     evaluatee_name: string;
-
-    score: number | null;
-
+    scores: (number | null)[];
     comment: string | null;
-
 }
 
 
