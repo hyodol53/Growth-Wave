@@ -824,3 +824,36 @@ def read_detailed_evaluation_result(
         raise HTTPException(status_code=404, detail="User or evaluation period not found")
     
     return result
+
+
+@router.post(
+    "/evaluation-periods/{evaluation_period_id}/calculate",
+    response_model=schemas.Msg,
+    status_code=202,
+)
+def calculate_final_scores_for_period(
+    *,
+    db: Session = Depends(deps.get_db),
+    evaluation_period_id: int,
+    current_user: models.User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Manually trigger the calculation of final scores for all users in a specific evaluation period.
+    (Admin only)
+    """
+    period = crud.evaluation_period.get(db, id=evaluation_period_id)
+    if not period:
+        raise HTTPException(status_code=404, detail="Evaluation period not found.")
+
+    success = crud.evaluation_calculator.calculate_scores_for_period(
+        db, period_id=evaluation_period_id
+    )
+    if not success:
+        # This case is already handled by the period check, but as a safeguard:
+        raise HTTPException(
+            status_code=500, detail="Final score calculation failed."
+        )
+
+    return {
+        "message": "Final score calculation for the evaluation period has been successfully completed."
+    }

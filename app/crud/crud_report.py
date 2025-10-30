@@ -136,7 +136,8 @@ def get_detailed_evaluation_result(
         ),
         project_evaluations=project_evaluations,
         qualitative_evaluation=schemas.report.QualitativeEvaluationDetail(
-            score=qualitative_eval.score if qualitative_eval else None,
-            comment=qualitative_eval.comment if qualitative_eval else None,
+            qualitative_score=qualitative_eval.qualitative_score if qualitative_eval else None,
+            department_contribution_score=qualitative_eval.department_contribution_score if qualitative_eval else None,
+            feedback=qualitative_eval.feedback if qualitative_eval else None,
         ),
     )

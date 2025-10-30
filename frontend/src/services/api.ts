@@ -151,6 +151,7 @@ export const evaluations = {
     // New UX APIs
     getEvaluatedUsersByPeriod: (periodId: number): Promise<AxiosResponse<EvaluatedUser[]>> => apiClient.get(`/evaluations/periods/${periodId}/evaluated-users`),
     getDetailedEvaluationResult: (periodId: number, userId: number): Promise<AxiosResponse<DetailedEvaluationResult>> => apiClient.get(`/evaluations/periods/${periodId}/users/${userId}/details`),
+    calculateFinalScores: (evaluationPeriodId: number): Promise<AxiosResponse<{ message: string }>> => apiClient.post(`/evaluations/evaluation-periods/${evaluationPeriodId}/calculate`),
 };
 
 const api = {

@@ -36,8 +36,9 @@ class ProjectEvaluationDetail(BaseModel):
 
 
 class QualitativeEvaluationDetail(BaseModel):
-    score: Optional[float] = None
-    comment: Optional[str] = None
+    qualitative_score: Optional[float] = None
+    department_contribution_score: Optional[float] = None
+    feedback: Optional[str] = None
 
 
 class DetailedEvaluationResult(BaseModel):

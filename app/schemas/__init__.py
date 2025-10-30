@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 from .user import User, UserCreate
 from .organization import Organization
 from .token import Token, TokenData
@@ -38,3 +40,6 @@ from .evaluation import (
 from .report import GrowthAndCultureReport
 from .retrospective import RetrospectiveCreateRequest, RetrospectiveResponse
 from .collaboration import CollaborationInteraction, CollaborationInteractionCreate, CollaborationData, CollaborationGraph, CollaborationAnalysis, CollaborationNode, CollaborationEdge
+
+class Msg(BaseModel):
+    message: str

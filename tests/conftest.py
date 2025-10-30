@@ -47,3 +47,8 @@ from tests.utils.user import create_random_user, authentication_token_from_usern
 def superuser_token_headers(client: TestClient, db: Session) -> dict:
     admin_user = create_random_user(db, role=UserRole.ADMIN)
     return authentication_token_from_username(client=client, username=admin_user.username, db=db)
+
+@pytest.fixture(scope="function")
+def normal_user_token_headers(client: TestClient, db: Session) -> dict:
+    user = create_random_user(db, role=UserRole.EMPLOYEE)
+    return authentication_token_from_username(client=client, username=user.username, db=db)

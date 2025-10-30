@@ -9,6 +9,7 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
+  Button,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
@@ -24,6 +25,11 @@ const EvaluationResultPage: React.FC = () => {
   const [evaluatedUsers, setEvaluatedUsers] = useState<EvaluatedUser[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [isCalculating, setIsCalculating] = useState<boolean>(false);
+  const [calculationError, setCalculationError] = useState<string | null>(null);
+  const [calculationSuccess, setCalculationSuccess] = useState<string | null>(null);
+
 
   const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
   const [detailData, setDetailData] = useState<DetailedEvaluationResult | null>(null);
@@ -72,6 +78,24 @@ const EvaluationResultPage: React.FC = () => {
     setSelectedPeriodId(event.target.value as string);
   };
 
+  const handleCalculateFinalScore = async () => {
+    if (!selectedPeriodId) return;
+
+    // TODO: Add role-based access control. This should only be available to Admins.
+
+    try {
+      setIsCalculating(true);
+      setCalculationError(null);
+      setCalculationSuccess(null);
+      const response = await api.evaluations.calculateFinalScores(Number(selectedPeriodId));
+      setCalculationSuccess(response.data.message || 'Final score calculation has been successfully initiated.');
+    } catch (err: any) {
+      setCalculationError(err.response?.data?.detail || 'An error occurred during final score calculation.');
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
   const handleViewDetails = async (userId: number) => {
     try {
       setDetailLoading(true);
@@ -115,22 +139,38 @@ const EvaluationResultPage: React.FC = () => {
         Evaluation Results
       </Typography>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      <Box sx={{ mb: 2 }}>
-        <FormControl fullWidth disabled={loading}>
-          <InputLabel id="period-select-label">Evaluation Period</InputLabel>
-          <Select
-            labelId="period-select-label"
-            value={selectedPeriodId}
-            label="Evaluation Period"
-            onChange={handlePeriodChange}
+      {calculationError && <Alert severity="error" sx={{ mb: 2 }}>{calculationError}</Alert>}
+      {calculationSuccess && <Alert severity="success" sx={{ mb: 2 }}>{calculationSuccess}</Alert>}
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ flexGrow: 1 }}>
+          <FormControl fullWidth disabled={loading || isCalculating}>
+            <InputLabel id="period-select-label">Evaluation Period</InputLabel>
+            <Select
+              labelId="period-select-label"
+              value={selectedPeriodId}
+              label="Evaluation Period"
+              onChange={handlePeriodChange}
+            >
+              {periods.map((p) => (
+                <MenuItem key={p.id} value={p.id.toString()}>
+                  {p.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+        <Box>
+          {/* TODO: This button should be visible only to Admin users. */}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleCalculateFinalScore}
+            disabled={loading || isCalculating || !selectedPeriodId}
+            sx={{ minWidth: 200, height: 56 }} // Match FormControl height
           >
-            {periods.map((p) => (
-              <MenuItem key={p.id} value={p.id.toString()}>
-                {p.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            {isCalculating ? <CircularProgress size={24} /> : 'Calculate Final Score'}
+          </Button>
+        </Box>
       </Box>
       <Box sx={{ height: 600, width: '100%' }}>
         {loading ? (

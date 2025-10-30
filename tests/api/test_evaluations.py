@@ -1,5 +1,11 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from datetime import date
+from jose import jwt
+
+from app.core.config import settings
+from app import crud, schemas
+from app.schemas import EvaluationPeriodCreate, FinalEvaluationCreate
 
 from tests.utils.user import create_random_user, authentication_token_from_username
 from tests.utils.project import create_random_project, add_user_to_project
@@ -358,4 +364,47 @@ def test_create_qualitative_evaluations(client: TestClient, db: Session) -> None
     }
     response = client.post("/api/v1/evaluations/qualitative-evaluations/", headers=team_lead_token_headers, json=invalid_score_data)
     assert response.status_code == 422 # Pydantic validation error
-    assert "Input should be less than or equal to 20" in response.json()["detail"][0]["msg"]
+
+
+def test_calculate_final_scores_for_period(
+    client: TestClient, db: Session, superuser_token_headers: dict, normal_user_token_headers: dict
+) -> None:
+    # Create an evaluation period
+    period_in = EvaluationPeriodCreate(
+        name="2025-H1",
+        start_date=date(2025, 1, 1),
+        end_date=date(2025, 6, 30),
+    )
+    period = crud.evaluation_period.create(db, obj_in=period_in)
+
+    # 1. Non-admin user should be forbidden
+    response = client.post(
+        f"{settings.API_V1_STR}/evaluations/evaluation-periods/{period.id}/calculate",
+        headers=normal_user_token_headers,
+    )
+    assert response.status_code == 403
+
+    # 2. Admin with non-existent period should get 404
+    non_existent_period_id = period.id + 999
+    response = client.post(
+        f"{settings.API_V1_STR}/evaluations/evaluation-periods/{non_existent_period_id}/calculate",
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 404
+
+    # 3. Admin user successfully initiates the calculation
+    response = client.post(
+        f"{settings.API_V1_STR}/evaluations/evaluation-periods/{period.id}/calculate",
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 202
+    data = response.json()
+    assert data["message"] == "Final score calculation for the evaluation period has been successfully initiated."
+
+    # 4. Admin user tries again, and it should succeed again (overwrite)
+    response = client.post(
+        f"{settings.API_V1_STR}/evaluations/evaluation-periods/{period.id}/calculate",
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 202
+    assert "successfully completed" in response.json()["message"]

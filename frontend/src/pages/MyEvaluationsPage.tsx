@@ -54,8 +54,28 @@ const MyEvaluationsPage: React.FC = () => {
     setPmEvaluationData(null);
     try {
         if (project.user_role_in_project === 'MEMBER') {
-            const res = await api.evaluations.getPeerEvaluations(project.project_id);
-            setPeerEvaluationData(res.data);
+            // Fetch both peer evaluation data and project members in parallel
+            const [peerEvalRes, membersRes] = await Promise.all([
+                api.evaluations.getPeerEvaluations(project.project_id),
+                api.projects.getProjectMembers(project.project_id)
+            ]);
+            
+            const peerEvalData = peerEvalRes.data;
+            const membersData = membersRes.data;
+
+            // Find the PM's user_id
+            const pm = membersData.find(member => member.is_pm);
+            const pmId = pm ? pm.user_id : null;
+
+            // Filter out the PM from the list of peers to evaluate
+            if (pmId) {
+                peerEvalData.peers_to_evaluate = peerEvalData.peers_to_evaluate.filter(
+                    peer => peer.evaluatee_id !== pmId
+                );
+            }
+            
+            setPeerEvaluationData(peerEvalData);
+
         } else if (project.user_role_in_project === 'PM') {
             const res = await api.evaluations.getPmEvaluations(project.project_id);
             setPmEvaluationData(res.data);

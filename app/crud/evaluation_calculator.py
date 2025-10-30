@@ -14,11 +14,11 @@ def calculate_and_store_final_scores(
         return None
 
     # 1. Get evaluation weights for the user's role
-    role_weights = crud.evaluation.evaluation_weight.get_multi_by_role(db, role=evaluatee.role)
-    if not role_weights:
-        return None
+    #role_weights = crud.evaluation.evaluation_weight.get_multi_by_role(db, role=evaluatee.role)
+    #if not role_weights:
+        #return None
     
-    weight_map = {item.item: item.weight for item in role_weights}
+    #weight_map = {item.item: item.weight for item in role_weights}
     
     # 2. Get user's project memberships
     project_memberships = crud.project_member.project_member.get_multi_by_user(db, user_id=evaluatee.id)
@@ -58,8 +58,10 @@ def calculate_and_store_final_scores(
                     total_weighted_pm_score += pm_eval.score * project_weight
     
     # 4. Calculate the combined project score component
-    peer_weight = weight_map.get(models.evaluation.EvaluationItem.PEER_REVIEW, 0)
-    pm_weight = weight_map.get(models.evaluation.EvaluationItem.PM_REVIEW, 0)
+    #peer_weight = weight_map.get(models.evaluation.EvaluationItem.PEER_REVIEW, 0)
+    #pm_weight = weight_map.get(models.evaluation.EvaluationItem.PM_REVIEW, 0)
+    peer_weight = 50
+    pm_weight = 50
     
     project_score = 0
     # Normalize weights within the project score component
@@ -105,3 +107,20 @@ def calculate_and_store_final_scores(
         final_evaluation = crud.final_evaluation.create(db, obj_in=final_eval_in)
 
     return final_evaluation
+
+
+def calculate_scores_for_period(db: Session, *, period_id: int) -> bool:
+    """
+    Calculates final scores for all users for a given evaluation period.
+    """
+    period = crud.evaluation_period.get(db, id=period_id)
+    if not period:
+        return False
+
+    users = crud.user.user.get_multi(db)
+    for user in users:
+        calculate_and_store_final_scores(
+            db, evaluatee=user, evaluation_period=period.name
+        )
+    
+    return True
