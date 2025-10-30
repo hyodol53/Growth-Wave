@@ -24,6 +24,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import TuneIcon from '@mui/icons-material/Tune';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 
 
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
@@ -70,6 +71,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { text: '참여 비중 설정', icon: <AccountTreeIcon />, path: '/admin/member-weights', roles: ['admin', 'dept_head'] },
     { text: '등급 조정', icon: <TuneIcon />, path: '/admin/grade-adjustment', roles: ['admin', 'dept_head'] },
     { text: '평가 설정', icon: <TuneIcon />, path: '/admin/evaluation-settings', roles: ['admin'] },
+    { text: '평가 결과 조회', icon: <FactCheckIcon />, path: '/admin/evaluation-results', roles: ['admin', 'dept_head'] },
   ];
 
   return (

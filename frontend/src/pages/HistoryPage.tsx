@@ -6,14 +6,12 @@ import {
 import { GridLegacy as Grid } from '@mui/material';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { getUserHistory, auth } from '../services/api';
-import type { User, UserHistoryResponse, ProjectHistoryItem } from '../schemas/user';
-import { UserRole } from '../schemas/user';
+import { getUserHistory } from '../services/api';
+import type { UserHistoryResponse, ProjectHistoryItem } from '../schemas/user';
 import { AxiosError } from 'axios';
 
 const HistoryPage: React.FC = () => {
   const [history, setHistory] = useState<UserHistoryResponse['history'] | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,12 +19,8 @@ const HistoryPage: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [historyRes, userRes] = await Promise.all([
-          getUserHistory(),
-          auth.getCurrentUser()
-        ]);
+        const historyRes = await getUserHistory();
         setHistory(historyRes.data.history);
-        setCurrentUser(userRes);
       } catch (err) {
         if (err instanceof AxiosError) {
           setError(err.response?.data?.detail || '이력 데이터를 불러오는데 실패했습니다.');
@@ -42,7 +36,7 @@ const HistoryPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const isManager = currentUser?.role === UserRole.ADMIN || currentUser?.role === UserRole.DEPT_HEAD;
+  
 
   const renderProjectItem = (project: ProjectHistoryItem) => (
     <ListItem key={project.project_id}>
@@ -90,16 +84,7 @@ const HistoryPage: React.FC = () => {
                       <Typography variant="body1">
                         <strong>최종 등급:</strong> {finalEval?.grade || '등급 없음'}
                       </Typography>
-                      {isManager && finalEval && (
-                         <>
-                           <Divider sx={{ my: 1 }} />
-                           <Typography variant="body2">동료 평가 점수: {finalEval.peer_score.toFixed(2)}</Typography>
-                           <Typography variant="body2">PM 평가 점수: {finalEval.pm_score.toFixed(2)}</Typography>
-                           <Typography variant="body2">정성 평가 점수: {finalEval.qualitative_score.toFixed(2)}</Typography>
-                           <Typography variant="body2" sx={{fontWeight: 'bold'}}>최종 점수: {finalEval.final_score.toFixed(2)}</Typography>
-                         </>
-                      )}
-                       {!isManager && finalEval && (
+                      {finalEval && (
                          <>
                           <Divider sx={{ my: 1 }} />
                           <Typography variant="body2">PM 평가 점수: {finalEval.pm_score.toFixed(2)}</Typography>
