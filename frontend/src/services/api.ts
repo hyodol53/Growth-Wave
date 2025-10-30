@@ -26,7 +26,14 @@ import type {
     GradeAdjustment,
     EvaluatedUser,
     DetailedEvaluationResult,
-    DepartmentEvaluation
+    DepartmentEvaluation,
+    ExternalAccount,
+    ExternalAccountCreate,
+    Retrospective,
+    RetrospectiveCreate,
+    RetrospectiveUpdate,
+    GeneratedRetrospective,
+    GenerateRetrospectivePayload,
 } from '../schemas';
 import { DepartmentGrade } from "../schemas/evaluation";
 
@@ -170,12 +177,29 @@ export const evaluations = {
         apiClient.post('/evaluations/department-evaluations/', data),
 };
 
+export const externalAccounts = {
+    getAccounts: (): Promise<AxiosResponse<ExternalAccount[]>> => apiClient.get('/external-accounts'),
+    createAccount: (data: ExternalAccountCreate): Promise<AxiosResponse<ExternalAccount>> => apiClient.post('/external-accounts', data),
+    deleteAccount: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/external-accounts/${id}`),
+};
+
+export const retrospectives = {
+    getList: (): Promise<AxiosResponse<Retrospective[]>> => apiClient.get('/retrospectives'),
+    getById: (id: number): Promise<AxiosResponse<Retrospective>> => apiClient.get(`/retrospectives/${id}`),
+    create: (data: RetrospectiveCreate): Promise<AxiosResponse<Retrospective>> => apiClient.post('/retrospectives', data),
+    update: (id: number, data: RetrospectiveUpdate): Promise<AxiosResponse<Retrospective>> => apiClient.put(`/retrospectives/${id}`, data),
+    delete: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/retrospectives/${id}`),
+    generate: (payload: GenerateRetrospectivePayload): Promise<AxiosResponse<GeneratedRetrospective>> => apiClient.post('/retrospectives/generate', payload),
+};
+
 const api = {
   auth,
   users,
   organizations,
   projects,
   evaluations,
+  externalAccounts,
+  retrospectives,
 };
 
 export default api;

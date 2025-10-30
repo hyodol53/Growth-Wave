@@ -15,7 +15,8 @@
             "jinja": true,
             "justMyCode": true,
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}",
+                "GOOGLE_API_KEY" : "AIzaSyBu280VVK9YaAmEDLgCigcInHY_QnWgkEI"
             }
         },
         {

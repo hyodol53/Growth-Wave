@@ -15,6 +15,7 @@ import MyEvaluationsPage from './pages/MyEvaluationsPage';
 import FinalGradeAdjustmentPage from './pages/Admin/FinalGradeAdjustmentPage';
 import EvaluationResultPage from './pages/Admin/EvaluationResultPage';
 import HistoryPage from './pages/HistoryPage';
+import MyRetrospectivePage from './pages/MyRetrospectivePage';
 import DepartmentEvaluationPage from './pages/Admin/DepartmentEvaluationPage'; // New import
 import type { User } from './schemas';
 import { UserRole } from './schemas';
@@ -76,6 +77,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/my-evaluations" element={<MyEvaluationsPage />} />
               <Route path="/history" element={<HistoryPage />} />
+              <Route path="/my-retrospectives" element={<MyRetrospectivePage />} />
               
               <Route
                 path="/admin/organizations"

@@ -19,6 +19,7 @@ import {
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import SummarizeIcon from '@mui/icons-material/Summarize';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -48,6 +49,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
     { text: '내 프로필', icon: <AccountCircleIcon />, path: '/profile' },
     { text: '내 평가', icon: <AssessmentIcon />, path: '/my-evaluations' },
     { text: '내 이력', icon: <SummarizeIcon />, path: '/history' },
+    { text: '나의 성장 회고록', icon: <AutoStoriesIcon />, path: '/my-retrospectives' },
   ];
 
   const managementMenuItems = [

@@ -12,8 +12,12 @@ class CRUDRetrospective(CRUDBase[Retrospective, RetrospectiveCreate, Retrospecti
         db_obj = self.model(**obj_in.model_dump(), user_id=user_id)
         db.add(db_obj)
         db.commit()
+        
+        # Re-fetch the object by its ID to ensure all server-side defaults are loaded.
+        # This is a more robust approach than db.refresh() in some cases.
         db.refresh(db_obj)
-        return db_obj
+        created_obj = self.get(db, id=db_obj.id)
+        return created_obj
 
     def get_multi_by_owner(
         self, db: Session, *, user_id: int, skip: int = 0, limit: int = 100
