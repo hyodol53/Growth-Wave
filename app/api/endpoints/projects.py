@@ -14,6 +14,7 @@ from app.schemas.project_member import (
 from app.crud import project as crud_project
 from app.crud import project_member as crud_pm
 from app.crud import user as crud_user
+from app.crud import evaluation_period as crud_evaluation_period
 from app.api import deps
 
 router = APIRouter()
@@ -28,6 +29,14 @@ def create_project(
     """
     Create new project. (Dept Head or Admin only)
     """
+    # Check if evaluation period exists
+    eval_period = crud_evaluation_period.get(db, id=project_in.evaluation_period_id)
+    if not eval_period:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"EvaluationPeriod with id {project_in.evaluation_period_id} not found.",
+        )
+
     # A dept_head can only create projects where the PM is in their own department.
     pm_user = crud_user.user.get(db, id=project_in.pm_id)
     if not pm_user:
@@ -61,14 +70,25 @@ def create_project(
 @router.get("/", response_model=List[Project])
 def read_projects(
     db: Session = Depends(get_db),
-    current_user: UserModel = Depends(deps.get_current_admin_or_dept_head_user),
+    evaluation_period_id: int | None = None,
+    pm_id: int | None = None,
+    user_id: int | None = None,
+    skip: int = 0,
+    limit: int = 100,
+    current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Retrieve projects based on user role.
-    - Admins can see all projects.
-    - Dept Heads can see projects where the PM is one of their subordinates.
+    Retrieve projects with filters.
     """
-    projects = crud_project.project.get_multi_for_user(db, user=current_user)
+    projects = crud_project.project.get_multi_for_user(
+        db,
+        user=current_user,
+        evaluation_period_id=evaluation_period_id,
+        pm_id=pm_id,
+        user_id=user_id,
+        skip=skip,
+        limit=limit
+    )
     return projects
 
 @router.get("/{project_id}", response_model=Project)

@@ -114,6 +114,8 @@ class EvaluationPeriod(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
 
+    projects = relationship("Project", back_populates="evaluation_period")
+
     __table_args__ = {'extend_existing': True}
 
 

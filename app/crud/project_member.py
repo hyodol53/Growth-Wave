@@ -32,16 +32,25 @@ class CRUDProjectMember(
     def get_multi_by_user(self, db: Session, *, user_id: int) -> List[ProjectMember]:
         return db.query(ProjectMember).filter(ProjectMember.user_id == user_id).all()
 
-    def get_multi_by_user_and_period(
-        self, db: Session, *, user_id: int, start_date: date, end_date: date
-    ) -> List[ProjectMember]:
+    def get_multi_by_user_and_period(self, db: Session, *, user_id: int, start_date: date, end_date: date) -> List[ProjectMember]:
         return (
-            db.query(ProjectMember)
+            db.query(self.model)
             .join(Project)
             .filter(
                 ProjectMember.user_id == user_id,
                 Project.start_date <= end_date,
                 Project.end_date >= start_date,
+            )
+            .all()
+        )
+
+    def get_multi_by_user_and_evaluation_period(self, db: Session, *, user_id: int, evaluation_period_id: int) -> List[ProjectMember]:
+        return (
+            db.query(self.model)
+            .join(Project)
+            .filter(
+                ProjectMember.user_id == user_id,
+                Project.evaluation_period_id == evaluation_period_id,
             )
             .all()
         )

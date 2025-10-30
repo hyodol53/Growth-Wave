@@ -1,20 +1,4 @@
-import type { FinalEvaluation } from './evaluation';
-
-// Based on backend/app/schemas/organization.py
-export interface Organization {
-  id: number;
-  name: string;
-  level: number;
-  parent_id: number | null;
-}
-
-export enum UserRole {
-  EMPLOYEE = 'employee',
-  TEAM_LEAD = 'team_lead',
-  DEPT_HEAD = 'dept_head',
-  CENTER_HEAD = 'center_head',
-  ADMIN = 'admin',
-}
+import { UserRole, type FinalEvaluation } from './evaluation';
 
 export type User = {
   id: number;

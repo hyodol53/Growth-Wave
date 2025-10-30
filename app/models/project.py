@@ -7,10 +7,13 @@ class Project(Base):
     __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False)
-    description = Column(String, nullable=True)
+    name = Column(String, index=True, nullable=False)
     start_date = Column(Date, nullable=True)
     end_date = Column(Date, nullable=True)
+
+    # Foreign Key to EvaluationPeriod
+    evaluation_period_id = Column(Integer, ForeignKey("evaluation_periods.id"), nullable=False)
+    evaluation_period = relationship("EvaluationPeriod", back_populates="projects")
 
     # The project is managed by a Project Manager (PM)
     pm_id = Column(Integer, ForeignKey("users.id"))

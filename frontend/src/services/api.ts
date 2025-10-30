@@ -107,11 +107,17 @@ export const organizations = {
 };
 
 export const projects = {
-    getProjects: (): Promise<AxiosResponse<Project[]>> => apiClient.get('/projects/'),
+    getProjects: (params?: { evaluation_period_id: number }): Promise<AxiosResponse<Project[]>> => apiClient.get('/projects/', { params }),
     createProject: (data: ProjectCreate): Promise<AxiosResponse<Project>> => apiClient.post('/projects/', data),
     updateProject: (id: number, data: ProjectUpdate): Promise<AxiosResponse<Project>> => apiClient.put(`/projects/${id}`, data),
     deleteProject: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/projects/${id}`),
     getProjectMembers: (projectId: number): Promise<AxiosResponse<ProjectMemberDetails[]>> => apiClient.get(`/projects/${projectId}/members`),
+    addProjectMember: (projectId: number, userId: number): Promise<AxiosResponse<any>> => apiClient.post(`/projects/${projectId}/members`, { user_id: userId }),
+    removeProjectMember: (projectId: number, userId: number): Promise<AxiosResponse<void>> => apiClient.delete(`/projects/${projectId}/members/${userId}`),
+};
+
+export const evaluationPeriods = {
+    getEvaluationPeriods: (): Promise<AxiosResponse<EvaluationPeriod[]>> => apiClient.get('/evaluations/evaluation-periods/'),
 };
 
 export const evaluations = {

@@ -64,7 +64,7 @@ def test_read_detailed_evaluation_result_completed(client: TestClient, db: Sessi
     db.commit()
 
     period = create_random_evaluation_period(db)
-    project = create_random_project(db, pm_id=dept_head_user.id)
+    project = create_random_project(db, pm_id=dept_head_user.id, evaluation_period_id=period.id)
     create_project_member(db, user_id=employee_user.id, project_id=project.id)
     create_random_final_evaluation(db, evaluatee_id=employee_user.id, period_id=period.id, grade="A", final_score=95.5)
 

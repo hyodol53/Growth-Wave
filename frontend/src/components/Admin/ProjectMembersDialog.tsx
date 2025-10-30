@@ -35,10 +35,8 @@ const ProjectMembersDialog: React.FC<ProjectMembersDialogProps> = ({ open, onClo
         const userId = parseInt(selectedUser, 10);
         if (isNaN(userId)) return;
 
-        // const memberIn = { user_id: userId, is_pm: false };
         try {
-            // await api.projects.addProjectMember(project.id, memberIn);
-            console.log("addProjectMember is not implemented in api.ts");
+            await api.projects.addProjectMember(project.id, userId);
             fetchMembers();
             setSelectedUser('');
         } catch (error) {
@@ -46,15 +44,17 @@ const ProjectMembersDialog: React.FC<ProjectMembersDialogProps> = ({ open, onClo
         }
     };
 
-    const handleRemoveMember = async () => {
+    const handleRemoveMember = async (memberId: number) => {
         try {
-            // await api.projects.removeProjectMember(project.id, memberId);
-            console.log("removeProjectMember is not implemented in api.ts");
+            await api.projects.removeProjectMember(project.id, memberId);
             fetchMembers();
         } catch (error) {
             console.error("Failed to remove project member", error);
         }
     };
+
+    const memberIds = new Set(members.map(m => m.user_id));
+    const availableUsers = users.filter(u => !memberIds.has(u.id));
 
     return (
         <Dialog open={open} onClose={onClose} fullWidth>
@@ -63,7 +63,7 @@ const ProjectMembersDialog: React.FC<ProjectMembersDialogProps> = ({ open, onClo
                 <List>
                     {members.map(member => (
                         <ListItem key={member.user_id} secondaryAction={
-                            <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveMember()}>
+                            <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveMember(member.user_id)}>
                                 <DeleteIcon />
                             </IconButton>
                         }>
@@ -81,7 +81,7 @@ const ProjectMembersDialog: React.FC<ProjectMembersDialogProps> = ({ open, onClo
                         fullWidth
                     >
                         <option value=""></option>
-                        {users.map(user => (
+                        {availableUsers.map(user => (
                             <option key={user.id} value={user.id}>
                                 {user.full_name}
                             </option>

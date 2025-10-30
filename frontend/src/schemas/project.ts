@@ -1,22 +1,33 @@
 
-import type { User } from './user';
-import type { Organization } from './organization';
-
-// Based on backend/app/schemas/project.py
 export interface Project {
     id: number;
     name: string;
-    description: string | null;
-    start_date: string; // ISO date string
-    end_date: string;   // ISO date string
+    description?: string;
     pm_id: number;
-    owner_org_id: number;
-    pm?: User;
-    owner_org?: Organization;
+    evaluation_period_id: number;
+    start_date?: string;
+    end_date?: string;
+    created_at: string;
+    updated_at: string;
 }
 
-export type ProjectCreate = Omit<Project, 'id' | 'pm' | 'owner_org'>;
-export type ProjectUpdate = Partial<ProjectCreate>;
+export interface ProjectCreate {
+    name: string;
+    description?: string;
+    pm_id: number;
+    evaluation_period_id: number;
+    start_date?: string;
+    end_date?: string;
+}
+
+export interface ProjectUpdate {
+    name?: string;
+    description?: string;
+    pm_id?: number;
+    evaluation_period_id?: number;
+    start_date?: string;
+    end_date?: string;
+}
 
 // Based on backend/app/schemas/project_member.py
 export interface ProjectMember {

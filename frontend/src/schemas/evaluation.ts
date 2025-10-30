@@ -1,3 +1,11 @@
+export enum UserRole {
+    EMPLOYEE = 'employee',
+    TEAM_LEAD = 'team_lead',
+    DEPT_HEAD = 'dept_head',
+    CENTER_HEAD = 'center_head',
+    ADMIN = 'admin',
+}
+
 export interface EvaluationPeriod {
     id: number;
     name: string;
@@ -36,41 +44,59 @@ export interface EvaluationPeriod {
       b_ratio: number;
   }
   
-  export type DepartmentGradeRatioUpdate = Partial<DepartmentGradeRatioCreate>;
+    export type DepartmentGradeRatioUpdate = Partial<DepartmentGradeRatioCreate>;
+  
+    
+  
+    export enum EvaluationItem {
+  
+        PEER = "peer_evaluation",
+  
+        PM = "pm_evaluation",
+  
+        QUALITATIVE = "qualitative_evaluation",
+  
+    }
+  
+    
+  
+    export interface EvaluationWeight {
+  
+        id: number;
+  
+        role: UserRole;
+  
+        evaluation_item: EvaluationItem;
+  
+        weight: number;
+  
+    }
+  
+    
+  
+    export interface EvaluationWeightCreate {
+  
+        role: UserRole;
+  
+        evaluation_item: EvaluationItem;
+  
+        weight: number;
+  
+    }
+  
+    
+  
+    export type EvaluationWeightUpdate = Partial<EvaluationWeightCreate>;
   
   
-  export enum UserRole {
-      EMPLOYEE = "employee",
-      TEAM_LEAD = "team_lead",
-      DEPT_HEAD = "dept_head",
-      ADMIN = "admin",
-  }
   
-  export enum EvaluationItem {
-      PEER_REVIEW = "peer_review",
-      PM_REVIEW = "pm_review",
-      QUALITATIVE_REVIEW = "qualitative_review",
-  }
+  export interface Evaluation {
   
-  export interface EvaluationWeight {
       id: number;
-      user_role: UserRole;
-      item: EvaluationItem;
-      weight: number;
-  }
   
-  export interface EvaluationWeightCreate {
-      user_role: UserRole;
-      item: EvaluationItem;
-      weight: number;
-  }
+      name: string;
   
-  export type EvaluationWeightUpdate = Partial<EvaluationWeightCreate>;
-
-export interface Evaluation {
-    id: number;
-    name: string;
-}
+  }
 
 export interface MyEvaluationResult {
     evaluation_period: string;

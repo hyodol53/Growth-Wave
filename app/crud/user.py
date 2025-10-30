@@ -102,8 +102,8 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
                 db, evaluatee_id=user_id, period_id=period.id
             )
             
-            project_memberships = crud_proj_member.project_member.get_multi_by_user_and_period(
-                db, user_id=user_id, start_date=period.start_date, end_date=period.end_date
+            project_memberships = crud_proj_member.project_member.get_multi_by_user_and_evaluation_period(
+                db, user_id=user_id, evaluation_period_id=period.id
             )
             
             project_history = [

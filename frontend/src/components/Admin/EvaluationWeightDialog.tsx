@@ -12,24 +12,24 @@ interface EvaluationWeightDialogProps {
 }
 
 const EvaluationWeightDialog: React.FC<EvaluationWeightDialogProps> = ({ open, onClose, onSave, weight }) => {
-  const [userRole, setUserRole] = useState<UserRole>(UserRole.EMPLOYEE);
-  const [item, setItem] = useState<EvaluationItem>(EvaluationItem.PEER_REVIEW);
+  const [role, setRole] = useState<UserRole>(UserRole.EMPLOYEE);
+  const [evaluationItem, setEvaluationItem] = useState<EvaluationItem>(EvaluationItem.PEER);
   const [itemWeight, setItemWeight] = useState(0);
 
   useEffect(() => {
     if (weight) {
-        setUserRole(weight.user_role);
-        setItem(weight.item);
+        setRole(weight.role);
+        setEvaluationItem(weight.evaluation_item);
         setItemWeight(weight.weight);
     } else {
-        setUserRole(UserRole.EMPLOYEE);
-        setItem(EvaluationItem.PEER_REVIEW);
+        setRole(UserRole.EMPLOYEE);
+        setEvaluationItem(EvaluationItem.PEER);
         setItemWeight(0);
     }
   }, [weight, open]);
 
   const handleSave = () => {
-    const data = { user_role: userRole, item: item, weight: itemWeight };
+    const data = { role: role, evaluation_item: evaluationItem, weight: itemWeight };
     onSave(data);
   };
 
@@ -41,22 +41,22 @@ const EvaluationWeightDialog: React.FC<EvaluationWeightDialogProps> = ({ open, o
           <FormControl fullWidth margin="dense">
             <InputLabel>User Role</InputLabel>
             <Select
-              value={userRole}
+              value={role}
               label="User Role"
-              onChange={(e) => setUserRole(e.target.value as UserRole)}
+              onChange={(e) => setRole(e.target.value as UserRole)}
               disabled={!!weight}
             >
-              {Object.values(UserRole).map((role) => (
-                <MenuItem key={role} value={role}>{role}</MenuItem>
+              {Object.values(UserRole).map((roleValue) => (
+                <MenuItem key={roleValue} value={roleValue}>{roleValue}</MenuItem>
               ))}
             </Select>
           </FormControl>
           <FormControl fullWidth margin="dense">
             <InputLabel>Evaluation Item</InputLabel>
             <Select
-              value={item}
+              value={evaluationItem}
               label="Evaluation Item"
-              onChange={(e) => setItem(e.target.value as EvaluationItem)}
+              onChange={(e) => setEvaluationItem(e.target.value as EvaluationItem)}
               disabled={!!weight}
             >
               {Object.values(EvaluationItem).map((evalItem) => (

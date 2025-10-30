@@ -1,43 +1,68 @@
-# API: GET /api/v1/projects/
+# API: 프로젝트 목록 조회 (GET /projects)
 
 ## 1. 개요
-사용자의 역할에 따라 접근 가능한 프로젝트 목록을 조회합니다.
 
-- **Admin:** 시스템에 존재하는 모든 프로젝트 목록을 조회합니다.
-- **실장 (Dept Head):** 자신의 하위 조직원이 PM(Project Manager)으로 할당된 모든 프로젝트 목록을 조회합니다.
-- **그 외 역할:** 접근이 금지됩니다. (403 Forbidden)
+조건에 맞는 프로젝트 목록을 조회합니다. **특정 평가 기간(Evaluation Period)을 기준으로 조회하는 것을 권장합니다.**
 
-## 2. 엔드포인트
-`GET /api/v1/projects/`
+## 2. 요청 (Request)
 
-## 3. 요청 (Request)
-### 3.1. 헤더 (Headers)
-- `Authorization`: `Bearer <JWT_TOKEN>` (필수)
+### 2.1. 엔드포인트 (Endpoint)
 
-## 4. 응답 (Response)
-### 4.1. 성공 (200 OK)
-프로젝트 정보 배열이 반환됩니다.
+```
+GET /api/v1/projects
+```
+
+### 2.2. 헤더 (Headers)
+
+- `Authorization`: `Bearer <access_token>`
+
+### 2.3. 쿼리 파라미터 (Query Parameters)
+
+| 파라미터 | 타입 | 필수 여부 | 설명 |
+| :--- | :--- | :--- | :--- |
+| `evaluation_period_id` | integer | N | **(추가됨)** 특정 평가 기간 ID로 프로젝트를 필터링합니다. 미지정 시 모든 프로젝트가 조회될 수 있습니다. |
+| `pm_id` | integer | N | 특정 PM이 담당하는 프로젝트를 필터링합니다. |
+| `user_id` | integer | N | 특정 사용자가 참여하고 있는 프로젝트를 필터링합니다. |
+| `skip` | integer | N | 페이지네이션을 위한 건너뛸 항목 수 (기본값: 0) |
+| `limit` | integer | N | 페이지네이션을 위한 한 페이지의 항목 수 (기본값: 100) |
+
+**사용 예시:**
+- 3번 평가 기간에 속한 모든 프로젝트 조회: `GET /api/v1/projects?evaluation_period_id=3`
+- 15번 사용자가 참여하는 프로젝트 조회: `GET /api/v1/projects?user_id=15`
+
+## 3. 응답 (Response)
+
+### 3.1. 성공 (Success)
+
+- **Status Code:** `200 OK`
+- **Body:**
+
 ```json
 [
   {
-    "id": 1,
-    "name": "Growth-Wave Development",
-    "description": "Dual-track HR platform development project.",
-    "start_date": "2024-01-01",
+    "id": 101,
+    "name": "신규 성장 동력 발굴 TF",
+    "pm_id": 15,
+    "evaluation_period_id": 3,
+    "start_date": "2024-07-01",
     "end_date": "2024-12-31",
-    "pm_id": 5,
-    "pm": {
-      "id": 5,
-      "full_name": "PM User"
-    }
+    "created_at": "2024-05-20T10:00:00Z",
+    "updated_at": "2024-05-20T10:00:00Z"
+  },
+  {
+    "id": 102,
+    "name": "기존 시스템 유지보수",
+    "pm_id": 22,
+    "evaluation_period_id": 3,
+    "start_date": "2024-07-01",
+    "end_date": "2024-12-31",
+    "created_at": "2024-05-21T11:00:00Z",
+    "updated_at": "2024-05-21T11:00:00Z"
   }
 ]
 ```
 
-### 4.2. 실패
-- **401 Unauthorized:** 인증되지 않은 사용자의 요청일 경우
-- **403 Forbidden:** 권한이 없는 역할(예: `team_lead`, `employee`)의 사용자가 요청할 경우
+### 3.2. 실패 (Failure)
 
-## 5. 권한 (Authorization)
-- `admin`
-- `dept_head`
+- **Status Code:** `401 Unauthorized` (인증 실패)
+- **Status Code:** `422 Unprocessable Entity` (유효성 검사 오류)

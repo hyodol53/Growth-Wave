@@ -17,7 +17,7 @@ from tests.utils.user import create_random_user, authentication_token_from_usern
 from tests.utils.organization import create_random_organization
 from tests.utils.project import create_random_project
 from tests.utils.project_member import create_project_member
-from tests.utils.evaluation import create_random_final_evaluation
+from tests.utils.evaluation import create_random_final_evaluation, create_random_evaluation_period
 from tests.utils.utils import random_lower_string
 
 
@@ -30,23 +30,19 @@ def test_read_my_evaluation_result(
     
     # Create organization and project, assigning the PM
     org = create_random_organization(db)
-    project_in = ProjectCreate(name=random_lower_string(), pm_id=pm.id)
-    project = crud.project.project.create(db, obj_in=project_in)
+    eval_period = create_random_evaluation_period(db)
+    project = create_random_project(db, pm_id=pm.id, evaluation_period_id=eval_period.id)
     
-    # Add users to project
-    create_project_member(db, project_id=project.id, user_id=employee.id, is_pm=False)
-    create_project_member(db, project_id=project.id, user_id=pm.id, is_pm=True)
-
-    # Create evaluation data
-    today = datetime.date.today()
-    period = f"{today.year}-H{1 if today.month <= 6 else 2}"
-
+    # Add employee to the project
+    create_project_member(db, user_id=employee.id, project_id=project.id)
+    
+    # Create a final evaluation for the employee for that period
     create_random_final_evaluation(
-        db,
-        evaluatee_id=employee.id,
-        evaluation_period=period,
-        final_score=88.5,
-        grade="A",
+        db, 
+        evaluatee_id=employee.id, 
+        evaluation_period=eval_period.name, 
+        final_score=88.0, 
+        grade="A"
     )
     crud.pm_evaluation.pm_evaluation.create(
         db,
@@ -54,18 +50,18 @@ def test_read_my_evaluation_result(
             project_id=project.id, evaluatee_id=employee.id, score=90
         ),
         evaluator_id=pm.id,
-        evaluation_period=period,
+        evaluation_period=eval_period.name,
     )
 
     # Get token and make request
     user_token_headers = authentication_token_from_username(
         client=client, username=employee.username, db=db
     )
-    response = client.get(f"{settings.API_V1_STR}/evaluations/me", headers=user_token_headers)
+    response = client.get(f"{settings.API_V1_STR}/evaluations/me?evaluation_period={eval_period.name}", headers=user_token_headers)
 
     assert response.status_code == 200
     data = response.json()
-    assert data["evaluation_period"] == period
+    assert data["evaluation_period"] == eval_period.name
     assert data["grade"] == "A"
     assert len(data["pm_scores"]) == 1
     assert data["pm_scores"][0]["project_name"] == project.name

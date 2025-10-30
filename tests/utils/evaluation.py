@@ -22,11 +22,11 @@ def create_random_evaluation_period(
     end_date: Optional[date] = None
 ) -> EvaluationPeriod:
     if name is None:
-        name = f"2025-H{1}"
+        name = f"Test Period {random_lower_string()}"
     if start_date is None:
-        start_date = date(2025, 1, 1)
+        start_date = date.today() - timedelta(days=1)
     if end_date is None:
-        end_date = date(2025, 6, 30)
+        end_date = date.today() + timedelta(days=1)
     period_in = EvaluationPeriodCreate(name=name, start_date=start_date, end_date=end_date)
     return crud.evaluation_period.create(db=db, obj_in=period_in)
 

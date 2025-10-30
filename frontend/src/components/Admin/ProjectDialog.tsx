@@ -1,22 +1,22 @@
-
 import React, { useState, useEffect } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, 
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
   Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material';
 import { GridLegacy as Grid } from '@mui/material';
-
+import type { SelectChangeEvent } from '@mui/material';
 import type { Project, ProjectCreate, ProjectUpdate } from '../../schemas/project';
 import type { User } from '../../schemas/user';
 import type { Organization } from '../../schemas/organization';
+import type { EvaluationPeriod } from '../../schemas/evaluation';
 
-const initialFormData: Omit<ProjectCreate, 'owner_org_id'> = { 
-  name: '', 
-  description: '', 
-  start_date: '', 
-  end_date: '', 
-  pm_id: 0, 
+
+const initialFormData: ProjectCreate = {
+  name: '',
+  pm_id: 0,
+  evaluation_period_id: 0,
+  start_date: '',
+  end_date: '',
 };
 
 interface ProjectDialogProps {
@@ -26,32 +26,40 @@ interface ProjectDialogProps {
   project: Project | null;
   users: User[];
   organizations: Organization[];
+  evaluationPeriods: EvaluationPeriod[];
+  selectedEvaluationPeriodId?: number;
 }
 
-const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, project, users, organizations }) => {
-  const [formData, setFormData] = useState<Omit<ProjectCreate, 'owner_org_id'>>(initialFormData);
+const ProjectDialog: React.FC<ProjectDialogProps> = ({
+  open,
+  onClose,
+  onSave,
+  project,
+  users,
+  evaluationPeriods,
+  selectedEvaluationPeriodId,
+}) => {
+  const [formData, setFormData] = useState<ProjectCreate | Omit<ProjectUpdate, 'id'>>(initialFormData);
 
   useEffect(() => {
-    if (project) {
-      setFormData({
-        name: project.name || '',
-        description: project.description || '',
-        start_date: project.start_date ? project.start_date.split('T')[0] : '',
-        end_date: project.end_date ? project.end_date.split('T')[0] : '',
-        pm_id: project.pm_id || 0,
-      });
-    } else {
-      // Only set default pm_id if users are available
-      if (users.length > 0) {
+    if (open) {
+      if (project) {
         setFormData({
-          ...initialFormData,
-          pm_id: users[0].id,
+          name: project.name || '',
+          pm_id: project.pm_id || 0,
+          evaluation_period_id: project.evaluation_period_id,
+          start_date: project.start_date ? project.start_date.split('T')[0] : '',
+          end_date: project.end_date ? project.end_date.split('T')[0] : '',
         });
       } else {
-        setFormData(initialFormData);
+        setFormData({
+          ...initialFormData,
+          pm_id: users.length > 0 ? users[0].id : 0,
+          evaluation_period_id: selectedEvaluationPeriodId || 0,
+        });
       }
     }
-  }, [project, open, users, organizations]);
+  }, [project, open, users, selectedEvaluationPeriodId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<number>) => {
     const { name, value } = e.target;
@@ -59,7 +67,12 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
   };
 
   const handleSave = () => {
-    onSave(formData);
+    // Ensure evaluation_period_id is set, especially for new projects
+    const dataToSave = {
+      ...formData,
+      evaluation_period_id: formData.evaluation_period_id || selectedEvaluationPeriodId || 0,
+    };
+    onSave(dataToSave);
   };
 
   return (
@@ -78,15 +91,21 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
             />
           </Grid>
           <Grid xs={12}>
-            <TextField
-              name="description"
-              label="Description"
-              value={formData.description}
-              onChange={handleChange}
-              fullWidth
-              multiline
-              rows={3}
-            />
+            <FormControl fullWidth required>
+              <InputLabel id="evaluation-period-select-label">Evaluation Period</InputLabel>
+              <Select
+                labelId="evaluation-period-select-label"
+                name="evaluation_period_id"
+                value={formData.evaluation_period_id}
+                label="Evaluation Period"
+                onChange={handleChange}
+                disabled={!!project} // Don't allow changing the period for existing projects
+              >
+                {evaluationPeriods.map(period => (
+                  <MenuItem key={period.id} value={period.id}>{period.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid xs={6}>
             <TextField
@@ -97,7 +116,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               onChange={handleChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
-              required
             />
           </Grid>
           <Grid xs={6}>
@@ -109,7 +127,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               onChange={handleChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
-              required
             />
           </Grid>
           <Grid xs={12}>
@@ -128,7 +145,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, onClose, onSave, pr
               </Select>
             </FormControl>
           </Grid>
-
         </Grid>
       </DialogContent>
       <DialogActions>

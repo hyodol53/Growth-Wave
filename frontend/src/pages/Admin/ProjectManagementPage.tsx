@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
-import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid';
+import { Box, Typography, Button, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { DataGrid, GridActionsCellItem, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PeopleIcon from '@mui/icons-material/People';
 import * as api from '../../services/api';
-import type { Project, User, Organization, ProjectCreate, ProjectUpdate } from '../../schemas';
+import type { Project, User, Organization, ProjectCreate, ProjectUpdate, EvaluationPeriod } from '../../schemas';
 import ProjectDialog from '../../components/Admin/ProjectDialog';
 import ProjectMembersDialog from '../../components/Admin/ProjectMembersDialog';
 
@@ -13,6 +13,9 @@ const ProjectManagementPage: React.FC = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
+    const [evaluationPeriods, setEvaluationPeriods] = useState<EvaluationPeriod[]>([]);
+    const [selectedEvaluationPeriod, setSelectedEvaluationPeriod] = useState<number | ''>('');
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -21,28 +24,52 @@ const ProjectManagementPage: React.FC = () => {
     const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
     const [selectedProjectForMembers, setSelectedProjectForMembers] = useState<Project | null>(null);
 
-    const fetchData = useCallback(async () => {
+    const fetchInitialData = useCallback(async () => {
         setLoading(true);
         try {
-            const [projectsRes, usersRes, orgsRes] = await Promise.all([
-                api.projects.getProjects(),
+            const [usersRes, orgsRes, periodsRes] = await Promise.all([
                 api.users.getUsers(),
                 api.organizations.getOrganizations(),
+                api.evaluationPeriods.getEvaluationPeriods(),
             ]);
-            setProjects(projectsRes.data);
             setUsers(usersRes.data);
             setOrganizations(orgsRes.data);
+            setEvaluationPeriods(periodsRes.data);
+            if (periodsRes.data.length > 0) {
+                const activePeriod = periodsRes.data.find(p => p.is_active) || periodsRes.data[0];
+                setSelectedEvaluationPeriod(activePeriod.id);
+            }
         } catch (err) {
-            setError('Failed to fetch data.');
+            setError('Failed to fetch initial data.');
+        } finally {
+            setLoading(false);
         }
-        finally {
+    }, []);
+
+    const fetchProjects = useCallback(async (periodId: number) => {
+        setLoading(true);
+        try {
+            const projectsRes = await api.projects.getProjects({ evaluation_period_id: periodId });
+            setProjects(projectsRes.data);
+        } catch (err) {
+            setError('Failed to fetch projects for the selected period.');
+        } finally {
             setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        fetchInitialData();
+    }, [fetchInitialData]);
+
+    useEffect(() => {
+        if (selectedEvaluationPeriod) {
+            fetchProjects(selectedEvaluationPeriod);
+        } else {
+            setProjects([]);
+        }
+    }, [selectedEvaluationPeriod, fetchProjects]);
+
 
     const handleOpenProjectDialog = (project: Project | null) => {
         setEditingProject(project);
@@ -61,7 +88,9 @@ const ProjectManagementPage: React.FC = () => {
             } else {
                 await api.projects.createProject(projectData as ProjectCreate);
             }
-            fetchData();
+            if (selectedEvaluationPeriod) {
+                fetchProjects(selectedEvaluationPeriod);
+            }
             handleCloseProjectDialog();
         } catch (err) {
             setError('Failed to save project.');
@@ -72,7 +101,9 @@ const ProjectManagementPage: React.FC = () => {
         if (window.confirm('Are you sure you want to delete this project?')) {
             try {
                 await api.projects.deleteProject(projectId);
-                fetchData();
+                if (selectedEvaluationPeriod) {
+                    fetchProjects(selectedEvaluationPeriod);
+                }
             } catch (err) {
                 setError('Failed to delete project.');
             }
@@ -91,13 +122,14 @@ const ProjectManagementPage: React.FC = () => {
 
     const columns: GridColDef[] = [
         { field: 'name', headerName: 'Project Name', flex: 1 },
-        { field: 'description', headerName: 'Description', flex: 2 },
         {
             field: 'pm_id',
             headerName: 'Project Manager',
             flex: 1,
-            valueGetter: (params: any) => users.find(u => u.id === params.value)?.full_name || '',
+            renderCell: (params: GridRenderCellParams<any, User>) => users.find(u => u.id === params.row.pm_id)?.full_name || '',
         },
+        { field: 'start_date', headerName: 'Start Date', flex: 1 },
+        { field: 'end_date', headerName: 'End Date', flex: 1 },
         {
             field: 'actions',
             type: 'actions',
@@ -115,9 +147,29 @@ const ProjectManagementPage: React.FC = () => {
         <Box sx={{ p: 3 }}>
             <Typography variant="h4" gutterBottom>Project Management</Typography>
             {error && <Alert severity="error">{error}</Alert>}
-            <Button variant="contained" onClick={() => handleOpenProjectDialog(null)} disabled={loading}>
-                Add Project
-            </Button>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <FormControl sx={{ m: 1, minWidth: 240 }}>
+                    <InputLabel id="evaluation-period-select-label">Evaluation Period</InputLabel>
+                    <Select
+                        labelId="evaluation-period-select-label"
+                        id="evaluation-period-select"
+                        value={selectedEvaluationPeriod}
+                        label="Evaluation Period"
+                        onChange={(e) => setSelectedEvaluationPeriod(e.target.value as number)}
+                    >
+                        {evaluationPeriods.map((period) => (
+                            <MenuItem key={period.id} value={period.id}>
+                                {period.name} ({period.is_active ? 'Active' : 'Inactive'})
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <Button variant="contained" onClick={() => handleOpenProjectDialog(null)} disabled={loading || !selectedEvaluationPeriod}>
+                    Add Project
+                </Button>
+            </Box>
+
             <Box sx={{ height: 600, width: '100%', mt: 2 }}>
                 {loading ? <CircularProgress /> : (
                     <DataGrid
@@ -134,6 +186,8 @@ const ProjectManagementPage: React.FC = () => {
                 project={editingProject}
                 users={users}
                 organizations={organizations}
+                evaluationPeriods={evaluationPeriods}
+                selectedEvaluationPeriodId={selectedEvaluationPeriod || undefined}
             />
             {selectedProjectForMembers && (
                 <ProjectMembersDialog

@@ -91,8 +91,8 @@ def get_detailed_evaluation_result(
 
     # Project Evaluations
     project_evaluations = []
-    project_members = crud.project_member.project_member.get_multi_by_user_and_period_id(
-        db, user_id=user_id, period_id=period_id
+    project_members = crud.project_member.project_member.get_multi_by_user_and_evaluation_period(
+        db, user_id=user_id, evaluation_period_id=period_id
     )
 
     for pm in project_members:

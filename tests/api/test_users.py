@@ -116,8 +116,8 @@ def test_read_my_history(client: TestClient, db: Session):
     user = create_random_user(db, organization_id=org.id)
     user_token_headers = authentication_token_from_username(client=client, username=user.username, db=db)
 
-    period1 = create_random_evaluation_period(db, name="2024-H1", start_date=date(2024, 1, 1), end_date=date(2024, 6, 30))
-    project1 = create_random_project(db, pm_id=user.id, start_date=date(2024, 2, 1), end_date=date(2024, 5, 31))
+    period1 = create_random_evaluation_period(db)
+    project1 = create_random_project(db, pm_id=user.id, evaluation_period_id=period1.id, start_date=date(2024, 2, 1), end_date=date(2024, 5, 31))
     create_project_member(db, user_id=user.id, project_id=project1.id, participation_weight=100)
     create_random_final_evaluation(db, evaluatee_id=user.id, evaluation_period=period1.name, final_score=95.5, grade="S")
 
@@ -128,7 +128,7 @@ def test_read_my_history(client: TestClient, db: Session):
     assert response.status_code == 200
     data = response.json()
     assert len(data["history"]) > 0
-    history_for_period1 = next((h for h in data["history"] if h["evaluation_period"] == "2024-H1"), None)
+    history_for_period1 = next((h for h in data["history"] if h["evaluation_period"] == period1.name), None)
     assert history_for_period1 is not None
     assert history_for_period1["final_evaluation"]["grade"] == "S"
     assert len(history_for_period1["projects"]) == 1
