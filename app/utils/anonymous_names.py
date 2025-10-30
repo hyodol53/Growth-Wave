@@ -17,22 +17,16 @@ ANIMALS: List[str] = [
     "양", "염소", "소", "말", "돼지", "닭", "오리", "거위", "타조", "알파카"
 ]
 
-def generate_anonymous_name(db: Session, *, praisee_id: int, evaluation_period: str) -> str:
+def get_anonymous_name_for_praise(praise_id: int, adjective_list: list[str], animal_list: list[str]) -> str:
     """
-    Generates a unique "Color + Animal" combination for a given praisee in a specific period.
+    Generates a deterministic anonymous name combining an adjective and an animal
+    based on the praise ID.
     """
-    existing_names_tuples = crud.praise_limiter.get_anonymous_names_for_praisee(
-        db, praisee_id=praisee_id, evaluation_period=evaluation_period
-    )
-    existing_names = {name for name, in existing_names_tuples}
+    if not adjective_list or not animal_list:
+        return "익명의 누군가"
     
-    max_attempts = 100 # Failsafe to prevent infinite loops
-    for _ in range(max_attempts):
-        color = random.choice(COLORS)
-        animal = random.choice(ANIMALS)
-        new_name = f"{color} {animal}"
-        if new_name not in existing_names:
-            return new_name
-            
-    # As a fallback if all combinations are somehow exhausted (highly unlikely)
-    return f"특별한 {random.randint(1, 999)}"
+    selected_adjective = adjective_list[praise_id % len(adjective_list)]
+    # Use a different calculation for the animal to ensure variety
+    selected_animal = animal_list[(praise_id // len(adjective_list)) % len(animal_list)]
+    
+    return f"익명의 {selected_adjective} {selected_animal}"

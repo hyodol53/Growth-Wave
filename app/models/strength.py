@@ -1,22 +1,16 @@
-from sqlalchemy import Column, Integer, String, Table, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
-praise_strength_association = Table(
-    "praise_strength_association",
-    Base.metadata,
-    Column("praise_id", Integer, ForeignKey("praise.id")),
-    Column("strength_id", Integer, ForeignKey("strength.id")),
-)
+class StrengthProfile(Base):
+    __tablename__ = "strength_profile"
 
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    hashtag = Column(String, primary_key=True)
+    evaluation_period_id = Column(Integer, ForeignKey("evaluation_periods.id"), primary_key=True)
+    
+    count = Column(Integer, nullable=False, default=0)
 
-class Strength(Base):
-    __tablename__ = "strength"
-
-    id = Column(Integer, primary_key=True, index=True)
-    hashtag = Column(String, unique=True, index=True, nullable=False)
-
-    praises = relationship(
-        "Praise", secondary=praise_strength_association, back_populates="strengths"
-    )
+    user = relationship("User")
+    evaluation_period = relationship("EvaluationPeriod")

@@ -1,25 +1,17 @@
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from typing import List
-
-# Schema for representing a strength hashtag within a praise response
-class StrengthInPraise(BaseModel):
-    hashtag: str
-    model_config = ConfigDict(from_attributes=True)
 
 # Schema for creating a new praise
 class PraiseCreate(BaseModel):
     recipient_id: int
     message: str = Field(..., min_length=1, max_length=500)
-    # Users will submit a list of simple string hashtags
-    hashtags: List[str] = Field(..., min_length=1, max_length=5)
+    hashtag: str = Field(..., min_length=1, max_length=100)
 
-# Schema for representing a praise in the database (and in API responses)
+# Schema for representing a praise in the inbox API response
 class Praise(BaseModel):
-    id: int
-    anonymous_name: str
+    sender_display_name: str # e.g., "익명의 고라니"
     message: str
-    created_at: datetime
-    strengths: List[StrengthInPraise] = []
+    hashtag: str
+    received_at: datetime = Field(..., alias="created_at")
 
     model_config = ConfigDict(from_attributes=True)

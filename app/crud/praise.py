@@ -1,87 +1,113 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
-from collections import Counter
+from sqlalchemy import and_, func
 
 from app import models, schemas
 from app.crud.base import CRUDBase
-from app.models import User, Praise, PraiseLimiter, Strength
-from app.schemas.praise import PraiseCreate
-from app.schemas.strength import StrengthStat
-from app.utils.anonymous_names import generate_anonymous_name
-from app.exceptions import PraiseLimitExceeded
-import datetime
+from app.exceptions import PraiseLimitExceeded, InvalidHashtag
+from app.utils.anonymous_names import get_anonymous_name_for_praise
 
-# TODO: This should be configurable via a settings page as per NFR-6
-PRAISE_LIMIT_PER_PERIOD = 5
+class CRUDPraise(CRUDBase[models.Praise, schemas.PraiseCreate, None]):
+    def create_with_sender(
+        self, 
+        db: Session, 
+        *, 
+        obj_in: schemas.PraiseCreate, 
+        sender_id: int,
+        current_period_id: int,
+        limit: int,
+        available_hashtags: list[str]
+    ) -> models.Praise:
+        # 1. Validate hashtag
+        if obj_in.hashtag not in available_hashtags:
+            raise InvalidHashtag()
 
-def get_current_period() -> str:
-    """Determines the current evaluation period (e.g., 2024-H1)."""
-    now = datetime.datetime.now()
-    half = "H1" if now.month < 7 else "H2"
-    return f"{now.year}-{half}"
+        # 2. Check praise limit
+        praise_count = db.query(func.count(self.model.id)).filter(
+            and_(
+                self.model.sender_id == sender_id,
+                self.model.recipient_id == obj_in.recipient_id,
+                self.model.evaluation_period_id == current_period_id
+            )
+        ).scalar()
 
-def create_praise(db: Session, *, praise_in: PraiseCreate, sender_id: int, strengths: list[Strength]) -> Praise:
-    period = get_current_period()
+        if praise_count >= limit:
+            raise PraiseLimitExceeded()
 
-    # 1. Find or create the praise limiter record
-    limiter = db.query(models.PraiseLimiter).filter(
-        models.PraiseLimiter.sender_id == sender_id,
-        models.PraiseLimiter.recipient_id == praise_in.recipient_id,
-        models.PraiseLimiter.period == period
-    ).first()
-
-    if limiter and limiter.count >= PRAISE_LIMIT_PER_PERIOD:
-        raise PraiseLimitExceeded()
-
-    if limiter:
-        # Record exists, check for anonymous name
-        if not limiter.anonymous_name:
-            # If name is missing (e.g., old data), generate and save it
-            limiter.anonymous_name = generate_anonymous_name(db, praisee_id=praise_in.recipient_id, evaluation_period=period)
-        limiter.count += 1
-    else:
-        # No record, create a new one
-        new_name = generate_anonymous_name(db, praisee_id=praise_in.recipient_id, evaluation_period=period)
-        limiter = models.PraiseLimiter(
+        # 3. Create Praise record
+        db_obj = self.model(
+            **obj_in.model_dump(),
             sender_id=sender_id,
-            recipient_id=praise_in.recipient_id,
-            period=period,
-            count=1,
-            anonymous_name=new_name
+            evaluation_period_id=current_period_id
         )
-        db.add(limiter)
-    
-    db.commit()
-    db.refresh(limiter)
+        db.add(db_obj)
 
-    anonymous_name_to_use = limiter.anonymous_name
+        # 4. Upsert StrengthProfile
+        strength_profile = db.query(models.StrengthProfile).filter(
+            and_(
+                models.StrengthProfile.user_id == obj_in.recipient_id,
+                models.StrengthProfile.hashtag == obj_in.hashtag,
+                models.StrengthProfile.evaluation_period_id == current_period_id
+            )
+        ).first()
 
-    # 2. Create the praise object
-    # Note: sender_id is intentionally not saved in the Praise model to ensure anonymity
-    db_praise = Praise(
-        recipient_id=praise_in.recipient_id,
-        message=praise_in.message,
-        anonymous_name=anonymous_name_to_use,
-        strengths=strengths
-    )
-    db.add(db_praise)
-    db.commit()
-    db.refresh(db_praise)
-    return db_praise
+        if strength_profile:
+            strength_profile.count += 1
+        else:
+            strength_profile = models.StrengthProfile(
+                user_id=obj_in.recipient_id,
+                hashtag=obj_in.hashtag,
+                evaluation_period_id=current_period_id,
+                count=1
+            )
+            db.add(strength_profile)
+        
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
 
-def get_praises_for_user(db: Session, *, user_id: int, skip: int = 0, limit: int = 100) -> list[Praise]:
-    return db.query(Praise).filter(Praise.recipient_id == user_id).order_by(Praise.created_at.desc(), Praise.id.desc()).offset(skip).limit(limit).all()
+    def get_inbox_for_user(
+        self, 
+        db: Session, 
+        *, 
+        user_id: int,
+        anonymous_adjectives: list[str],
+        anonymous_animals: list[str]
+    ) -> list[schemas.Praise]:
+        praises = db.query(self.model).filter(self.model.recipient_id == user_id).order_by(self.model.created_at.desc(), self.model.id.desc()).all()
+        
+        inbox_items = []
+        for p in praises:
+            display_name = get_anonymous_name_for_praise(
+                praise_id=p.id,
+                adjective_list=anonymous_adjectives,
+                animal_list=anonymous_animals
+            )
+            inbox_items.append(
+                schemas.Praise(
+                    sender_display_name=display_name,
+                    message=p.message,
+                    hashtag=p.hashtag,
+                    created_at=p.created_at
+                )
+            )
+        return inbox_items
 
-def get_strength_profile_for_user(db: Session, *, user: User) -> list[StrengthStat]:
-    praises = user.praises_received
-    if not praises:
-        return []
+    def get_strength_profile(
+        self,
+        db: Session,
+        *,
+        user_id: int,
+        current_period_id: int
+    ) -> list[schemas.StrengthStat]:
+        
+        strengths = db.query(models.StrengthProfile).filter(
+            and_(
+                models.StrengthProfile.user_id == user_id,
+                models.StrengthProfile.evaluation_period_id == current_period_id
+            )
+        ).order_by(models.StrengthProfile.count.desc(), models.StrengthProfile.hashtag.asc()).all()
 
-    all_hashtags = [strength.hashtag for praise in praises for strength in praise.strengths]
-    hashtag_counts = Counter(all_hashtags)
+        return [schemas.StrengthStat(hashtag=s.hashtag, count=s.count) for s in strengths]
 
-    strength_stats = [StrengthStat(hashtag=h, count=c) for h, c in hashtag_counts.items()]
-    # Sort by count descending, then alphabetically
-    strength_stats.sort(key=lambda x: (-x.count, x.hashtag))
 
-    return strength_stats
+praise = CRUDPraise(models.Praise)

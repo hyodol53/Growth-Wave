@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
 # Import all models to ensure they are registered with SQLAlchemy's metadata
-from app.models import user, organization, external_account, project, project_member, praise, praise_limiter, strength, evaluation, collaboration
+from app.models import user, organization, external_account, project, project_member, praise, strength, evaluation, collaboration
 from app.api.endpoints import auth, users, organizations, external_accounts, projects, praises, evaluations, reports, retrospectives, collaborations
 
 # Create all tables in the database

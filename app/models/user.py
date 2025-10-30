@@ -43,21 +43,6 @@ class User(Base):
     praises_received = relationship(
         "Praise",
         back_populates="recipient",
-        cascade="all, delete-orphan"
-    )
-
-    # Praise limiter logs for praises sent by this user
-    praises_sent_log = relationship(
-        "PraiseLimiter",
-        foreign_keys="[PraiseLimiter.sender_id]",
-        back_populates="sender",
         cascade="all, delete-orphan",
-    )
-
-    # Praise limiter logs for praises received by this user
-    praises_received_log = relationship(
-        "PraiseLimiter",
-        foreign_keys="[PraiseLimiter.recipient_id]",
-        back_populates="recipient",
-        cascade="all, delete-orphan",
+        foreign_keys="[Praise.recipient_id]"
     )

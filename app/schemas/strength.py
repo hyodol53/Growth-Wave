@@ -10,5 +10,5 @@ class StrengthStat(BaseModel):
 class StrengthProfile(BaseModel):
     user_id: int
     full_name: str
-    total_praises: int = 0
-    strengths: List[StrengthStat] = []
+    current_period: str
+    badges: List[StrengthStat] = []
