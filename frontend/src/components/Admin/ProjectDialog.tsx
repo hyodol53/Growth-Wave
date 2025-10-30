@@ -80,7 +80,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
       <DialogTitle>{project ? 'Edit Project' : 'Create Project'}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid xs={12}>
+          <Grid item xs={12}>
             <TextField
               name="name"
               label="Project Name"
@@ -90,7 +90,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
               required
             />
           </Grid>
-          <Grid xs={12}>
+          <Grid item xs={12}>
             <FormControl fullWidth required>
               <InputLabel id="evaluation-period-select-label">Evaluation Period</InputLabel>
               <Select
@@ -107,7 +107,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
               </Select>
             </FormControl>
           </Grid>
-          <Grid xs={6}>
+          <Grid item xs={6}>
             <TextField
               name="start_date"
               label="Start Date"
@@ -118,7 +118,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid xs={6}>
+          <Grid item xs={6}>
             <TextField
               name="end_date"
               label="End Date"
@@ -129,7 +129,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid xs={12}>
+          <Grid item xs={12}>
             <FormControl fullWidth required>
               <InputLabel id="pm-select-label">Project Manager</InputLabel>
               <Select

@@ -89,7 +89,7 @@ const MemberWeightManagementPage: React.FC = () => {
 
         <Box sx={{ p: 3 }}>
 
-            <Typography variant="h4" gutterBottom>Member Weight Management</Typography>
+            <Typography variant="h4" gutterBottom>프로젝트 투입률 설정</Typography>
 
             <List>
 
@@ -99,7 +99,7 @@ const MemberWeightManagementPage: React.FC = () => {
 
                         <Button variant="outlined" onClick={() => handleOpenDialog(user)}>
 
-                            Manage Weights
+                            투입률 관리
 
                         </Button>
 

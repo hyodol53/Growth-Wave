@@ -76,12 +76,12 @@ const HistoryPage: React.FC = () => {
           return (
             <Accordion key={period} defaultExpanded={period === sortedPeriods[0]}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">{period}</Typography>
+                <Typography variant="h6">{entry.evaluation_period}</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 2 }}>
+                  <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
+                    <Paper sx={{ p: 2, width: '100%' }}>
                       <Typography variant="h6" gutterBottom>평가 결과</Typography>
                       <Typography variant="body1">
                         <strong>최종 등급:</strong> {finalEval?.grade || '등급 없음'}
@@ -94,8 +94,8 @@ const HistoryPage: React.FC = () => {
                        )}
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 2 }}>
+                  <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
+                    <Paper sx={{ p: 2, width: '100%' }}>
                       <Typography variant="h6" gutterBottom>프로젝트</Typography>
                       <List dense>
                         {entry.projects.length > 0 ? (

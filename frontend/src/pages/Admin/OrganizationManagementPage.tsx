@@ -250,12 +250,9 @@ const OrganizationManagementPage: React.FC = () => {
           조직 및 사용자 관리
         </Typography>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <OrgSync onSyncSuccess={fetchData} />
-          <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
             <Button variant="contained" onClick={() => handleOpenOrgDialog(null)}>조직 추가</Button>
             <Button variant="contained" onClick={() => handleOpenUserDialog(null)}>사용자 추가</Button>
-          </Box>
         </Box>
         <Paper sx={{ p: 2 }}>
           <Grid container spacing={3}>
@@ -299,6 +296,9 @@ const OrganizationManagementPage: React.FC = () => {
             </Grid>
           </Grid>
         </Paper>
+        <Box sx={{ mt: 3 }}>
+          <OrgSync onSyncSuccess={fetchData} />
+        </Box>
       </Box>
     </Box>
   );
