@@ -18,7 +18,7 @@ const QualitativeEvaluationDialog: React.FC<QualitativeEvaluationDialogProps> = 
     // Reset scores when dialog opens or evaluatees change
     const initialScores: Record<number, number> = {};
     evaluatees.forEach(e => {
-      initialScores[e.id] = 0;
+      initialScores[e.id] = 0; // Default to 0 or a previous score if available
     });
     setScores(initialScores);
   }, [open, evaluatees]);

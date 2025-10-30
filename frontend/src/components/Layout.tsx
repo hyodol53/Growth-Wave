@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { auth } from '../services/api';
-import type { User } from '../schemas/user'; // Assuming you have a user schema/type defined
+import type { User } from '../schemas/user';
 
 import {
   AppBar,
@@ -25,43 +24,28 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import TuneIcon from '@mui/icons-material/Tune';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
-
-
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 
 const drawerWidth = 240;
 
 interface LayoutProps {
   children: React.ReactNode;
+  user: User | null;
+  onLogout: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
 
-  const handleLogout = useCallback(() => {
-    auth.logout();
+  const handleLogout = () => {
+    onLogout();
     navigate('/login');
-    window.location.reload(); // Force reload to clear state
-  }, [navigate]);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const currentUser = await auth.getCurrentUser();
-        setUser(currentUser);
-      } catch (error) {
-        console.error('Failed to fetch user', error);
-        handleLogout();
-      }
-    };
-    fetchUser();
-  }, [handleLogout]);
+  };
 
   const menuItems = [
     { text: '대시보드', icon: <DashboardIcon />, path: '/' },
     { text: '내 프로필', icon: <AccountCircleIcon />, path: '/profile' },
-    { text: '내 평가', icon: <AssessmentIcon />, path: '/evaluations' },
+    { text: '내 평가', icon: <AssessmentIcon />, path: '/my-evaluations' },
     { text: '내 이력', icon: <SummarizeIcon />, path: '/history' },
   ];
 

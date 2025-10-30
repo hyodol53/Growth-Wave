@@ -1,43 +1,41 @@
 
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { auth } from '../services/api';
-import type { UserRole } from '../schemas/user';
+import api from '../services/api';
+import type { User, UserRole } from '../schemas';
 
 interface AuthorizedRouteProps {
   children: React.ReactElement;
-  allowedRoles: UserRole[];
+  roles: UserRole[];
 }
 
-const AuthorizedRoute: React.FC<AuthorizedRouteProps> = ({ children, allowedRoles }) => {
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+const AuthorizedRoute: React.FC<AuthorizedRouteProps> = ({ children, roles }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
+    const checkUser = async () => {
       try {
-        const user = await auth.getCurrentUser();
-        if (user && allowedRoles.includes(user.role)) {
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
+        const { data } = await api.auth.getCurrentUser();
+        setUser(data);
       } catch (error) {
-        console.error('Error fetching user role:', error);
-        setIsAuthorized(false);
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
-
-    checkAuthStatus();
-  }, [allowedRoles]);
+    checkUser();
+  }, []);
 
   if (loading) {
-    return <p>Loading...</p>; // Or a spinner component
+    return <div>Loading...</div>;
   }
 
-  return isAuthorized ? children : <Navigate to="/" />;
+  if (user && roles.includes(user.role)) {
+    return children;
+  }
+
+  return <Navigate to="/" />;
 };
 
 export default AuthorizedRoute;

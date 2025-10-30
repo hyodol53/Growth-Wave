@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Box, Button, Typography, CircularProgress, Alert } from '@mui/material';
-import { auth } from '../../services/api';
+import api from '../../services/api';
 
 interface OrgSyncProps {
   onSyncSuccess: () => void;
@@ -36,21 +36,16 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
     setSuccess(null);
 
     try {
-      const result = await auth.syncOrganizationsWithJson(selectedFile);
-      
-      // Construct a user-friendly success message from the result object
-      const orgs = result.organizations || { created: 0, updated: 0 };
-      const users = result.users || { created: 0, updated: 0 };
-      const successMsg = `동기화 성공! 조직 (생성: ${orgs.created}개, 업데이트: ${orgs.updated}개), 사용자 (생성: ${users.created}명, 업데이트: ${users.updated}명).`;
-
-      setSuccess(successMsg);
-      setSelectedFile(null);
+      const result = await api.organizations.syncChart(selectedFile);
+      setSuccess(`Sync successful! Organizations: ${result.data.organizations.created} created, ${result.data.organizations.updated} updated. Users: ${result.data.users.created} created, ${result.data.users.updated} updated.`);
       // Notify parent component to refetch data
       onSyncSuccess();
-    } catch (err: any) {
+    }
+    catch (err: any) {
       console.error('Sync failed:', err);
       setError(err.response?.data?.detail || '동기화 중 알 수 없는 오류가 발생했습니다.');
-    } finally {
+    }
+    finally {
       setIsUploading(false);
     }
   }, [selectedFile, onSyncSuccess]);
@@ -61,7 +56,7 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
         JSON으로 동기화
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        JSON 파일을 업로드하여 전체 조직도와 사용자 목록을 동기화합니다.
+        JSON 파일을 업로드하여 전체 조직도와 사용자 목록을 동기화합니다。
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button variant="outlined" onClick={handleSelectFileClick}>
@@ -94,4 +89,5 @@ const OrgSync: React.FC<OrgSyncProps> = ({ onSyncSuccess }) => {
 };
 
 export default OrgSync;
+
 

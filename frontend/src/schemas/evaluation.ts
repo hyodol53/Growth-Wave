@@ -67,15 +67,119 @@ export interface EvaluationPeriod {
   
   export type EvaluationWeightUpdate = Partial<EvaluationWeightCreate>;
 
-export interface FinalEvaluation {
+export interface Evaluation {
     id: number;
-    evaluatee_id: number;
+    name: string;
+}
+
+export interface MyEvaluationResult {
     evaluation_period: string;
-    peer_score: number;
-    pm_score: number;
-    qualitative_score: number;
-    final_score: number;
     grade: string | null;
+    pm_scores: {
+        project_name: string;
+        pm_name: string;
+        score: number;
+    }[];
+}
+
+export interface PeerEvaluation {
+    id: number;
+    project_id: number;
+    evaluator_id: number;
+    evaluatee_id: number;
+    scores: number[];
+    comment: string | null;
+}
+
+export interface PmEvaluation {
+    id: number;
+    project_id: number;
+    evaluator_id: number;
+    evaluatee_id: number;
+    score: number;
+    comment: string | null;
+}
+
+export interface QualitativeEvaluation {
+    id: number;
+    evaluator_id: number;
+    evaluatee_id: number;
+    score: number;
+    comment: string | null;
+}
+
+export interface Evaluation {
+    id: number;
+    name: string;
+}
+
+export interface MyEvaluationResult {
+    evaluation_period: string;
+    grade: string | null;
+    pm_scores: {
+        project_name: string;
+        pm_name: string;
+        score: number;
+    }[];
+}
+
+export interface PeerEvaluation {
+    id: number;
+    project_id: number;
+    evaluator_id: number;
+    evaluatee_id: number;
+    scores: number[];
+    comment: string | null;
+}
+
+export interface PmEvaluation {
+    id: number;
+    project_id: number;
+    evaluator_id: number;
+    evaluatee_id: number;
+    score: number;
+    comment: string | null;
+}
+
+export interface QualitativeEvaluation {
+    id: number;
+    evaluator_id: number;
+    evaluatee_id: number;
+    score: number;
+    comment: string | null;
+}
+
+export interface PeerEvaluationCreate {
+    project_id: number;
+    evaluatee_id: number;
+    scores: number[];
+    comment?: string | null;
+}
+export interface PeerEvaluationUpdate extends PeerEvaluationCreate {}
+
+export interface PmEvaluationCreate {
+    project_id: number;
+    evaluatee_id: number;
+    score: number;
+    comment?: string | null;
+}
+export interface PmEvaluationUpdate extends PmEvaluationCreate {}
+
+export interface QualitativeEvaluationUpdate {
+    evaluatee_id: number;
+    score: number;
+    comment?: string | null;
+}
+
+export interface FinalEvaluation {
+  evaluatee_id: number;
+  evaluation_period: string;
+  peer_score: number;
+  pm_score: number;
+  qualitative_score: number;
+  final_score: number;
+  grade: string | null;
+  id: number;
 }
 
 export type FinalEvaluationHistory = FinalEvaluation;
@@ -96,15 +200,99 @@ export interface ManagerEvaluationView {
 }
 
 export interface GradeAdjustment {
+  user_id: number;
+  adjusted_grade: string;
+}
+
+
+
+export interface EvaluationPeriod {
+
+  id: number;
+
+  name: string;
+
+  start_date: string;
+
+  end_date: string;
+
+}
+
+
+
+export interface EvaluatedUser {
+
+  user_id: number;
+
+  full_name: string;
+
+  title: string;
+
+  organization_name: string;
+
+}
+
+
+
+export interface DetailedProjectEvaluation {
+
+  project_id: number;
+
+  project_name: string;
+
+  participation_weight: number;
+
+  peer_evaluation_score: number | null;
+
+  pm_evaluation_score: number | null;
+
+  peer_feedback: string[];
+
+}
+
+
+
+export interface DetailedQualitativeEvaluation {
+
+  score: number | null;
+
+  comment: string | null;
+
+}
+
+
+
+export interface DetailedEvaluationResult {
+
+  status: 'COMPLETED' | 'IN_PROGRESS';
+
+  user_info: {
+
     user_id: number;
-    grade: string;
+
+    full_name: string;
+
+    title: string;
+
+    organization_name: string;
+
+  };
+
+  final_evaluation: {
+
+    grade: string | null;
+
+    final_score: number | null;
+
+  } | null;
+
+  project_evaluations: DetailedProjectEvaluation[];
+
+  qualitative_evaluation: DetailedQualitativeEvaluation | null;
+
 }
 
-export interface GradeAdjustmentRequest {
 
-    adjustments: GradeAdjustment[];
-
-}
 
 
 

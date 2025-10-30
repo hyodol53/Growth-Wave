@@ -1,180 +1,130 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
+import api from './services/api';
 import Layout from './components/Layout';
-import AuthorizedRoute from './components/AuthorizedRoute';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
 import OrganizationManagementPage from './pages/Admin/OrganizationManagementPage';
 import ProjectManagementPage from './pages/Admin/ProjectManagementPage';
+import AuthorizedRoute from './components/AuthorizedRoute';
+import MemberWeightManagementPage from './pages/Admin/MemberWeightManagementPage';
 import EvaluationSettingsPage from './pages/Admin/EvaluationSettingsPage';
 import MyEvaluationsPage from './pages/MyEvaluationsPage';
-import HistoryPage from './pages/HistoryPage';
-import { auth } from './services/api';
-import type { User } from './schemas/user';
-import { UserRole } from './schemas/user';
 import FinalGradeAdjustmentPage from './pages/Admin/FinalGradeAdjustmentPage';
-import MemberWeightManagementPage from './pages/Admin/MemberWeightManagementPage';
 import EvaluationResultPage from './pages/Admin/EvaluationResultPage';
+import HistoryPage from './pages/HistoryPage';
+import type { User } from './schemas';
+import { UserRole } from './schemas';
 
-const Dashboard: React.FC = () => {
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const currentUser = await auth.getCurrentUser();
+  const checkAuth = useCallback(async () => {
+    try {
+      const { data: currentUser } = await api.auth.getCurrentUser();
+      // Defensive check: Ensure we have a valid user object with an ID
+      if (currentUser && currentUser.id) {
         setUser(currentUser);
-      } catch (error) {
-        console.error('Failed to fetch user data', error);
-        auth.logout();
-        window.location.reload();
-      } finally {
-        setLoading(false);
+        setIsAuthenticated(true);
+      } else {
+        // Treat as unauthenticated if the user object is invalid
+        setUser(null);
+        setIsAuthenticated(false);
+        localStorage.removeItem('access_token');
       }
-    };
-
-    fetchUser();
+    } catch (error) {
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('access_token');
+    }
   }, []);
 
-  if (loading) {
-    return <p>Loading dashboard...</p>;
-  }
-
-  return (
-    <div>
-      <h2>Welcome, {user?.full_name || user?.username}!</h2>
-      <p>This is your personalized dashboard. Here you can see an overview of your evaluations, praises, and project activities.</p>
-      {/* Add more dashboard widgets here */}
-      <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #eee', borderRadius: '8px' }}>
-        <h3>Quick Stats</h3>
-        <p>Total Praises Received: <strong>5</strong></p>
-        <p>Projects Participated: <strong>3</strong></p>
-        <p>Upcoming Evaluations: <strong>1</strong></p>
-      </div>
-    </div>
-  );
-};
-
-const Profile: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const currentUser = await auth.getCurrentUser();
-        setUser(currentUser);
-      } catch (error) {
-        console.error('Failed to fetch user data', error);
-        auth.logout();
-        window.location.reload();
-      } finally {
-        setLoading(false);
-      }
-    };
+    checkAuth();
+  }, [checkAuth]);
 
-    fetchUser();
-  }, []);
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    setIsAuthenticated(false);
+    setUser(null);
+    window.location.href = '/login';
+  };
 
-  if (loading) {
-    return <p>Loading profile...</p>;
+  if (isAuthenticated === null) {
+    return <div>Loading...</div>; // Or a proper spinner
   }
 
-  return (
-    <div>
-      <h2>User Profile</h2>
-      {user ? (
-        <div style={{ lineHeight: '1.8' }}>
-          <p><strong>Username:</strong> {user.username}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Full Name:</strong> {user.full_name}</p>
-          <p><strong>Role:</strong> {user.role}</p>
-          <p><strong>Organization:</strong> {user.organization?.name || 'N/A'}</p>
-          {/* Add external account integration here */}
-          <h3 style={{ marginTop: '20px' }}>External Accounts</h3>
-          <p>No external accounts linked yet.</p>
-        </div>
-      ) : (
-        <p>User data not available.</p>
-      )}
-    </div>
-  );
-};
-
-const App: React.FC = () => {
-  const isLoggedIn = !!localStorage.getItem('access_token');
   return (
     <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/*"
-          element={isLoggedIn ? (
-            <Layout>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/evaluations" element={<MyEvaluationsPage />} />
-                <Route path="/history" element={<HistoryPage />} />
-
-                {/* Admin Routes */}
-                <Route 
-                  path="/admin/organizations" 
-                  element={
-                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN]}>
-                      <OrganizationManagementPage />
-                    </AuthorizedRoute>
-                  }
-                />
-                <Route 
-                  path="/admin/projects" 
-                  element={
-                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
-                      <ProjectManagementPage />
-                    </AuthorizedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/evaluation-settings" 
-                  element={
-                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN]}>
-                      <EvaluationSettingsPage />
-                    </AuthorizedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/grade-adjustment" 
-                  element={
-                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
-                      <FinalGradeAdjustmentPage />
-                    </AuthorizedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/member-weights" 
-                  element={
-                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
-                      <MemberWeightManagementPage />
-                    </AuthorizedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/evaluation-results" 
-                  element={
-                    <AuthorizedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
-                      <EvaluationResultPage />
-                    </AuthorizedRoute>
-                  } 
-                />
-              </Routes>
-            </Layout>
-          ) : (
-            <Navigate to="/login" />
-          )}
-        />
-      </Routes>
+      {isAuthenticated && user ? (
+        <Layout user={user} onLogout={handleLogout}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/my-evaluations" element={<MyEvaluationsPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            
+            <Route
+              path="/admin/organizations"
+              element={
+                <AuthorizedRoute roles={[UserRole.ADMIN]}>
+                  <OrganizationManagementPage />
+                </AuthorizedRoute>
+              }
+            />
+            <Route
+              path="/admin/projects"
+              element={
+                <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
+                  <ProjectManagementPage />
+                </AuthorizedRoute>
+              }
+            />
+            <Route
+              path="/admin/member-weights"
+              element={
+                <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
+                  <MemberWeightManagementPage />
+                </AuthorizedRoute>
+              }
+            />
+            <Route
+              path="/admin/evaluation-settings"
+              element={
+                <AuthorizedRoute roles={[UserRole.ADMIN]}>
+                  <EvaluationSettingsPage />
+                </AuthorizedRoute>
+              }
+            />
+            <Route
+              path="/admin/grade-adjustment"
+              element={
+                <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
+                  <FinalGradeAdjustmentPage />
+                </AuthorizedRoute>
+              }
+            />
+            <Route
+              path="/admin/evaluation-results"
+              element={
+                <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
+                  <EvaluationResultPage />
+                </AuthorizedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Layout>
+      ) : (
+        <Routes>
+          <Route path="/login" element={<Login onLoginSuccess={checkAuth} />} />
+          <Route path="*" element={<Navigate to="/login" />} />
+        </Routes>
+      )}
     </Router>
   );
-};
+}
 
 export default App;

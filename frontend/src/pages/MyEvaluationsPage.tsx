@@ -25,11 +25,10 @@ const MyEvaluationsPage: React.FC = () => {
     const fetchInitialData = async () => {
         try {
             setLoading(true);
-            const userRes = await api.auth.getCurrentUser();
-            setCurrentUser(userRes);
-
-            const tasksRes = await api.evaluations.getMyTasks();
-            setEvaluationTasks(tasksRes.data);
+                    const userRes = await api.auth.getCurrentUser();
+                    setCurrentUser(userRes.data);
+            
+                    const tasksRes = await api.evaluations.getMyTasks();            setEvaluationTasks(tasksRes.data);
 
         } catch (error) {
             console.error("Failed to fetch initial data", error);

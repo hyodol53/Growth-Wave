@@ -32,3 +32,23 @@ export interface ProjectMemberDetails {
     is_pm: boolean;
     participation_weight: number;
 }
+
+export interface UserProjectWeight {
+    project_id: number;
+    project_name: string;
+    participation_weight: number;
+}
+
+export interface UserProjectWeightsUpdate {
+    weights: UserProjectWeight[];
+}
+
+export interface UserProjectWeight {
+    project_id: number;
+    project_name: string;
+    participation_weight: number;
+}
+
+export interface UserProjectWeightsUpdate {
+    weights: UserProjectWeight[];
+}

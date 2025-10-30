@@ -1,214 +1,118 @@
-import axios from 'axios';
+// frontend/src/services/api.ts
+import axios, { type AxiosResponse } from 'axios';
+import type * as schemas from '../schemas/index';
 
-import type { User, UserCreate, UserUpdate, UserHistoryResponse } from '../schemas/user';
-import type { OrganizationCreate, OrganizationUpdate } from '../schemas/organization';
-import type { ProjectCreate, ProjectUpdate } from '../schemas/project';
-import type { ProjectMemberAdd, ProjectMemberDetail } from '../schemas/project_member';
-import type { 
-    EvaluationPeriod, EvaluationPeriodCreate, EvaluationPeriodUpdate, 
-    DepartmentGradeRatio, DepartmentGradeRatioCreate, DepartmentGradeRatioUpdate, 
-    EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate, 
-    ManagerEvaluationView, GradeAdjustmentRequest, MyEvaluationTask, 
-    PeerEvaluationData, PmEvaluationData, PeerEvaluationSubmit, 
-    PmEvaluationSubmit, QualitativeEvaluationCreate 
-} from '../schemas/evaluation';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+// 1. apiClient.ts의 내용을 api.ts에 통합
+const apiClient = axios.create({
+  baseURL: '/api/v1', // 4. 상대 경로로 복원
 });
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+// 2. 인터셉터 설정 통합
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
-export interface UserProjectWeight {
-  project_id: number;
-  project_name: string;
-  participation_weight: number;
-}
 
-export interface UserProjectWeightsUpdate {
-  weights: {
-    project_id: number;
-    participation_weight: number;
-  }[];
-}
-
+// 3. 기존 api.ts의 내용 (apiClient를 직접 사용하도록 수정)
 export const auth = {
-  login: async (username: string, password: string) => {
-    const response = await api.post('/auth/token', new URLSearchParams({
-      username,
-      password,
-    }), {
+  login: (username: string, password: string): Promise<AxiosResponse<schemas.Token>> => {
+    const credentials = new URLSearchParams();
+    credentials.append('username', username);
+    credentials.append('password', password);
+
+    return apiClient.post('/auth/token', credentials, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
-    localStorage.setItem('access_token', response.data.access_token);
-    return response.data;
   },
-  logout: () => {
-    localStorage.removeItem('access_token');
-  },
-  getCurrentUser: async (): Promise<User> => {
-    const response = await api.get('/users/me');
-    return response.data;
-  },
-  getOrganizations: async () => {
-    const response = await api.get('/organizations/');
-    return response.data;
-  },
-  getUsers: async () => {
-    const response = await api.get('/users/');
-    return response.data;
-  },
-
-  // Organization CRUD
-  createOrganization: async (data: OrganizationCreate) => {
-    const response = await api.post('/organizations/', data);
-    return response.data;
-  },
-  updateOrganization: async (id: number, data: OrganizationUpdate) => {
-    const response = await api.put(`/organizations/${id}`, data);
-    return response.data;
-  },
-  deleteOrganization: async (id: number) => {
-    const response = await api.delete(`/organizations/${id}`);
-    return response.data;
-  },
-
-  // User CRUD
-  createUser: async (data: UserCreate) => {
-    const response = await api.post('/users/', data);
-    return response.data;
-  },
-  updateUser: async (id: number, data: UserUpdate) => {
-    const response = await api.put(`/users/${id}`, data);
-    return response.data;
-  },
-  deleteUser: async (id: number) => {
-    const response = await api.delete(`/users/${id}`);
-    return response.data;
-  },
-
-  // Organization Sync
-  syncOrganizationsWithJson: async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await api.post('/organizations/sync-chart', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  },
-
-  // Project CRUD
-  getProjects: async () => {
-    const response = await api.get('/projects/');
-    return response.data;
-  },
-  createProject: async (data: ProjectCreate) => {
-    const response = await api.post('/projects/', data);
-    return response.data;
-  },
-  updateProject: async (id: number, data: ProjectUpdate) => {
-    const response = await api.put(`/projects/${id}`, data);
-    return response.data;
-  },
-  deleteProject: async (id: number) => {
-    const response = await api.delete(`/projects/${id}`);
-    return response.data;
-  },
-
-  // Project Members
-  getProjectMembers: async (projectId: number): Promise<ProjectMemberDetail[]> => {
-    const response = await api.get(`/projects/${projectId}/members`);
-    return response.data;
-  },
-  addProjectMember: async (projectId: number, memberData: ProjectMemberAdd) => {
-    const response = await api.post(`/projects/${projectId}/members`, memberData);
-    return response.data;
-  },
-  removeProjectMember: async (projectId: number, userId: number) => {
-    const response = await api.delete(`/projects/${projectId}/members/${userId}`);
-    return response.data;
-  },
-
-  // User Project Weights
-  getUserProjectWeights: async (userId: number): Promise<UserProjectWeight[]> => {
-    const response = await api.get(`/users/${userId}/project-weights`);
-    return response.data;
-  },
-  updateUserProjectWeights: async (userId: number, data: UserProjectWeightsUpdate): Promise<UserProjectWeight[]> => {
-    const response = await api.put(`/users/${userId}/project-weights`, data);
-    return response.data;
-  },
+  getCurrentUser: (): Promise<AxiosResponse<schemas.User>> =>
+    apiClient.get('/users/me'),
 };
 
-export const deleteProject = (projectId: number) => api.delete(`/projects/${projectId}`);
+export const users = {
+  getUsers: (): Promise<AxiosResponse<schemas.User[]>> => apiClient.get('/users/'),
+  updateUser: (
+    id: number,
+    data: schemas.UserUpdate
+  ): Promise<AxiosResponse<schemas.User>> => apiClient.put(`/users/${id}`, data),
+  createUser: (data: schemas.UserCreate): Promise<AxiosResponse<schemas.User>> =>
+    apiClient.post('/users/', data),
+  deleteUser: (id: number): Promise<AxiosResponse<void>> =>
+    apiClient.delete(`/users/${id}`),
+  getMySubordinates: (): Promise<AxiosResponse<schemas.User[]>> =>
+    apiClient.get('/users/me/subordinates'),
+  getUserHistory: (userId?: number): Promise<AxiosResponse<schemas.UserHistoryResponse>> =>
+    apiClient.get(userId ? `/users/${userId}/history` : '/users/me/history'),
+  getUserProjectWeights: (userId: number): Promise<AxiosResponse<schemas.UserProjectWeight[]>> =>
+    apiClient.get(`/users/${userId}/project-weights`),
+  updateUserProjectWeights: (userId: number, data: schemas.UserProjectWeightsUpdate): Promise<AxiosResponse<schemas.UserProjectWeight[]>> =>
+    apiClient.put(`/users/${userId}/project-weights`, data),
+};
 
-// =============================================================================
-// Evaluation APIs
-// =============================================================================
+export const organizations = {
+    getOrganizations: (): Promise<AxiosResponse<schemas.Organization[]>> => apiClient.get('/organizations/'),
+    createOrganization: (data: schemas.OrganizationCreate): Promise<AxiosResponse<schemas.Organization>> => apiClient.post('/organizations/', data),
+    updateOrganization: (id: number, data: schemas.OrganizationUpdate): Promise<AxiosResponse<schemas.Organization>> => apiClient.put(`/organizations/${id}`, data),
+    deleteOrganization: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/organizations/${id}`),
+    syncChart: (file: File): Promise<AxiosResponse<any>> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return apiClient.post('/organizations/sync-chart', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    }
+};
+
+export const projects = {
+    getProjects: (): Promise<AxiosResponse<schemas.Project[]>> => apiClient.get('/projects/'),
+    createProject: (data: schemas.ProjectCreate): Promise<AxiosResponse<schemas.Project>> => apiClient.post('/projects/', data),
+    updateProject: (id: number, data: schemas.ProjectUpdate): Promise<AxiosResponse<schemas.Project>> => apiClient.put(`/projects/${id}`, data),
+    deleteProject: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/projects/${id}`),
+    getProjectMembers: (projectId: number): Promise<AxiosResponse<schemas.ProjectMemberDetails[]>> => apiClient.get(`/projects/${projectId}/members`),
+};
 
 export const evaluations = {
-  // Fetching data for "My Evaluations" page
-  getMyTasks: () => api.get<MyEvaluationTask[]>('/evaluations/my-tasks'),
-  getPeerEvaluations: (projectId: number) => api.get<PeerEvaluationData>(`/evaluations/peer-evaluations/${projectId}`),
-  getPmEvaluations: (projectId: number) => api.get<PmEvaluationData>(`/evaluations/pm-evaluations/${projectId}`), // Assuming this exists
+    getMyTasks: (): Promise<AxiosResponse<schemas.MyEvaluationTask[]>> => apiClient.get('/evaluations/my-tasks'),
+    getPeerEvaluations: (projectId: number): Promise<AxiosResponse<schemas.PeerEvaluationData>> => apiClient.get(`/evaluations/peer-evaluations/${projectId}`),
+    submitPeerEvaluations: (data: schemas.PeerEvaluationSubmit): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/peer-evaluations/', data),
+    getPmEvaluations: (projectId: number): Promise<AxiosResponse<schemas.PmEvaluationData>> => apiClient.get(`/evaluations/pm-evaluations/${projectId}`),
+    submitPmEvaluations: (data: schemas.PmEvaluationSubmit): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/pm-evaluations/', data),
+    getEvaluationResultForUser: (userId: number): Promise<AxiosResponse<schemas.ManagerEvaluationView>> => apiClient.get(`/evaluations/${userId}/result`),
+    getMyEvaluationResult: (): Promise<AxiosResponse<schemas.MyEvaluationResult>> => apiClient.get('/evaluations/me'),
+    adjustGrades: (adjustments: schemas.GradeAdjustment[]): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/adjust-grades', { adjustments }),
 
-  // Submitting evaluations
-  submitPeerEvaluations: (data: PeerEvaluationSubmit) => api.post('/evaluations/peer-evaluations/', data),
-  submitPmEvaluations: (data: PmEvaluationSubmit) => api.post('/evaluations/pm-evaluations/', data),
-  submitQualitativeEvaluations: (data: QualitativeEvaluationCreate) => api.post('/evaluations/qualitative-evaluations/', data),
+    // Settings
+    getEvaluationPeriods: (): Promise<AxiosResponse<schemas.EvaluationPeriod[]>> => apiClient.get('/evaluations/evaluation-periods/'),
+    createEvaluationPeriod: (data: schemas.EvaluationPeriodCreate): Promise<AxiosResponse<schemas.EvaluationPeriod>> => apiClient.post('/evaluations/evaluation-periods/', data),
+    updateEvaluationPeriod: (id: number, data: schemas.EvaluationPeriodUpdate): Promise<AxiosResponse<schemas.EvaluationPeriod>> => apiClient.put(`/evaluations/evaluation-periods/${id}`, data),
+    deleteEvaluationPeriod: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/evaluations/evaluation-periods/${id}`),
+
+    getDepartmentGradeRatios: (): Promise<AxiosResponse<schemas.DepartmentGradeRatio[]>> => apiClient.get('/evaluations/department-grade-ratios/'),
+    createDepartmentGradeRatio: (data: schemas.DepartmentGradeRatioCreate): Promise<AxiosResponse<schemas.DepartmentGradeRatio>> => apiClient.post('/evaluations/department-grade-ratios/', data),
+    updateDepartmentGradeRatio: (id: number, data: schemas.DepartmentGradeRatioUpdate): Promise<AxiosResponse<schemas.DepartmentGradeRatio>> => apiClient.put(`/evaluations/department-grade-ratios/${id}`, data),
+    deleteDepartmentGradeRatio: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/evaluations/department-grade-ratios/${id}`),
+
+    getEvaluationWeights: (): Promise<AxiosResponse<schemas.EvaluationWeight[]>> => apiClient.get('/evaluations/'),
+    createEvaluationWeight: (data: schemas.EvaluationWeightCreate): Promise<AxiosResponse<schemas.EvaluationWeight>> => apiClient.post('/evaluations/', data),
+    updateEvaluationWeight: (id: number, data: schemas.EvaluationWeightUpdate): Promise<AxiosResponse<schemas.EvaluationWeight>> => apiClient.put(`/evaluations/${id}`, data),
+    deleteEvaluationWeight: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/evaluations/${id}`),
+
+    // New UX APIs
+    getEvaluatedUsersByPeriod: (periodId: number): Promise<AxiosResponse<schemas.EvaluatedUser[]>> => apiClient.get(`/evaluations/periods/${periodId}/evaluated-users`),
+    getDetailedEvaluationResult: (periodId: number, userId: number): Promise<AxiosResponse<schemas.DetailedEvaluationResult>> => apiClient.get(`/evaluations/periods/${periodId}/users/${userId}/details`),
 };
 
-// User History
-export const getUserHistory = () => api.get<UserHistoryResponse>('/users/me/history');
-
-
-// For backward compatibility if needed elsewhere, can be cleaned up later.
-export const getMySubordinates = () => api.get<User[]>('/users/me/subordinates');
-export const createQualitativeEvaluations = evaluations.submitQualitativeEvaluations;
-
-// Evaluation Settings
-// Evaluation Periods
-export const getEvaluationPeriods = () => api.get<EvaluationPeriod[]>('/evaluations/evaluation-periods/');
-export const createEvaluationPeriod = (data: EvaluationPeriodCreate) => api.post<EvaluationPeriod>('/evaluations/evaluation-periods/', data);
-export const updateEvaluationPeriod = (id: number, data: EvaluationPeriodUpdate) => api.put<EvaluationPeriod>(`/evaluations/evaluation-periods/${id}`, data);
-export const deleteEvaluationPeriod = (id: number) => api.delete(`/evaluations/evaluation-periods/${id}`);
-
-// Department Grade Ratios
-export const getDepartmentGradeRatios = () => api.get<DepartmentGradeRatio[]>('/evaluations/department-grade-ratios/');
-export const createDepartmentGradeRatio = (data: DepartmentGradeRatioCreate) => api.post<DepartmentGradeRatio>('/evaluations/department-grade-ratios/', data);
-export const updateDepartmentGradeRatio = (id: number, data: DepartmentGradeRatioUpdate) => api.put<DepartmentGradeRatio>(`/evaluations/department-grade-ratios/${id}`, data);
-export const deleteDepartmentGradeRatio = (id: number) => api.delete(`/evaluations/department-grade-ratios/${id}`);
-
-// Evaluation Weights
-export const getEvaluationWeights = () => api.get<EvaluationWeight[]>('/evaluations/');
-export const createEvaluationWeight = (data: EvaluationWeightCreate) => api.post<EvaluationWeight>('/evaluations/', data);
-export const updateEvaluationWeight = (id: number, data: EvaluationWeightUpdate) => api.put<EvaluationWeight>(`/evaluations/${id}`, data);
-export const deleteEvaluationWeight = (id: number) => api.delete(`/evaluations/${id}`);
-
-// Grade Adjustment
-export const getEvaluationResultForUser = (userId: number) => api.get<ManagerEvaluationView>(`/evaluations/${userId}/result`);
-export const adjustGrades = (data: GradeAdjustmentRequest) => api.post('/evaluations/adjust-grades', data);
-
+const api = {
+  auth,
+  users,
+  organizations,
+  projects,
+  evaluations,
+};
 
 export default api;

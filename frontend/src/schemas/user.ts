@@ -9,23 +9,22 @@ export interface Organization {
 }
 
 export enum UserRole {
-    EMPLOYEE = "employee",
-    TEAM_LEAD = "team_lead",
-    DEPT_HEAD = "dept_head",
-    ADMIN = "admin",
+  EMPLOYEE = 'employee',
+  TEAM_LEAD = 'team_lead',
+  DEPT_HEAD = 'dept_head',
+  CENTER_HEAD = 'center_head',
+  ADMIN = 'admin',
 }
 
-// Based on backend/app/schemas/user.py
-export interface User {
+export type User = {
   id: number;
   username: string;
   email: string;
   full_name: string | null;
   role: UserRole;
   organization_id: number | null;
-  is_active: boolean;
-  organization?: Organization | null; // Optional, as it might not always be fetched
-}
+  title: string | null;
+};
 
 export interface UserCreate {
     email: string;

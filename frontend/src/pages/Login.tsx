@@ -1,29 +1,32 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { auth } from '../services/api';
+import api from '../services/api';
 
-const Login: React.FC = () => {
-  const navigate = useNavigate();
+interface LoginProps {
+  onLoginSuccess: () => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError('');
     try {
-      await auth.login(username, password);
-      navigate('/');
-      window.location.reload();
-    } catch {
-      setError('로그인에 실패했습니다. 사용자 이름과 비밀번호를 확인하세요.');
+      const response = await api.auth.login(username, password);
+      const { access_token } = response.data;
+      localStorage.setItem('access_token', access_token);
+      onLoginSuccess();
+    } catch (err) {
+      setError('Failed to login. Please check your credentials.');
     }
   };
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', width: '300px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-        <h2>로그인</h2>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', width: '300px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
+        <h2>Login</h2>
         {error && <p style={{ color: 'red' }}>{error}</p>}
         <input
           type="text"

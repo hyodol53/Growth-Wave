@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Tabs, Tab, Button, CircularProgress } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Button, CircularProgress, Alert } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import * as api from '../../services/api';
@@ -32,6 +32,7 @@ function TabPanel(props: { children?: React.ReactNode; index: number; value: num
 const EvaluationSettingsPage: React.FC = () => {
   const [tabIndex, setTabIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Evaluation Periods
   const [periods, setPeriods] = useState<EvaluationPeriod[]>([]);
@@ -48,109 +49,131 @@ const EvaluationSettingsPage: React.FC = () => {
   const [weightDialogOpen, setWeightDialogOpen] = useState(false);
   const [editingWeight, setEditingWeight] = useState<EvaluationWeight | null>(null);
 
-  const fetchPeriods = async () => {
-    try {
-      const response = await api.getEvaluationPeriods();
-      setPeriods(response.data);
-    } catch (error) {
-      console.error("Failed to fetch evaluation periods", error);
-    }
-  };
-
-  const fetchRatios = async () => {
-    try {
-      const response = await api.getDepartmentGradeRatios();
-      setRatios(response.data);
-    } catch (error) {
-      console.error("Failed to fetch department grade ratios", error);
-    }
-  };
-
-  const fetchWeights = async () => {
-    try {
-      const response = await api.getEvaluationWeights();
-      setWeights(response.data);
-    } catch (error) {
-      console.error("Failed to fetch evaluation weights", error);
-    }
-  };
-
   useEffect(() => {
-    setLoading(true);
-    Promise.all([fetchPeriods(), fetchRatios(), fetchWeights()]).finally(() => setLoading(false));
+    const loadAllData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [periodsRes, ratiosRes, weightsRes] = await Promise.all([
+          api.evaluations.getEvaluationPeriods(),
+          api.evaluations.getDepartmentGradeRatios(),
+          api.evaluations.getEvaluationWeights(),
+        ]);
+        setPeriods(periodsRes.data);
+        setRatios(ratiosRes.data);
+        setWeights(weightsRes.data);
+      } catch (err) {
+        setError('Failed to load settings data.');
+      }
+      setLoading(false);
+    };
+    loadAllData();
   }, []);
+
+  const refreshData = async (type: 'period' | 'ratio' | 'weight') => {
+    try {
+      setError(null);
+      if (type === 'period') {
+        const response = await api.evaluations.getEvaluationPeriods();
+        setPeriods(response.data);
+      } else if (type === 'ratio') {
+        const response = await api.evaluations.getDepartmentGradeRatios();
+        setRatios(response.data);
+      } else {
+        const response = await api.evaluations.getEvaluationWeights();
+        setWeights(response.data);
+      }
+    } catch (err) {
+      setError(`Failed to refresh ${type} data.`);
+    }
+  };
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
   };
 
   // Period Handlers
-  const handleAddNewPeriod = () => { setEditingPeriod(null); setPeriodDialogOpen(true); };
-  const handleEditPeriod = (period: EvaluationPeriod) => { setEditingPeriod(period); setPeriodDialogOpen(true); };
+  const handleAddNewPeriod = () => {
+    setEditingPeriod(null);
+    setPeriodDialogOpen(true);
+  };
+
+  const handleEditPeriod = (period: EvaluationPeriod) => {
+    setEditingPeriod(period);
+    setPeriodDialogOpen(true);
+  };
+
   const handleDeletePeriod = async (id: number) => {
-    if (window.confirm('이 평가 기간을 정말로 삭제하시겠습니까?')) {
-      try {
-        await api.deleteEvaluationPeriod(id);
-        fetchPeriods();
-      } catch (error) { console.error("Failed to delete evaluation period", error); alert('평가 기간 삭제에 실패했습니다.'); }
+    if (window.confirm('Are you sure you want to delete this period?')) {
+      await api.evaluations.deleteEvaluationPeriod(id);
+      refreshData('period');
     }
   };
+
   const handleSavePeriod = async (data: EvaluationPeriodCreate | EvaluationPeriodUpdate) => {
-    try {
-      if (editingPeriod) {
-        await api.updateEvaluationPeriod(editingPeriod.id, data as EvaluationPeriodUpdate);
-      } else {
-        await api.createEvaluationPeriod(data as EvaluationPeriodCreate);
-      }
-      fetchPeriods();
-      setPeriodDialogOpen(false);
-    } catch (error) { console.error("Failed to save evaluation period", error); alert('평가 기간 저장에 실패했습니다.'); }
+    if (editingPeriod) {
+      await api.evaluations.updateEvaluationPeriod(editingPeriod.id, data as EvaluationPeriodUpdate);
+    } else {
+      await api.evaluations.createEvaluationPeriod(data as EvaluationPeriodCreate);
+    }
+    refreshData('period');
+    setPeriodDialogOpen(false);
   };
 
   // Ratio Handlers
-  const handleAddNewRatio = () => { setEditingRatio(null); setRatioDialogOpen(true); };
-  const handleEditRatio = (ratio: DepartmentGradeRatio) => { setEditingRatio(ratio); setRatioDialogOpen(true); };
+  const handleAddNewRatio = () => {
+    setEditingRatio(null);
+    setRatioDialogOpen(true);
+  };
+
+  const handleEditRatio = (ratio: DepartmentGradeRatio) => {
+    setEditingRatio(ratio);
+    setRatioDialogOpen(true);
+  };
+
   const handleDeleteRatio = async (id: number) => {
-    if (window.confirm('이 등급 비율을 정말로 삭제하시겠습니까?')) {
-      try {
-        await api.deleteDepartmentGradeRatio(id);
-        fetchRatios();
-      } catch (error) { console.error("Failed to delete grade ratio", error); alert('등급 비율 삭제에 실패했습니다.'); }
+    if (window.confirm('Are you sure you want to delete this ratio?')) {
+      await api.evaluations.deleteDepartmentGradeRatio(id);
+      refreshData('ratio');
     }
   };
+
   const handleSaveRatio = async (data: DepartmentGradeRatioCreate | DepartmentGradeRatioUpdate) => {
-    try {
-      if (editingRatio) {
-        await api.updateDepartmentGradeRatio(editingRatio.id, data as DepartmentGradeRatioUpdate);
-      } else {
-        await api.createDepartmentGradeRatio(data as DepartmentGradeRatioCreate);
-      }
-      fetchRatios();
-      setRatioDialogOpen(false);
-    } catch (error) { console.error("Failed to save grade ratio", error); alert('등급 비율 저장에 실패했습니다.'); }
+    if (editingRatio) {
+      await api.evaluations.updateDepartmentGradeRatio(editingRatio.id, data as DepartmentGradeRatioUpdate);
+    } else {
+      await api.evaluations.createDepartmentGradeRatio(data as DepartmentGradeRatioCreate);
+    }
+    refreshData('ratio');
+    setRatioDialogOpen(false);
   };
 
   // Weight Handlers
-  const handleAddNewWeight = () => { setEditingWeight(null); setWeightDialogOpen(true); };
-  const handleEditWeight = (weight: EvaluationWeight) => { setEditingWeight(weight); setWeightDialogOpen(true); };
+  const handleAddNewWeight = () => {
+    setEditingWeight(null);
+    setWeightDialogOpen(true);
+  };
+
+  const handleEditWeight = (weight: EvaluationWeight) => {
+    setEditingWeight(weight);
+    setWeightDialogOpen(true);
+  };
+
   const handleDeleteWeight = async (id: number) => {
-    if (window.confirm('이 평가 가중치를 정말로 삭제하시겠습니까?')) {
-      try {
-        await api.deleteEvaluationWeight(id);
-        fetchWeights();
-      } catch (error) { console.error("Failed to delete evaluation weight", error); alert('평가 가중치 삭제에 실패했습니다.'); }
+    if (window.confirm('Are you sure you want to delete this weight?')) {
+      await api.evaluations.deleteEvaluationWeight(id);
+      refreshData('weight');
     }
   };
+
   const handleSaveWeight = async (data: EvaluationWeightCreate | EvaluationWeightUpdate) => {
-    try {
-      if (editingWeight) {
-        await api.updateEvaluationWeight(editingWeight.id, data as EvaluationWeightUpdate);
-      } else {
-        await api.createEvaluationWeight(data as EvaluationWeightCreate);
-      }
-      fetchWeights();
-      setWeightDialogOpen(false);
-    } catch (error) { console.error("Failed to save evaluation weight", error); alert('평가 가중치 저장에 실패했습니다.'); }
+    if (editingWeight) {
+      await api.evaluations.updateEvaluationWeight(editingWeight.id, data as EvaluationWeightUpdate);
+    } else {
+      await api.evaluations.createEvaluationWeight(data as EvaluationWeightCreate);
+    }
+    refreshData('weight');
+    setWeightDialogOpen(false);
   };
 
   const periodColumns: GridColDef[] = [
@@ -212,6 +235,7 @@ const EvaluationSettingsPage: React.FC = () => {
   return (
     <Box sx={{ width: '100%' }}>
       <Typography variant="h4" gutterBottom>평가 설정</Typography>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={tabIndex} onChange={handleTabChange} aria-label="evaluation settings tabs">
           <Tab label="평가 기간" />
