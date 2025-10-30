@@ -84,8 +84,15 @@ const EvaluationDetailDialog: React.FC<EvaluationDetailDialogProps> = ({ open, o
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="h6" gutterBottom>Qualitative Evaluation</Typography>
-        <Typography variant="body1"><b>Score:</b> {data.qualitative_evaluation?.score || 'N/A'}</Typography>
-        <Typography variant="body2" color="text.secondary"><b>Comment:</b> {data.qualitative_evaluation?.comment || '-'}</Typography>
+        <Typography variant="body1">
+          <b>Qualitative Score:</b> {data.qualitative_evaluation?.qualitative_score?.toFixed(2) || 'N/A'} / 20
+        </Typography>
+        <Typography variant="body1">
+          <b>Department Contribution Score:</b> {data.qualitative_evaluation?.department_contribution_score?.toFixed(2) || 'N/A'} / 10
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          <b>Feedback:</b> {data.qualitative_evaluation?.feedback || '-'}
+        </Typography>
       </Box>
     );
   };

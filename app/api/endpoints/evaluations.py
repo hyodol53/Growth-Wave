@@ -225,6 +225,10 @@ def create_qualitative_evaluations(
     """
     Create new qualitative evaluations for team/department members.
     """
+    active_period = crud.evaluation_period.get_active_period(db)
+    if not active_period:
+        raise HTTPException(status_code=400, detail="No active evaluation period.")
+
     # FR-A-3.5: Team lead/Dept head can evaluate their members.
     if current_user.role not in [UserRole.TEAM_LEAD, UserRole.DEPT_HEAD]:
         raise HTTPException(
@@ -243,17 +247,11 @@ def create_qualitative_evaluations(
                 detail=f"User {evaluation.evaluatee_id} is not a subordinate of the evaluator.",
             )
 
-        # Check if the score is valid
-        if not 0 <= evaluation.score <= 100:
-            raise HTTPException(
-                status_code=400,
-                detail="Score must be between 0 and 100.",
-            )
-
-    evaluation_period = f"{datetime.date.today().year}-H{1 if datetime.date.today().month <= 6 else 2}"
-
     return crud.qualitative_evaluation.qualitative_evaluation.create_multi(
-        db, evaluations=evaluations_in.evaluations, evaluator_id=current_user.id, evaluation_period=evaluation_period
+        db,
+        evaluations=evaluations_in.evaluations,
+        evaluator_id=current_user.id,
+        evaluation_period=active_period.name,
     )
 
 

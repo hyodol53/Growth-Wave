@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import date
 from app.models.user import UserRole
 from app.models.evaluation import EvaluationItem
@@ -73,8 +73,9 @@ class PmSelfEvaluationCreate(PmEvaluationBase):
 # QualitativeEvaluation Schemas
 class QualitativeEvaluationBase(BaseModel):
     evaluatee_id: int
-    score: int
-    comment: Optional[str] = None
+    qualitative_score: int = Field(..., ge=0, le=20)
+    department_contribution_score: int = Field(..., ge=0, le=10)
+    feedback: Optional[str] = None
 
 
 class QualitativeEvaluationCreate(BaseModel):

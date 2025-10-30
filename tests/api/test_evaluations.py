@@ -309,3 +309,53 @@ def test_create_or_update_peer_evaluations(client: TestClient, db: Session) -> N
     assert content[0]["scores"][0] == 5
     assert content[0]["comment"] == "Updated comment"
     assert sum(content[0]["scores"]) == 23
+
+def test_create_qualitative_evaluations(client: TestClient, db: Session) -> None:
+    # 1. Setup: Create users, org, and evaluation period
+    from tests.utils.organization import create_random_organization
+    org = create_random_organization(db)
+    team_lead = create_random_user(db, role="team_lead", organization_id=org.id)
+    subordinate = create_random_user(db, role="employee", organization_id=org.id)
+
+    admin_user = create_random_user(db, role="admin")
+    superuser_token_headers = authentication_token_from_username(client=client, username=admin_user.username, db=db)
+    today = datetime.date.today()
+    period_data = {"name": f"{today.year}-H{1 if today.month <= 6 else 2}", "start_date": (today - datetime.timedelta(days=1)).isoformat(), "end_date": (today + datetime.timedelta(days=1)).isoformat()}
+    client.post("/api/v1/evaluations/evaluation-periods/", headers=superuser_token_headers, json=period_data)
+
+    team_lead_token_headers = authentication_token_from_username(client=client, username=team_lead.username, db=db)
+
+    # 2. Test valid qualitative evaluation submission
+    valid_data = {
+        "evaluations": [
+            {
+                "evaluatee_id": subordinate.id,
+                "qualitative_score": 18,
+                "department_contribution_score": 9,
+                "feedback": "Excellent contribution to the department goals."
+            }
+        ]
+    }
+    response = client.post("/api/v1/evaluations/qualitative-evaluations/", headers=team_lead_token_headers, json=valid_data)
+    assert response.status_code == 200
+    content = response.json()
+    assert len(content) == 1
+    assert content[0]["evaluatee_id"] == subordinate.id
+    assert content[0]["qualitative_score"] == 18
+    assert content[0]["department_contribution_score"] == 9
+    assert content[0]["feedback"] == "Excellent contribution to the department goals."
+
+    # 3. Test invalid: score out of range
+    invalid_score_data = {
+        "evaluations": [
+            {
+                "evaluatee_id": subordinate.id,
+                "qualitative_score": 25,  # Invalid score
+                "department_contribution_score": 5,
+                "feedback": "This should fail."
+            }
+        ]
+    }
+    response = client.post("/api/v1/evaluations/qualitative-evaluations/", headers=team_lead_token_headers, json=invalid_score_data)
+    assert response.status_code == 422 # Pydantic validation error
+    assert "Input should be less than or equal to 20" in response.json()["detail"][0]["msg"]

@@ -82,6 +82,7 @@ export const evaluations = {
     submitPeerEvaluations: (data: schemas.PeerEvaluationSubmit): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/peer-evaluations/', data),
     getPmEvaluations: (projectId: number): Promise<AxiosResponse<schemas.PmEvaluationData>> => apiClient.get(`/evaluations/pm-evaluations/${projectId}`),
     submitPmEvaluations: (data: schemas.PmEvaluationSubmit): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/pm-evaluations/', data),
+    submitQualitativeEvaluations: (data: schemas.QualitativeEvaluationCreate): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/qualitative-evaluations/', data),
     getEvaluationResultForUser: (userId: number): Promise<AxiosResponse<schemas.ManagerEvaluationView>> => apiClient.get(`/evaluations/${userId}/result`),
     getMyEvaluationResult: (): Promise<AxiosResponse<schemas.MyEvaluationResult>> => apiClient.get('/evaluations/me'),
     adjustGrades: (adjustments: schemas.GradeAdjustment[]): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/adjust-grades', { adjustments }),

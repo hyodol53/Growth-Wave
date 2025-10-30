@@ -26,8 +26,9 @@ class CRUDQualitativeEvaluation(CRUDBase[QualitativeEvaluation, QualitativeEvalu
         db_objs = [
             QualitativeEvaluation(
                 evaluatee_id=evaluation.evaluatee_id,
-                score=evaluation.score,
-                comment=evaluation.comment,
+                qualitative_score=evaluation.qualitative_score,
+                department_contribution_score=evaluation.department_contribution_score,
+                feedback=evaluation.feedback,
                 evaluator_id=evaluator_id,
                 evaluation_period=evaluation_period,
             )

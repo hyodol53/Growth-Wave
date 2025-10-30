@@ -86,14 +86,16 @@ def create_random_qualitative_evaluation(
     db: Session, 
     evaluator_id: int, 
     evaluatee_id: int, 
-    score: float = 90.0,
-    comment: str = "Excellent performance",
+    qualitative_score: int = 18,
+    department_contribution_score: int = 8,
+    feedback: str = "Excellent performance",
     evaluation_period: str = "2025-H1"
 ) -> QualitativeEvaluation:
     qual_eval_base = QualitativeEvaluationBase(
         evaluatee_id=evaluatee_id,
-        score=score,
-        comment=comment
+        qualitative_score=qualitative_score,
+        department_contribution_score=department_contribution_score,
+        feedback=feedback
     )
     qual_eval_in = QualitativeEvaluationCreate(evaluations=[qual_eval_base])
     return crud.qualitative_evaluation.qualitative_evaluation.create_multi(

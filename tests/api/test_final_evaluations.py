@@ -43,9 +43,10 @@ def test_calculate_final_evaluations_as_dept_head(
     create_project_member(db, project_id=project1.id, user_id=team_lead.id, is_pm=True)
 
 
-    # Evaluation Weights for EMPLOYEE role
+    # Evaluation Weights for EMPLOYEE role (used for project score component)
     create_random_evaluation_weight(db, role=UserRole.EMPLOYEE, item=EvaluationItem.PEER_REVIEW, weight=30.0)
     create_random_evaluation_weight(db, role=UserRole.EMPLOYEE, item=EvaluationItem.PM_REVIEW, weight=50.0)
+    # This weight is no longer used in the final calculation, but we leave it for completeness
     create_random_evaluation_weight(db, role=UserRole.EMPLOYEE, item=EvaluationItem.QUALITATIVE_REVIEW, weight=20.0)
 
     # Evaluations for employee1
@@ -56,7 +57,11 @@ def test_calculate_final_evaluations_as_dept_head(
     create_random_peer_evaluation(db, evaluator_id=team_lead.id, evaluatee_id=employee1.id, project_id=project2.id, score=70, evaluation_period=test_evaluation_period)
     create_random_pm_evaluation(db, evaluator_id=team_lead.id, evaluatee_id=employee1.id, project_id=project2.id, score=85, evaluation_period=test_evaluation_period)
     # Qualitative
-    create_random_qualitative_evaluation(db, evaluator_id=dept_head.id, evaluatee_id=employee1.id, score=95, evaluation_period=test_evaluation_period)
+    create_random_qualitative_evaluation(
+        db, evaluator_id=dept_head.id, evaluatee_id=employee1.id, 
+        qualitative_score=18, department_contribution_score=9, 
+        evaluation_period=test_evaluation_period
+    )
 
     # 2. Action: Trigger calculation
     response = client.post(
@@ -73,15 +78,22 @@ def test_calculate_final_evaluations_as_dept_head(
     final_eval = final_evals[0]
     assert final_eval["evaluatee_id"] == employee1.id
     
-    # Expected calculation for employee1
-    # Peer: (80 * 0.6) + (70 * 0.4) = 48 + 28 = 76
-    # PM: (90 * 0.6) + (85 * 0.4) = 54 + 34 = 88
-    # Qualitative: 95
-    # Final: (76 * 0.3) + (88 * 0.5) + (95 * 0.2) = 22.8 + 44 + 19 = 85.8
+    # Expected calculation for employee1 with new 70/30 logic
+    # Peer Score: (80 * 0.6) + (70 * 0.4) = 48 + 28 = 76
+    # PM Score: (90 * 0.6) + (85 * 0.4) = 54 + 34 = 88
+    # Project Score Component:
+    #   - Weights: Peer=30, PM=50. Total=80.
+    #   - Normalized: Peer=30/80=0.375, PM=50/80=0.625
+    #   - Project Score = (76 * 0.375) + (88 * 0.625) = 28.5 + 55 = 83.5
+    # Qualitative Score Component:
+    #   - Combined Score = 18 + 9 = 27
+    #   - Normalized Score = (27 / 30) * 100 = 90
+    # Final Score = (Project Score * 0.7) + (Qualitative Normalized Score * 0.3)
+    #             = (83.5 * 0.7) + (90 * 0.3) = 58.45 + 27 = 85.45
     assert final_eval["peer_score"] == 76.0
     assert final_eval["pm_score"] == 88.0
-    assert final_eval["qualitative_score"] == 95.0
-    assert final_eval["final_score"] == 85.8
+    assert final_eval["qualitative_score"] == 27.0 # Combined score
+    assert round(final_eval["final_score"], 2) == 85.45
 
 def test_calculate_final_evaluations_for_pm(
     client: TestClient, db: Session
@@ -112,7 +124,11 @@ def test_calculate_final_evaluations_for_pm(
 
     # Other evaluations for the PM
     create_random_peer_evaluation(db, evaluator_id=dept_head.id, evaluatee_id=pm_user.id, project_id=project.id, score=85, evaluation_period=test_evaluation_period)
-    create_random_qualitative_evaluation(db, evaluator_id=dept_head.id, evaluatee_id=pm_user.id, score=92, evaluation_period=test_evaluation_period)
+    create_random_qualitative_evaluation(
+        db, evaluator_id=dept_head.id, evaluatee_id=pm_user.id, 
+        qualitative_score=18, department_contribution_score=8, 
+        evaluation_period=test_evaluation_period
+    )
 
     # 2. Action: Trigger calculation for the PM
     calc_response = client.post(
@@ -127,16 +143,23 @@ def test_calculate_final_evaluations_for_pm(
     assert len(final_evals) == 1
     final_eval = final_evals[0]
 
-    # Expected calculation for PM
-    # Peer: 85 (single project)
-    # PM: 98 (manually entered by admin, not from any other evaluation)
-    # Qualitative: 92
-    # Final: (85 * 0.4) + (98 * 0.4) + (92 * 0.2) = 34 + 39.2 + 18.4 = 91.6
+    # Expected calculation for PM with new 70/30 logic
+    # Peer Score: 85
+    # PM Score: 98
+    # Project Score Component:
+    #   - Weights: Peer=40, PM=40. Total=80.
+    #   - Normalized: Peer=40/80=0.5, PM=40/80=0.5
+    #   - Project Score = (85 * 0.5) + (98 * 0.5) = 42.5 + 49 = 91.5
+    # Qualitative Score Component:
+    #   - Combined Score = 18 + 8 = 26
+    #   - Normalized Score = (26 / 30) * 100 = 86.67
+    # Final Score = (Project Score * 0.7) + (Qualitative Normalized Score * 0.3)
+    #             = (91.5 * 0.7) + (86.666... * 0.3) = 64.05 + 26 = 90.05
     assert final_eval["evaluatee_id"] == pm_user.id
     assert final_eval["peer_score"] == 85.0
     assert final_eval["pm_score"] == 98.0
-    assert final_eval["qualitative_score"] == 92.0
-    assert round(final_eval["final_score"], 2) == 91.6
+    assert final_eval["qualitative_score"] == 26.0 # Combined score
+    assert round(final_eval["final_score"], 2) == 90.05
 
 
 def test_calculate_final_evaluations_unauthorized(

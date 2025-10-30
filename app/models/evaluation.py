@@ -76,15 +76,16 @@ class PmEvaluation(Base):
 class QualitativeEvaluation(Base):
     __tablename__ = "qualitative_evaluations"
 
-    id = Column(Integer, primary_key=True, index=True)
-    evaluator_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Team Lead or Dept Head
-    evaluatee_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    score = Column(Integer, nullable=False)
-    evaluation_period = Column(String, nullable=False)
-    comment = Column(String, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    evaluator_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)  # Team Lead or Dept Head
+    evaluatee_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    qualitative_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    department_contribution_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    feedback: Mapped[str | None] = mapped_column(String, nullable=True)
+    evaluation_period: Mapped[str] = mapped_column(String, nullable=False)
 
-    evaluator = relationship("User", foreign_keys=lambda: QualitativeEvaluation.evaluator_id)
-    evaluatee = relationship("User", foreign_keys=lambda: QualitativeEvaluation.evaluatee_id)
+    evaluator: Mapped["User"] = relationship("User", foreign_keys=lambda: QualitativeEvaluation.evaluator_id)
+    evaluatee: Mapped["User"] = relationship("User", foreign_keys=lambda: QualitativeEvaluation.evaluatee_id)
 
     __table_args__ = {'extend_existing': True}
 
