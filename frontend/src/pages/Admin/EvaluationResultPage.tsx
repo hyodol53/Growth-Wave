@@ -136,7 +136,7 @@ const EvaluationResultPage: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Evaluation Results
+        평가 결과 조회
       </Typography>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {calculationError && <Alert severity="error" sx={{ mb: 2 }}>{calculationError}</Alert>}
@@ -168,7 +168,7 @@ const EvaluationResultPage: React.FC = () => {
             disabled={loading || isCalculating || !selectedPeriodId}
             sx={{ minWidth: 200, height: 56 }} // Match FormControl height
           >
-            {isCalculating ? <CircularProgress size={24} /> : 'Calculate Final Score'}
+            {isCalculating ? <CircularProgress size={24} /> : '최종 점수 계산하기'}
           </Button>
         </Box>
       </Box>

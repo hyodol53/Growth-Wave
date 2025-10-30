@@ -65,12 +65,20 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
       <CssBaseline />
       <AppBar
         position="fixed"
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, backgroundColor: 'rgb(20, 36, 62)' }}
       >
         <Toolbar>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Growth-Wave
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+            <img src="/images/logo.png" alt="Growth-Wave Logo" style={{ width: '40px', height: '40px', verticalAlign: 'middle' }} />
+            <Box sx={{ display: 'inline-block', verticalAlign: 'middle', marginLeft: '10px' }}>
+              <Typography variant="h6" noWrap component="div">
+                Growth-Wave
+              </Typography>
+              <Typography variant="caption" noWrap component="div">
+                슈어소트테크 인사평가시스템
+              </Typography>
+            </Box>
+          </Box>
           <Typography sx={{ mr: 2 }}>{user?.full_name || user?.username}</Typography>
           <Button color="inherit" onClick={handleLogout}>로그아웃</Button>
         </Toolbar>

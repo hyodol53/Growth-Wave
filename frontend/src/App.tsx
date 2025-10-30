@@ -1,3 +1,4 @@
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import api from './services/api';
@@ -17,6 +18,14 @@ import HistoryPage from './pages/HistoryPage';
 import DepartmentEvaluationPage from './pages/Admin/DepartmentEvaluationPage'; // New import
 import type { User } from './schemas';
 import { UserRole } from './schemas';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: 'rgb(20, 36, 62)',
+    },
+  },
+});
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -58,82 +67,84 @@ function App() {
   }
 
   return (
-    <Router>
-      {isAuthenticated && user ? (
-        <Layout user={user} onLogout={handleLogout}>
+    <ThemeProvider theme={theme}>
+      <Router>
+        {isAuthenticated && user ? (
+          <Layout user={user} onLogout={handleLogout}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/my-evaluations" element={<MyEvaluationsPage />} />
+              <Route path="/history" element={<HistoryPage />} />
+              
+              <Route
+                path="/admin/organizations"
+                element={
+                  <AuthorizedRoute roles={[UserRole.ADMIN]}>
+                    <OrganizationManagementPage />
+                  </AuthorizedRoute>
+                }
+              />
+              <Route
+                path="/admin/projects"
+                element={
+                  <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
+                    <ProjectManagementPage />
+                  </AuthorizedRoute>
+                }
+              />
+              <Route
+                path="/admin/member-weights"
+                element={
+                  <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
+                    <MemberWeightManagementPage />
+                  </AuthorizedRoute>
+                }
+              />
+              <Route
+                path="/admin/evaluation-settings"
+                element={
+                  <AuthorizedRoute roles={[UserRole.ADMIN]}>
+                    <EvaluationSettingsPage />
+                  </AuthorizedRoute>
+                }
+              />
+              <Route
+                path="/admin/grade-adjustment"
+                element={
+                  <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
+                    <FinalGradeAdjustmentPage />
+                  </AuthorizedRoute>
+                }
+              />
+              <Route
+                path="/admin/evaluation-results"
+                element={
+                  <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
+                    <EvaluationResultPage />
+                  </AuthorizedRoute>
+                }
+              />
+              {/* New Department Evaluation Route */}
+              <Route
+                path="/admin/department-evaluation"
+                element={
+                  <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.CENTER_HEAD]}>
+                    <DepartmentEvaluationPage />
+                  </AuthorizedRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Layout>
+        ) : (
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/my-evaluations" element={<MyEvaluationsPage />} />
-            <Route path="/history" element={<HistoryPage />} />
-            
-            <Route
-              path="/admin/organizations"
-              element={
-                <AuthorizedRoute roles={[UserRole.ADMIN]}>
-                  <OrganizationManagementPage />
-                </AuthorizedRoute>
-              }
-            />
-            <Route
-              path="/admin/projects"
-              element={
-                <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
-                  <ProjectManagementPage />
-                </AuthorizedRoute>
-              }
-            />
-            <Route
-              path="/admin/member-weights"
-              element={
-                <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
-                  <MemberWeightManagementPage />
-                </AuthorizedRoute>
-              }
-            />
-            <Route
-              path="/admin/evaluation-settings"
-              element={
-                <AuthorizedRoute roles={[UserRole.ADMIN]}>
-                  <EvaluationSettingsPage />
-                </AuthorizedRoute>
-              }
-            />
-            <Route
-              path="/admin/grade-adjustment"
-              element={
-                <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
-                  <FinalGradeAdjustmentPage />
-                </AuthorizedRoute>
-              }
-            />
-            <Route
-              path="/admin/evaluation-results"
-              element={
-                <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
-                  <EvaluationResultPage />
-                </AuthorizedRoute>
-              }
-            />
-            {/* New Department Evaluation Route */}
-            <Route
-              path="/admin/department-evaluation"
-              element={
-                <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.CENTER_HEAD]}>
-                  <DepartmentEvaluationPage />
-                </AuthorizedRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="/login" element={<Login onLoginSuccess={checkAuth} />} />
+            <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
-        </Layout>
-      ) : (
-        <Routes>
-          <Route path="/login" element={<Login onLoginSuccess={checkAuth} />} />
-          <Route path="*" element={<Navigate to="/login" />} />
-        </Routes>
-      )}
-    </Router>
+        )}
+      </Router>
+    </ThemeProvider>
   );
 }
 
