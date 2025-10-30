@@ -13,11 +13,13 @@ def create_random_user(
     password: str = "password", 
     role: UserRole = UserRole.EMPLOYEE, 
     organization_id: int = None,
-    reports_to: int = None
+    reports_to: int = None,
+    full_name: str = None
 ) -> User:
     email = random_email()
     username = random_lower_string()
-    full_name = random_lower_string().capitalize()
+    if full_name is None:
+        full_name = random_lower_string().capitalize()
     user_in = UserCreate(
         username=username, 
         email=email, 

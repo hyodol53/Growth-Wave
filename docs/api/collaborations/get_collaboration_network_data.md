@@ -45,16 +45,18 @@
     ]
   },
   "analysis": {
-    "most_reviews": [
+    "most_support": [
       {
         "user_id": 2,
-        "count": 8
+        "full_name": "Bob",
+        "count": 15
       }
     ],
-    "most_help": [
+    "most_requests": [
       {
         "user_id": 1,
-        "count": 12
+        "full_name": "Alice",
+        "count": 10
       }
     ]
   }

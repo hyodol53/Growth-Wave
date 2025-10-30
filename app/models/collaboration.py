@@ -9,6 +9,12 @@ class InteractionType(str, enum.Enum):
     BITBUCKET_PR_REVIEW = "bitbucket_pr_review"
     BITBUCKET_PR_COMMENT = "bitbucket_pr_comment"
 
+class CollaborationCategory(str, enum.Enum):
+    REQUEST = "request"
+    SUPPORT = "support"
+    ACKNOWLEDGE = "acknowledge"
+    SHARE = "share"
+
 class CollaborationInteraction(Base):
     __tablename__ = "collaboration_interaction"
 
@@ -17,6 +23,7 @@ class CollaborationInteraction(Base):
     target_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     interaction_type = Column(SAEnum(InteractionType), nullable=False)
+    category = Column(SAEnum(CollaborationCategory), nullable=False)
     occurred_at = Column(DateTime, nullable=False)
 
     source_user = relationship("User", foreign_keys=[source_user_id])

@@ -4,7 +4,7 @@ from typing import List, Optional, Dict
 from collections import Counter
 
 from app.crud.base import CRUDBase
-from app.models.collaboration import CollaborationInteraction, InteractionType
+from app.models.collaboration import CollaborationInteraction, InteractionType, CollaborationCategory
 from app.models.user import User
 from app.models.project_member import ProjectMember
 from app.models.organization import Organization
@@ -60,13 +60,13 @@ class CRUDCollaborationInteraction(CRUDBase[CollaborationInteraction, Collaborat
         graph = CollaborationGraph(nodes=nodes, edges=edges)
 
         # Build Analysis
-        review_counter = Counter(i.source_user_id for i in interactions if i.interaction_type == InteractionType.BITBUCKET_PR_REVIEW)
-        help_counter = Counter(i.target_user_id for i in interactions if i.interaction_type == InteractionType.JIRA_MENTION)
+        support_counter = Counter(i.source_user_id for i in interactions if i.category == CollaborationCategory.SUPPORT)
+        request_counter = Counter(i.source_user_id for i in interactions if i.category == CollaborationCategory.REQUEST)
 
-        most_reviews = [{"user_id": uid, "count": count} for uid, count in review_counter.most_common(5)]
-        most_help = [{"user_id": uid, "count": count} for uid, count in help_counter.most_common(5)]
+        most_support = [{"user_id": uid, "full_name": nodes_map[uid].full_name, "count": count} for uid, count in support_counter.most_common(5) if uid in nodes_map]
+        most_requests = [{"user_id": uid, "full_name": nodes_map[uid].full_name, "count": count} for uid, count in request_counter.most_common(5) if uid in nodes_map]
 
-        analysis = CollaborationAnalysis(most_reviews=most_reviews, most_help=most_help)
+        analysis = CollaborationAnalysis(most_support=most_support, most_requests=most_requests)
 
         return CollaborationData(graph=graph, analysis=analysis)
 
