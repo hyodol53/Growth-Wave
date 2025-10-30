@@ -1,3 +1,4 @@
+import traceback
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Any, Optional
@@ -17,12 +18,56 @@ from app.schemas.evaluation import (
     DepartmentGradeRatio,
     DepartmentGradeRatioCreate,
     GradeAdjustmentRequest,
+    DepartmentEvaluationCreate,
+    DepartmentEvaluation,
 )
 from app.models.user import User as UserModel, UserRole
 from app.crud import grade_adjustment, crud_report
+from app.crud.evaluation import department_evaluation
 from app.exceptions import GradeAdjustmentError, GradeTOExceededError
 
 router = APIRouter()
+
+@router.post("/department-evaluations/", response_model=DepartmentEvaluation)
+def upsert_department_evaluation(
+    *,
+    db: Session = Depends(deps.get_db),
+    eval_in: DepartmentEvaluationCreate,
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Upsert a department evaluation. Accessible only by CENTER_HEAD.
+    """
+    if current_user.role != UserRole.CENTER_HEAD:
+        raise HTTPException(
+            status_code=403,
+            detail="The user doesn't have enough privileges for this operation.",
+        )
+    
+    # Additional check: Ensure the user is the head of the department's parent (center)
+    department = crud.organization.organization.get(db, id=eval_in.department_id)
+    if not department or department.parent_id != current_user.organization_id:
+         raise HTTPException(
+            status_code=403,
+            detail="User can only evaluate departments within their center.",
+        )
+
+    return department_evaluation.upsert_department_evaluation(db, eval_in=eval_in)
+
+
+@router.get("/department-evaluations/", response_model=List[DepartmentEvaluation])
+def read_department_evaluations(
+    *,
+    db: Session = Depends(deps.get_db),
+    evaluation_period_id: int,
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Get department evaluations by evaluation_period_id.
+    """
+    # Depending on requirements, you might want to restrict access here as well
+    return db.query(models.DepartmentEvaluation).filter(models.DepartmentEvaluation.evaluation_period_id == evaluation_period_id).all()
+
 
 @router.post(
     "/adjust-grades",
@@ -76,6 +121,7 @@ def adjust_grades(
     except GradeTOExceededError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail="An unexpected error occurred.")
 
 
@@ -249,14 +295,14 @@ def read_qualitative_evaluations(
 
 
 @router.post("/qualitative-evaluations/", response_model=List[schemas.QualitativeEvaluation])
-def create_qualitative_evaluations(
+def create_or_update_qualitative_evaluations(
     *,
     db: Session = Depends(deps.get_db),
     evaluations_in: schemas.QualitativeEvaluationCreate,
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Create new qualitative evaluations for team/department members.
+    Create or update qualitative evaluations for team/department members.
     """
     active_period = crud.evaluation_period.get_active_period(db)
     if not active_period:
@@ -280,7 +326,7 @@ def create_qualitative_evaluations(
                 detail=f"User {evaluation.evaluatee_id} is not a subordinate of the evaluator.",
             )
 
-    return crud.qualitative_evaluation.qualitative_evaluation.create_multi(
+    return crud.qualitative_evaluation.qualitative_evaluation.upsert_multi(
         db,
         evaluations=evaluations_in.evaluations,
         evaluator_id=current_user.id,
@@ -655,7 +701,7 @@ def read_evaluation_periods(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_admin_or_dept_head_user),
+    current_user: models.User = Depends(deps.get_current_project_manager_user),
 ) -> Any:
     """
     Retrieve evaluation periods. (Admin only)

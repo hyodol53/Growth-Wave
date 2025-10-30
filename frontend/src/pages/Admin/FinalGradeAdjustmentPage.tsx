@@ -31,6 +31,7 @@ const FinalGradeAdjustmentPage: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [gradeQuotas, setGradeQuotas] = useState<{ S: number; A: number } | null>(null);
   const [departmentGrade, setDepartmentGrade] = useState<string | null>(null);
+  const [departmentEvaluations, setDepartmentEvaluations] = useState<DepartmentEvaluation[]>([]);
 
   const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
   const [detailData, setDetailData] = useState<DetailedEvaluationResult | null>(null);
@@ -63,6 +64,23 @@ const FinalGradeAdjustmentPage: React.FC = () => {
     };
     fetchInitialData();
   }, []);
+
+  useEffect(() => {
+    const period = periods.find(p => p.name === selectedPeriod);
+    if (!period) return;
+
+    const fetchDepartmentEvaluations = async () => {
+      try {
+        const { data } = await api.evaluations.getDepartmentEvaluations(period.id);
+        setDepartmentEvaluations(data);
+      } catch (err) {
+        setError('Failed to load department evaluations for the selected period.');
+        setDepartmentEvaluations([]);
+      }
+    };
+
+    fetchDepartmentEvaluations();
+  }, [selectedPeriod, periods]);
 
   useEffect(() => {
     const period = periods.find(p => p.name === selectedPeriod);
@@ -102,20 +120,23 @@ const FinalGradeAdjustmentPage: React.FC = () => {
   }, [selectedPeriod, periods]);
 
   useEffect(() => {
-    if (!currentUser || !currentUser.organization_id || organizations.length === 0 || gradeRatios.length === 0 || rows.length === 0) {
+    if (!currentUser || !currentUser.organization_id || departmentEvaluations.length === 0 || gradeRatios.length === 0 || rows.length === 0) {
       setGradeQuotas(null);
       return;
     }
 
-    const myOrg = organizations.find(o => o.id === currentUser.organization_id);
-    if (!myOrg || !myOrg.department_grade) {
+    const myDeptEvaluation = departmentEvaluations.find(de => de.department_id === currentUser.organization_id);
+
+    if (!myDeptEvaluation || !myDeptEvaluation.grade) {
       setDepartmentGrade(null);
       setGradeQuotas(null);
       return;
     }
-    setDepartmentGrade(myOrg.department_grade);
+    
+    const currentDepartmentGrade = myDeptEvaluation.grade;
+    setDepartmentGrade(currentDepartmentGrade);
 
-    const ratio = gradeRatios.find(r => r.department_grade === myOrg.department_grade);
+    const ratio = gradeRatios.find(r => r.department_grade === currentDepartmentGrade);
     if (!ratio) {
       setGradeQuotas(null);
       return;
@@ -127,7 +148,7 @@ const FinalGradeAdjustmentPage: React.FC = () => {
 
     setGradeQuotas({ S: sQuota, A: aQuota });
 
-  }, [rows, currentUser, organizations, gradeRatios]);
+  }, [rows, currentUser, departmentEvaluations, gradeRatios]);
 
   const currentGradeCounts = useMemo(() => {
     const counts = { S: 0, A: 0, 'B+': 0, 'B-': 0 };
@@ -164,7 +185,7 @@ const FinalGradeAdjustmentPage: React.FC = () => {
 
     const adjustments: GradeAdjustment[] = Object.entries(adjustedGrades).map(([userId, grade]) => ({
       user_id: Number(userId),
-      adjusted_grade: grade,
+      grade: grade,
     }));
 
     if (adjustments.length === 0) {

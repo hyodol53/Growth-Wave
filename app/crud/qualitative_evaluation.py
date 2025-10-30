@@ -23,25 +23,45 @@ class CRUDQualitativeEvaluation(CRUDBase[QualitativeEvaluation, QualitativeEvalu
             .first()
         )
 
-    def create_multi(
+    def upsert_multi(
         self, db: Session, *, evaluations: List[QualitativeEvaluationBase], evaluator_id: int, evaluation_period: str
     ) -> List[QualitativeEvaluation]:
-        db_objs = [
-            QualitativeEvaluation(
-                evaluatee_id=evaluation.evaluatee_id,
-                qualitative_score=evaluation.qualitative_score,
-                department_contribution_score=evaluation.department_contribution_score,
-                feedback=evaluation.feedback,
-                evaluator_id=evaluator_id,
-                evaluation_period=evaluation_period,
-            )
-            for evaluation in evaluations
-        ]
-        db.add_all(db_objs)
+        
+        updated_and_created_evaluations = []
+
+        for evaluation in evaluations:
+            # Check if an evaluation already exists
+            existing_eval = db.query(QualitativeEvaluation).filter(
+                QualitativeEvaluation.evaluator_id == evaluator_id,
+                QualitativeEvaluation.evaluatee_id == evaluation.evaluatee_id,
+                QualitativeEvaluation.evaluation_period == evaluation_period
+            ).first()
+
+            if existing_eval:
+                # Update existing evaluation
+                existing_eval.qualitative_score = evaluation.qualitative_score
+                existing_eval.department_contribution_score = evaluation.department_contribution_score
+                existing_eval.feedback = evaluation.feedback
+                db.add(existing_eval)
+                updated_and_created_evaluations.append(existing_eval)
+            else:
+                # Create new evaluation
+                new_eval = QualitativeEvaluation(
+                    evaluator_id=evaluator_id,
+                    evaluatee_id=evaluation.evaluatee_id,
+                    evaluation_period=evaluation_period,
+                    qualitative_score=evaluation.qualitative_score,
+                    department_contribution_score=evaluation.department_contribution_score,
+                    feedback=evaluation.feedback,
+                )
+                db.add(new_eval)
+                updated_and_created_evaluations.append(new_eval)
+
         db.commit()
-        for db_obj in db_objs:
-            db.refresh(db_obj)
-        return db_objs
+        for eval_obj in updated_and_created_evaluations:
+            db.refresh(eval_obj)
+            
+        return updated_and_created_evaluations
 
     def get_members_to_evaluate(self, db: Session, *, evaluator: User) -> List[User]:
         active_period = crud.evaluation_period.get_active_period(db)

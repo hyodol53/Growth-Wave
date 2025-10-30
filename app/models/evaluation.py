@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Enum as SQLAlchemyEnum, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, Float, Enum as SQLAlchemyEnum, ForeignKey, Date, UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import List
 
@@ -115,6 +115,8 @@ class EvaluationPeriod(Base):
     end_date = Column(Date, nullable=False)
 
     projects = relationship("Project", back_populates="evaluation_period")
+    department_evaluations = relationship("DepartmentEvaluation", back_populates="evaluation_period")
+
 
     __table_args__ = {'extend_existing': True}
 
@@ -128,3 +130,20 @@ class DepartmentGradeRatio(Base):
     a_ratio = Column(Float, nullable=False)
 
     __table_args__ = {'extend_existing': True}
+
+
+class DepartmentEvaluation(Base):
+    __tablename__ = "department_evaluations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    department_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
+    grade = Column(String, nullable=False)
+    evaluation_period_id = Column(Integer, ForeignKey("evaluation_periods.id"), nullable=False)
+
+    department = relationship("Organization", back_populates="department_evaluations")
+    evaluation_period = relationship("EvaluationPeriod", back_populates="department_evaluations")
+
+    __table_args__ = (
+        UniqueConstraint('department_id', 'evaluation_period_id', name='_dept_eval_period_uc'),
+        {'extend_existing': True}
+    )

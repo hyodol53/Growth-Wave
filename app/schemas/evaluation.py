@@ -177,6 +177,27 @@ class DepartmentGradeRatio(DepartmentGradeRatioInDB):
     pass
 
 
+# DepartmentEvaluation Schemas
+class DepartmentEvaluationBase(BaseModel):
+    department_id: int
+    grade: str
+    evaluation_period_id: int
+
+class DepartmentEvaluationCreate(DepartmentEvaluationBase):
+    pass
+
+class DepartmentEvaluationUpdate(DepartmentEvaluationBase):
+    pass
+
+class DepartmentEvaluationInDB(DepartmentEvaluationBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+class DepartmentEvaluation(DepartmentEvaluationInDB):
+    pass
+
+
 # Schemas for viewing evaluation results
 class PmScoreResult(BaseModel):
     project_name: str

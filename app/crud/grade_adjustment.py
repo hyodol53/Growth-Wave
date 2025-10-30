@@ -17,7 +17,7 @@ def adjust_grades_for_department(
     Adjusts grades for all users in a department, ensuring B+/B- balance and TO limits.
     """
     # 1. Get the department and its users
-    parent_org = crud.organization.get_organization(db, department_id)
+    parent_org = crud.organization.organization.get(db, id=department_id)
     if not parent_org:
         raise GradeAdjustmentError(f"Department with id {department_id} not found.")
     org_and_descendants = [parent_org] + crud.organization.get_all_descendant_orgs(db, department_id)
@@ -44,12 +44,25 @@ def adjust_grades_for_department(
 
     # 5. TO Validation for DEPT_HEAD
     if current_user_role == models.UserRole.DEPT_HEAD:
-        if not parent_org.department_grade:
-            raise GradeTOExceededError("Department grade is not set.")
+        # Get the evaluation period object to find the period_id
+        period = crud.evaluation_period.get_by_name(db, name=evaluation_period)
+        if not period:
+            raise GradeAdjustmentError(f"Evaluation period '{evaluation_period}' not found.")
+
+        # Get the department's grade for the specific period from the DepartmentEvaluation table
+        dept_eval = db.query(models.DepartmentEvaluation).filter(
+            models.DepartmentEvaluation.department_id == department_id,
+            models.DepartmentEvaluation.evaluation_period_id == period.id
+        ).first()
+
+        if not dept_eval or not dept_eval.grade:
+            raise GradeTOExceededError("Department grade is not set for the selected period.")
         
-        ratio = crud.department_grade_ratio.get_by_grade(db, department_grade=parent_org.department_grade)
+        department_grade = dept_eval.grade
+        
+        ratio = crud.department_grade_ratio.get_by_grade(db, department_grade=department_grade)
         if not ratio:
-            raise GradeTOExceededError(f"Grade ratio for department grade '{parent_org.department_grade}' not found.")
+            raise GradeTOExceededError(f"Grade ratio for department grade '{department_grade}' not found.")
 
         num_employees = len(dept_user_ids)
         s_to = math.floor(num_employees * (ratio.s_ratio / 100.0))

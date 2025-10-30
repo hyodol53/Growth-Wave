@@ -4,8 +4,9 @@ import io
 from typing import List, Dict, Any
 
 from fastapi import UploadFile
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
+from app.crud.base import CRUDBase
 from app.models.organization import Organization
 from app.schemas.organization import OrganizationCreate, OrganizationUpdate
 from app.crud import user as crud_user
@@ -16,15 +17,19 @@ from app.schemas.user import UserCreate, UserUpdate
 from app.crud import evaluation_period as crud_evaluation_period
 
 
+class CRUDOrganization(CRUDBase[Organization, OrganizationCreate, OrganizationUpdate]):
+    def get(self, db: Session, id: int) -> Organization:
+        return db.query(Organization).options(joinedload(Organization.members)).filter(Organization.id == id).first()
+
+organization = CRUDOrganization(Organization)
+
+
 def get_organizations(db: Session) -> List[Organization]:
     return db.query(Organization).all()
 
-def get_organization(db: Session, org_id: int) -> Organization:
-    return db.query(Organization).filter(Organization.id == org_id).first()
-
 def get_all_descendant_orgs(db: Session, org_id: int) -> List[Organization]:
     descendants = []
-    children = db.query(Organization).filter(Organization.parent_id == org_id).all()
+    children = db.query(Organization).options(joinedload(Organization.members)).filter(Organization.parent_id == org_id).all()
     for child in children:
         descendants.append(child)
         descendants.extend(get_all_descendant_orgs(db, child.id))
@@ -35,7 +40,6 @@ def create_organization(db: Session, org: OrganizationCreate) -> Organization:
         name=org.name,
         level=org.level,
         parent_id=org.parent_id,
-        department_grade=org.department_grade
     )
     db.add(db_org)
     db.commit()

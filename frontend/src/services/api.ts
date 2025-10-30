@@ -148,6 +148,8 @@ export const evaluations = {
     deleteEvaluationPeriod: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/evaluations/evaluation-periods/${id}`),
 
     getDepartmentGradeRatios: (): Promise<AxiosResponse<DepartmentGradeRatio[]>> => apiClient.get('/evaluations/department-grade-ratios/'),
+    getDepartmentEvaluations: (evaluation_period_id: number): Promise<AxiosResponse<DepartmentEvaluation[]>> => 
+      apiClient.get('/evaluations/department-evaluations/', { params: { evaluation_period_id } }),
     createDepartmentGradeRatio: (data: DepartmentGradeRatioCreate): Promise<AxiosResponse<DepartmentGradeRatio>> => apiClient.post('/evaluations/department-grade-ratios/', data),
     updateDepartmentGradeRatio: (id: number, data: DepartmentGradeRatioUpdate): Promise<AxiosResponse<DepartmentGradeRatio>> => apiClient.put(`/evaluations/department-grade-ratios/${id}`, data),
     deleteDepartmentGradeRatio: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/evaluations/department-grade-ratios/${id}`),
@@ -161,6 +163,12 @@ export const evaluations = {
     getEvaluatedUsersByPeriod: (periodId: number): Promise<AxiosResponse<EvaluatedUser[]>> => apiClient.get(`/evaluations/periods/${periodId}/evaluated-users`),
     getDetailedEvaluationResult: (periodId: number, userId: number): Promise<AxiosResponse<DetailedEvaluationResult>> => apiClient.get(`/evaluations/periods/${periodId}/users/${userId}/details`),
     calculateFinalScores: (evaluationPeriodId: number): Promise<AxiosResponse<{ message: string }>> => apiClient.post(`/evaluations/evaluation-periods/${evaluationPeriodId}/calculate`),
+
+    // Department Evaluations
+    getDepartmentEvaluations: (evaluationPeriodId: number): Promise<AxiosResponse<any[]>> => 
+        apiClient.get('/evaluations/department-evaluations/', { params: { evaluation_period_id: evaluationPeriodId } }),
+    upsertDepartmentEvaluation: (data: { department_id: number; grade: string; evaluation_period_id: number }): Promise<AxiosResponse<any>> => 
+        apiClient.post('/evaluations/department-evaluations/', data),
 };
 
 const api = {

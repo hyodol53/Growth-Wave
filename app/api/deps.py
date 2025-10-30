@@ -53,6 +53,15 @@ def get_current_admin_or_dept_head_user(current_user: User = Depends(get_current
     return current_user
 
 
+def get_current_project_manager_user(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role not in [UserRole.ADMIN, UserRole.DEPT_HEAD, UserRole.CENTER_HEAD]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The user doesn't have enough privileges"
+        )
+    return current_user
+
+
 def get_current_center_head_or_admin_user(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role not in [UserRole.ADMIN, UserRole.CENTER_HEAD]:
         raise HTTPException(
