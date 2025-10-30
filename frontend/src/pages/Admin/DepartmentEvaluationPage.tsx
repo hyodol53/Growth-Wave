@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Select, MenuItem, Button, Snackbar, Alert, CircularProgress, FormControl, InputLabel } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import type { Organization } from '../../schemas/organization';
-import type { EvaluationPeriod } from '../../schemas/evaluation';
-import * as api from '../../services/api';
+import type { EvaluationPeriod, DepartmentEvaluation } from '../../schemas/evaluation';
+import api from '../../services/api';
 import { DepartmentGrade, UserRole } from '../../schemas';
 
 // Helper function to find all descendant organizations (remains the same)
@@ -73,7 +73,7 @@ const DepartmentEvaluationPage: React.FC = () => {
       setDepartments(filteredOrgs);
 
       // Step 2: Fetch existing evaluations, handle failure gracefully
-      let evaluations = [];
+      let evaluations: DepartmentEvaluation[] = [];
       try {
         const evaluationsResponse = await api.evaluations.getDepartmentEvaluations(periodId);
         evaluations = evaluationsResponse.data;
@@ -85,7 +85,7 @@ const DepartmentEvaluationPage: React.FC = () => {
       // Step 3: Merge the data
       const grades: Record<number, DepartmentGrade | ''> = {};
       evaluations.forEach(ev => {
-        grades[ev.department_id] = ev.grade;
+        grades[ev.department_id] = ev.grade ?? '';
       });
       
       filteredOrgs.forEach(dept => {

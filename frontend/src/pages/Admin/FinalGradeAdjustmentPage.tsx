@@ -6,7 +6,7 @@ import type { GridColDef, GridCellParams } from '@mui/x-data-grid';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import api from '../../services/api';
 import type { User } from '../../schemas/user';
-import type { GradeAdjustment, EvaluationPeriod, DepartmentGradeRatio, Organization, DetailedEvaluationResult } from '../../schemas';
+import type { GradeAdjustment, EvaluationPeriod, DepartmentGradeRatio, DetailedEvaluationResult, DepartmentEvaluation } from '../../schemas';
 import EvaluationDetailDialog from '../../components/Admin/EvaluationDetailDialog';
 
 interface RowData extends User {
@@ -27,7 +27,6 @@ const FinalGradeAdjustmentPage: React.FC = () => {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const [gradeRatios, setGradeRatios] = useState<DepartmentGradeRatio[]>([]);
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [gradeQuotas, setGradeQuotas] = useState<{ S: number; A: number } | null>(null);
   const [departmentGrade, setDepartmentGrade] = useState<string | null>(null);
@@ -40,16 +39,14 @@ const FinalGradeAdjustmentPage: React.FC = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [periodsRes, ratiosRes, orgsRes, userRes] = await Promise.all([
+        const [periodsRes, ratiosRes, userRes] = await Promise.all([
           api.evaluations.getEvaluationPeriods(),
           api.evaluations.getDepartmentGradeRatios(),
-          api.organizations.getOrganizations(),
           api.auth.getCurrentUser(),
         ]);
 
         setPeriods(periodsRes.data);
         setGradeRatios(ratiosRes.data);
-        setOrganizations(orgsRes.data);
         setCurrentUser(userRes.data);
 
         const activePeriod = periodsRes.data.find(p => p.is_active);
@@ -185,7 +182,7 @@ const FinalGradeAdjustmentPage: React.FC = () => {
 
     const adjustments: GradeAdjustment[] = Object.entries(adjustedGrades).map(([userId, grade]) => ({
       user_id: Number(userId),
-      grade: grade,
+      adjusted_grade: grade,
     }));
 
     if (adjustments.length === 0) {

@@ -25,7 +25,8 @@ import type {
     ManagerEvaluationView,
     GradeAdjustment,
     EvaluatedUser,
-    DetailedEvaluationResult
+    DetailedEvaluationResult,
+    DepartmentEvaluation
 } from '../schemas';
 import { DepartmentGrade } from "../schemas/evaluation";
 
@@ -165,8 +166,6 @@ export const evaluations = {
     calculateFinalScores: (evaluationPeriodId: number): Promise<AxiosResponse<{ message: string }>> => apiClient.post(`/evaluations/evaluation-periods/${evaluationPeriodId}/calculate`),
 
     // Department Evaluations
-    getDepartmentEvaluations: (evaluationPeriodId: number): Promise<AxiosResponse<any[]>> => 
-        apiClient.get('/evaluations/department-evaluations/', { params: { evaluation_period_id: evaluationPeriodId } }),
     upsertDepartmentEvaluation: (data: { department_id: number; grade: string; evaluation_period_id: number }): Promise<AxiosResponse<any>> => 
         apiClient.post('/evaluations/department-evaluations/', data),
 };

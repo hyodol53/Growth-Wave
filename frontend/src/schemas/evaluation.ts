@@ -229,6 +229,14 @@ export interface DetailedEvaluationResult {
   qualitative_evaluation: DetailedQualitativeEvaluation | null;
 }
 
+export interface DepartmentEvaluation {
+  id: number;
+  evaluation_period_id: number;
+  department_id: number;
+  department_name: string;
+  grade: DepartmentGrade | null;
+}
+
 // For submitting evaluations (POST)
 export interface PeerEvaluationSubmit {
     evaluations: {
