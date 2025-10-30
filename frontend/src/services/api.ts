@@ -1,6 +1,44 @@
 // frontend/src/services/api.ts
 import axios, { type AxiosResponse } from 'axios';
-import type * as schemas from '../schemas/index';
+import type {
+    Token,
+    User,
+    UserUpdate,
+    UserCreate,
+    UserHistoryResponse,
+    UserProjectWeight,
+    UserProjectWeightsUpdate,
+    Organization,
+    OrganizationCreate,
+    OrganizationUpdate,
+    Project,
+    ProjectCreate,
+    ProjectUpdate,
+    ProjectMemberDetails,
+    MyEvaluationTask,
+    PeerEvaluationData,
+    PeerEvaluationSubmit,
+    PmEvaluationData,
+    PmEvaluationSubmit,
+    QualitativeEvaluationData,
+    QualitativeEvaluationCreate,
+    ManagerEvaluationView,
+    GradeAdjustment,
+    EvaluatedUser,
+    DetailedEvaluationResult
+} from '../schemas';
+import type {
+    MyEvaluationResult,
+    EvaluationPeriod,
+    EvaluationPeriodCreate,
+    EvaluationPeriodUpdate,
+    DepartmentGradeRatio,
+    DepartmentGradeRatioCreate,
+    DepartmentGradeRatioUpdate,
+    EvaluationWeight,
+    EvaluationWeightCreate,
+    EvaluationWeightUpdate,
+} from '../schemas/evaluation';
 
 // 1. apiClient.ts의 내용을 api.ts에 통합
 const apiClient = axios.create({
@@ -19,7 +57,7 @@ apiClient.interceptors.request.use((config) => {
 
 // 3. 기존 api.ts의 내용 (apiClient를 직접 사용하도록 수정)
 export const auth = {
-  login: (username: string, password: string): Promise<AxiosResponse<schemas.Token>> => {
+  login: (username: string, password: string): Promise<AxiosResponse<Token>> => {
     const credentials = new URLSearchParams();
     credentials.append('username', username);
     credentials.append('password', password);
@@ -30,34 +68,34 @@ export const auth = {
       },
     });
   },
-  getCurrentUser: (): Promise<AxiosResponse<schemas.User>> =>
+  getCurrentUser: (): Promise<AxiosResponse<User>> =>
     apiClient.get('/users/me'),
 };
 
 export const users = {
-  getUsers: (): Promise<AxiosResponse<schemas.User[]>> => apiClient.get('/users/'),
+  getUsers: (): Promise<AxiosResponse<User[]>> => apiClient.get('/users/'),
   updateUser: (
     id: number,
-    data: schemas.UserUpdate
-  ): Promise<AxiosResponse<schemas.User>> => apiClient.put(`/users/${id}`, data),
-  createUser: (data: schemas.UserCreate): Promise<AxiosResponse<schemas.User>> =>
+    data: UserUpdate
+  ): Promise<AxiosResponse<User>> => apiClient.put(`/users/${id}`, data),
+  createUser: (data: UserCreate): Promise<AxiosResponse<User>> =>
     apiClient.post('/users/', data),
   deleteUser: (id: number): Promise<AxiosResponse<void>> =>
     apiClient.delete(`/users/${id}`),
-  getMySubordinates: (): Promise<AxiosResponse<schemas.User[]>> =>
+  getMySubordinates: (): Promise<AxiosResponse<User[]>> =>
     apiClient.get('/users/me/subordinates'),
-  getUserHistory: (userId?: number): Promise<AxiosResponse<schemas.UserHistoryResponse>> =>
+  getUserHistory: (userId?: number): Promise<AxiosResponse<UserHistoryResponse>> =>
     apiClient.get(userId ? `/users/${userId}/history` : '/users/me/history'),
-  getUserProjectWeights: (userId: number): Promise<AxiosResponse<schemas.UserProjectWeight[]>> =>
+  getUserProjectWeights: (userId: number): Promise<AxiosResponse<UserProjectWeight[]>> =>
     apiClient.get(`/users/${userId}/project-weights`),
-  updateUserProjectWeights: (userId: number, data: schemas.UserProjectWeightsUpdate): Promise<AxiosResponse<schemas.UserProjectWeight[]>> =>
+  updateUserProjectWeights: (userId: number, data: UserProjectWeightsUpdate): Promise<AxiosResponse<UserProjectWeight[]>> =>
     apiClient.put(`/users/${userId}/project-weights`, data),
 };
 
 export const organizations = {
-    getOrganizations: (): Promise<AxiosResponse<schemas.Organization[]>> => apiClient.get('/organizations/'),
-    createOrganization: (data: schemas.OrganizationCreate): Promise<AxiosResponse<schemas.Organization>> => apiClient.post('/organizations/', data),
-    updateOrganization: (id: number, data: schemas.OrganizationUpdate): Promise<AxiosResponse<schemas.Organization>> => apiClient.put(`/organizations/${id}`, data),
+    getOrganizations: (): Promise<AxiosResponse<Organization[]>> => apiClient.get('/organizations/'),
+    createOrganization: (data: OrganizationCreate): Promise<AxiosResponse<Organization>> => apiClient.post('/organizations/', data),
+    updateOrganization: (id: number, data: OrganizationUpdate): Promise<AxiosResponse<Organization>> => apiClient.put(`/organizations/${id}`, data),
     deleteOrganization: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/organizations/${id}`),
     syncChart: (file: File): Promise<AxiosResponse<any>> => {
         const formData = new FormData();
@@ -69,43 +107,44 @@ export const organizations = {
 };
 
 export const projects = {
-    getProjects: (): Promise<AxiosResponse<schemas.Project[]>> => apiClient.get('/projects/'),
-    createProject: (data: schemas.ProjectCreate): Promise<AxiosResponse<schemas.Project>> => apiClient.post('/projects/', data),
-    updateProject: (id: number, data: schemas.ProjectUpdate): Promise<AxiosResponse<schemas.Project>> => apiClient.put(`/projects/${id}`, data),
+    getProjects: (): Promise<AxiosResponse<Project[]>> => apiClient.get('/projects/'),
+    createProject: (data: ProjectCreate): Promise<AxiosResponse<Project>> => apiClient.post('/projects/', data),
+    updateProject: (id: number, data: ProjectUpdate): Promise<AxiosResponse<Project>> => apiClient.put(`/projects/${id}`, data),
     deleteProject: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/projects/${id}`),
-    getProjectMembers: (projectId: number): Promise<AxiosResponse<schemas.ProjectMemberDetails[]>> => apiClient.get(`/projects/${projectId}/members`),
+    getProjectMembers: (projectId: number): Promise<AxiosResponse<ProjectMemberDetails[]>> => apiClient.get(`/projects/${projectId}/members`),
 };
 
 export const evaluations = {
-    getMyTasks: (): Promise<AxiosResponse<schemas.MyEvaluationTask[]>> => apiClient.get('/evaluations/my-tasks'),
-    getPeerEvaluations: (projectId: number): Promise<AxiosResponse<schemas.PeerEvaluationData>> => apiClient.get(`/evaluations/peer-evaluations/${projectId}`),
-    submitPeerEvaluations: (data: schemas.PeerEvaluationSubmit): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/peer-evaluations/', data),
-    getPmEvaluations: (projectId: number): Promise<AxiosResponse<schemas.PmEvaluationData>> => apiClient.get(`/evaluations/pm-evaluations/${projectId}`),
-    submitPmEvaluations: (data: schemas.PmEvaluationSubmit): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/pm-evaluations/', data),
-    submitQualitativeEvaluations: (data: schemas.QualitativeEvaluationCreate): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/qualitative-evaluations/', data),
-    getEvaluationResultForUser: (userId: number): Promise<AxiosResponse<schemas.ManagerEvaluationView>> => apiClient.get(`/evaluations/${userId}/result`),
-    getMyEvaluationResult: (): Promise<AxiosResponse<schemas.MyEvaluationResult>> => apiClient.get('/evaluations/me'),
-    adjustGrades: (adjustments: schemas.GradeAdjustment[]): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/adjust-grades', { adjustments }),
+    getMyTasks: (): Promise<AxiosResponse<MyEvaluationTask[]>> => apiClient.get('/evaluations/my-tasks'),
+    getPeerEvaluations: (projectId: number): Promise<AxiosResponse<PeerEvaluationData>> => apiClient.get(`/evaluations/peer-evaluations/${projectId}`),
+    submitPeerEvaluations: (data: PeerEvaluationSubmit): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/peer-evaluations/', data),
+    getPmEvaluations: (projectId: number): Promise<AxiosResponse<PmEvaluationData>> => apiClient.get(`/evaluations/pm-evaluations/${projectId}`),
+    submitPmEvaluations: (data: PmEvaluationSubmit): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/pm-evaluations/', data),
+    getQualitativeEvaluations: (): Promise<AxiosResponse<QualitativeEvaluationData>> => apiClient.get('/evaluations/qualitative-evaluations/'),
+    submitQualitativeEvaluations: (data: QualitativeEvaluationCreate): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/qualitative-evaluations/', data),
+    getEvaluationResultForUser: (userId: number): Promise<AxiosResponse<ManagerEvaluationView>> => apiClient.get(`/evaluations/${userId}/result`),
+    getMyEvaluationResult: (): Promise<AxiosResponse<MyEvaluationResult>> => apiClient.get('/evaluations/me'),
+    adjustGrades: (adjustments: GradeAdjustment[]): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/adjust-grades', { adjustments }),
 
     // Settings
-    getEvaluationPeriods: (): Promise<AxiosResponse<schemas.EvaluationPeriod[]>> => apiClient.get('/evaluations/evaluation-periods/'),
-    createEvaluationPeriod: (data: schemas.EvaluationPeriodCreate): Promise<AxiosResponse<schemas.EvaluationPeriod>> => apiClient.post('/evaluations/evaluation-periods/', data),
-    updateEvaluationPeriod: (id: number, data: schemas.EvaluationPeriodUpdate): Promise<AxiosResponse<schemas.EvaluationPeriod>> => apiClient.put(`/evaluations/evaluation-periods/${id}`, data),
+    getEvaluationPeriods: (): Promise<AxiosResponse<EvaluationPeriod[]>> => apiClient.get('/evaluations/evaluation-periods/'),
+    createEvaluationPeriod: (data: EvaluationPeriodCreate): Promise<AxiosResponse<EvaluationPeriod>> => apiClient.post('/evaluations/evaluation-periods/', data),
+    updateEvaluationPeriod: (id: number, data: EvaluationPeriodUpdate): Promise<AxiosResponse<EvaluationPeriod>> => apiClient.put(`/evaluations/evaluation-periods/${id}`, data),
     deleteEvaluationPeriod: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/evaluations/evaluation-periods/${id}`),
 
-    getDepartmentGradeRatios: (): Promise<AxiosResponse<schemas.DepartmentGradeRatio[]>> => apiClient.get('/evaluations/department-grade-ratios/'),
-    createDepartmentGradeRatio: (data: schemas.DepartmentGradeRatioCreate): Promise<AxiosResponse<schemas.DepartmentGradeRatio>> => apiClient.post('/evaluations/department-grade-ratios/', data),
-    updateDepartmentGradeRatio: (id: number, data: schemas.DepartmentGradeRatioUpdate): Promise<AxiosResponse<schemas.DepartmentGradeRatio>> => apiClient.put(`/evaluations/department-grade-ratios/${id}`, data),
+    getDepartmentGradeRatios: (): Promise<AxiosResponse<DepartmentGradeRatio[]>> => apiClient.get('/evaluations/department-grade-ratios/'),
+    createDepartmentGradeRatio: (data: DepartmentGradeRatioCreate): Promise<AxiosResponse<DepartmentGradeRatio>> => apiClient.post('/evaluations/department-grade-ratios/', data),
+    updateDepartmentGradeRatio: (id: number, data: DepartmentGradeRatioUpdate): Promise<AxiosResponse<DepartmentGradeRatio>> => apiClient.put(`/evaluations/department-grade-ratios/${id}`, data),
     deleteDepartmentGradeRatio: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/evaluations/department-grade-ratios/${id}`),
 
-    getEvaluationWeights: (): Promise<AxiosResponse<schemas.EvaluationWeight[]>> => apiClient.get('/evaluations/'),
-    createEvaluationWeight: (data: schemas.EvaluationWeightCreate): Promise<AxiosResponse<schemas.EvaluationWeight>> => apiClient.post('/evaluations/', data),
-    updateEvaluationWeight: (id: number, data: schemas.EvaluationWeightUpdate): Promise<AxiosResponse<schemas.EvaluationWeight>> => apiClient.put(`/evaluations/${id}`, data),
+    getEvaluationWeights: (): Promise<AxiosResponse<EvaluationWeight[]>> => apiClient.get('/evaluations/'),
+    createEvaluationWeight: (data: EvaluationWeightCreate): Promise<AxiosResponse<EvaluationWeight>> => apiClient.post('/evaluations/', data),
+    updateEvaluationWeight: (id: number, data: EvaluationWeightUpdate): Promise<AxiosResponse<EvaluationWeight>> => apiClient.put(`/evaluations/${id}`, data),
     deleteEvaluationWeight: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/evaluations/${id}`),
 
     // New UX APIs
-    getEvaluatedUsersByPeriod: (periodId: number): Promise<AxiosResponse<schemas.EvaluatedUser[]>> => apiClient.get(`/evaluations/periods/${periodId}/evaluated-users`),
-    getDetailedEvaluationResult: (periodId: number, userId: number): Promise<AxiosResponse<schemas.DetailedEvaluationResult>> => apiClient.get(`/evaluations/periods/${periodId}/users/${userId}/details`),
+    getEvaluatedUsersByPeriod: (periodId: number): Promise<AxiosResponse<EvaluatedUser[]>> => apiClient.get(`/evaluations/periods/${periodId}/evaluated-users`),
+    getDetailedEvaluationResult: (periodId: number, userId: number): Promise<AxiosResponse<DetailedEvaluationResult>> => apiClient.get(`/evaluations/periods/${periodId}/users/${userId}/details`),
 };
 
 const api = {

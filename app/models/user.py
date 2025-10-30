@@ -25,6 +25,12 @@ class User(Base):
 
     organization_id = Column(Integer, ForeignKey("organizations.id"))
     organization = relationship("Organization", back_populates="members")
+    
+    # Self-referential relationship for reporting structure
+    reports_to = Column(Integer, ForeignKey("users.id"), nullable=True)
+    manager = relationship("User", remote_side=[id], back_populates="subordinates")
+    subordinates = relationship("User", back_populates="manager")
+
     external_accounts = relationship("ExternalAccount", back_populates="owner", cascade="all, delete-orphan")
 
     # Project memberships for this user

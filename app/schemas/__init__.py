@@ -32,6 +32,8 @@ from .evaluation import (
     PeerEvaluationDetail,
     PmEvaluationTarget,
     PmEvaluationDetail,
+    MemberToEvaluateQualitatively,
+    QualitativeEvaluationData,
 )
 from .report import GrowthAndCultureReport
 from .retrospective import RetrospectiveCreateRequest, RetrospectiveResponse

@@ -230,3 +230,21 @@ class PmEvaluationDetail(BaseModel):
     project_name: str
     status: str # "NOT_STARTED", "IN_PROGRESS", "COMPLETED"
     members_to_evaluate: List[PmEvaluationTarget]
+
+
+# Schemas for Qualitative Evaluation UX
+class MemberToEvaluateQualitatively(BaseModel):
+    evaluatee_id: int
+    evaluatee_name: str
+    title: Optional[str] = None
+    organization_name: Optional[str] = None
+    qualitative_score: Optional[int] = None
+    department_contribution_score: Optional[int] = None
+    feedback: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class QualitativeEvaluationData(BaseModel):
+    status: str # "NOT_STARTED", "IN_PROGRESS", "COMPLETED"
+    members_to_evaluate: List[MemberToEvaluateQualitatively]

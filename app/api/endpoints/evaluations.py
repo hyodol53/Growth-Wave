@@ -215,6 +215,39 @@ def create_pm_self_evaluation(
     return db_obj
 
 
+@router.get("/qualitative-evaluations/", response_model=schemas.QualitativeEvaluationData)
+def read_qualitative_evaluations(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Get the list of users to be qualitatively evaluated by the current user.
+    """
+    members_to_evaluate_data = crud.qualitative_evaluation.qualitative_evaluation.get_members_to_evaluate(
+        db, evaluator=current_user
+    )
+
+    members_to_evaluate = [
+        schemas.MemberToEvaluateQualitatively.model_validate(row._asdict()) for row in members_to_evaluate_data
+    ]
+
+    total_members = len(members_to_evaluate)
+    evaluated_count = sum(1 for member in members_to_evaluate if member.qualitative_score is not None)
+
+    status = "NOT_STARTED"
+    if total_members > 0:
+        if evaluated_count == total_members:
+            status = "COMPLETED"
+        elif evaluated_count > 0:
+            status = "IN_PROGRESS"
+
+    return schemas.QualitativeEvaluationData(
+        status=status,
+        members_to_evaluate=members_to_evaluate,
+    )
+
+
 @router.post("/qualitative-evaluations/", response_model=List[schemas.QualitativeEvaluation])
 def create_qualitative_evaluations(
     *,

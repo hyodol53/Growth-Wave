@@ -7,11 +7,26 @@ from app.schemas.user import UserCreate
 from app.models.user import UserRole, User
 from tests.utils.utils import random_lower_string, random_email
 
-def create_random_user(db: Session, *, password: str = "password", role: UserRole = UserRole.EMPLOYEE, organization_id: int = None) -> User:
+def create_random_user(
+    db: Session, 
+    *, 
+    password: str = "password", 
+    role: UserRole = UserRole.EMPLOYEE, 
+    organization_id: int = None,
+    reports_to: int = None
+) -> User:
     email = random_email()
     username = random_lower_string()
     full_name = random_lower_string().capitalize()
-    user_in = UserCreate(username=username, email=email, password=password, role=role, organization_id=organization_id, full_name=full_name)
+    user_in = UserCreate(
+        username=username, 
+        email=email, 
+        password=password, 
+        role=role, 
+        organization_id=organization_id, 
+        full_name=full_name,
+        reports_to=reports_to
+    )
     return crud_user.create(db=db, obj_in=user_in)
 
 def authentication_token_from_username(

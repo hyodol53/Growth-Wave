@@ -2,42 +2,49 @@ import React, { useState, useEffect } from 'react';
 import type { SelectChangeEvent } from '@mui/material';
 import { Box, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import * as api from '../services/api';
-import type { User } from '../schemas/user';
-import type { MyEvaluationTask, PeerEvaluationData, PmEvaluationData, PeerEvaluationSubmit, PmEvaluationSubmit } from '../schemas/evaluation';
+import type { MyEvaluationTask, PeerEvaluationData, PmEvaluationData, PeerEvaluationSubmit, PmEvaluationSubmit, QualitativeEvaluationData, QualitativeEvaluationCreate } from '../schemas/evaluation';
 
-import QualitativeEvaluationCard from '../components/QualitativeEvaluationCard';
 import PeerEvaluationGrid from '../components/PeerEvaluationGrid';
 import PmEvaluationGrid from '../components/PmEvaluationGrid';
+import QualitativeEvaluationGrid from '../components/QualitativeEvaluationGrid';
 
 
 const MyEvaluationsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  
+  // Project Evaluation State
   const [evaluationTasks, setEvaluationTasks] = useState<MyEvaluationTask[]>([]);
   const [selectedProject, setSelectedProject] = useState<MyEvaluationTask | null>(null);
-  
   const [peerEvaluationData, setPeerEvaluationData] = useState<PeerEvaluationData | null>(null);
   const [pmEvaluationData, setPmEvaluationData] = useState<PmEvaluationData | null>(null);
   const [isProjectDataLoading, setIsProjectDataLoading] = useState(false);
 
+  // Qualitative Evaluation State
+  const [qualitativeEvaluationData, setQualitativeEvaluationData] = useState<QualitativeEvaluationData | null>(null);
+
+
+  const fetchInitialData = async () => {
+      try {
+          setLoading(true);
+          const userRes = await api.auth.getCurrentUser();
+  
+          const tasksRes = await api.evaluations.getMyTasks();
+          setEvaluationTasks(tasksRes.data);
+
+          if (userRes.data.role === 'team_lead' || userRes.data.role === 'dept_head') {
+            const qualitativeRes = await api.evaluations.getQualitativeEvaluations();
+            setQualitativeEvaluationData(qualitativeRes.data);
+          }
+
+      } catch (error) {
+          console.error("Failed to fetch initial data", error);
+          alert('초기 데이터 로딩에 실패했습니다.');
+      } finally {
+          setLoading(false);
+      }
+  };
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-        try {
-            setLoading(true);
-                    const userRes = await api.auth.getCurrentUser();
-                    setCurrentUser(userRes.data);
-            
-                    const tasksRes = await api.evaluations.getMyTasks();            setEvaluationTasks(tasksRes.data);
-
-        } catch (error) {
-            console.error("Failed to fetch initial data", error);
-            alert('초기 데이터 로딩에 실패했습니다.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     fetchInitialData();
   }, []);
 
@@ -96,6 +103,19 @@ const MyEvaluationsPage: React.FC = () => {
     }
   };
 
+  const handleQualitativeSubmit = async (formData: QualitativeEvaluationCreate) => {
+    try {
+      await api.evaluations.submitQualitativeEvaluations(formData);
+      alert('정성평가가 성공적으로 제출되었습니다.');
+      // Refetch data to show updated status
+      const qualitativeRes = await api.evaluations.getQualitativeEvaluations();
+      setQualitativeEvaluationData(qualitativeRes.data);
+    } catch (error) {
+      console.error('Failed to submit qualitative evaluations', error);
+      alert('정성평가 제출에 실패했습니다.');
+    }
+  };
+
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -105,10 +125,10 @@ const MyEvaluationsPage: React.FC = () => {
         <CircularProgress />
       ) : (
         <>
-            {(currentUser?.role === 'team_lead' || currentUser?.role === 'dept_head') && (
+            {qualitativeEvaluationData && (
                 <Box sx={{ mb: 4 }}>
                     <Typography variant="h5" gutterBottom>정성평가</Typography>
-                    <QualitativeEvaluationCard />
+                    <QualitativeEvaluationGrid data={qualitativeEvaluationData} onSubmit={handleQualitativeSubmit} />
                 </Box>
             )}
 

@@ -266,3 +266,19 @@ export interface MyEvaluationTask {
     project_name: string;
     user_role_in_project: 'PM' | 'MEMBER';
 }
+
+// For Qualitative Evaluation Grid
+export interface MemberToEvaluateQualitatively {
+    evaluatee_id: number;
+    evaluatee_name: string;
+    title: string;
+    organization_name: string;
+    qualitative_score: number | null;
+    department_contribution_score: number | null;
+    feedback: string | null;
+}
+
+export interface QualitativeEvaluationData {
+    status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+    members_to_evaluate: MemberToEvaluateQualitatively[];
+}

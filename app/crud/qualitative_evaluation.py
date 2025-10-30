@@ -1,8 +1,11 @@
 from typing import List
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased, joinedload
 from app.crud.base import CRUDBase
 from app.models.evaluation import QualitativeEvaluation, EvaluationPeriod
 from app.schemas.evaluation import QualitativeEvaluationCreate, QualitativeEvaluationBase
+from app import crud
+from app.models.user import User, UserRole
+from app.models.organization import Organization
 
 class CRUDQualitativeEvaluation(CRUDBase[QualitativeEvaluation, QualitativeEvaluationCreate, QualitativeEvaluationBase]):
     def get_by_evaluatee_and_period(
@@ -39,5 +42,54 @@ class CRUDQualitativeEvaluation(CRUDBase[QualitativeEvaluation, QualitativeEvalu
         for db_obj in db_objs:
             db.refresh(db_obj)
         return db_objs
+
+    def get_members_to_evaluate(self, db: Session, *, evaluator: User) -> List[User]:
+        active_period = crud.evaluation_period.get_active_period(db)
+        if not active_period:
+            return []
+
+        subordinates = crud.user.user.get_subordinates(db, user_id=evaluator.id)
+        
+        target_evaluatees = []
+        if evaluator.role == UserRole.TEAM_LEAD:
+            target_evaluatees = subordinates
+        elif evaluator.role == UserRole.DEPT_HEAD:
+            target_evaluatees = [
+                sub for sub in subordinates if sub.role == UserRole.TEAM_LEAD
+            ]
+        else:
+            return []
+
+        if not target_evaluatees:
+            return []
+
+        target_ids = [user.id for user in target_evaluatees]
+
+        # Alias for the specific evaluation by the current evaluator
+        CurrentEvaluation = aliased(QualitativeEvaluation)
+
+        # Query users and left join their evaluations for the current period by the current evaluator
+        results = (
+            db.query(
+                User.id.label("evaluatee_id"),
+                User.full_name.label("evaluatee_name"),
+                User.title,
+                Organization.name.label("organization_name"),
+                CurrentEvaluation.qualitative_score,
+                CurrentEvaluation.department_contribution_score,
+                CurrentEvaluation.feedback,
+            )
+            .outerjoin(Organization, User.organization_id == Organization.id)
+            .outerjoin(
+                CurrentEvaluation,
+                (User.id == CurrentEvaluation.evaluatee_id)
+                & (CurrentEvaluation.evaluator_id == evaluator.id)
+                & (CurrentEvaluation.evaluation_period == active_period.name),
+            )
+            .filter(User.id.in_(target_ids))
+            .all()
+        )
+        return results
+
 
 qualitative_evaluation = CRUDQualitativeEvaluation(QualitativeEvaluation)

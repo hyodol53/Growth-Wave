@@ -19,6 +19,7 @@ class UserCreate(UserBase):
     password: str
     role: UserRole = UserRole.EMPLOYEE
     organization_id: Optional[int] = None
+    reports_to: Optional[int] = None
 
 # Schema for reading user data
 class User(UserBase):
