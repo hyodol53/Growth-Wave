@@ -1,6 +1,7 @@
 import httpx
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+from typing import Optional
 
 from app import models, crud
 from app.core.security import decrypt_data

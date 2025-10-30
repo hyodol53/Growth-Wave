@@ -12,5 +12,5 @@ from .final_evaluation import final_evaluation
 from . import evaluation_calculator
 from .evaluation_period import evaluation_period
 from .department_grade_ratio import department_grade_ratio
-from . import retrospective_generator
+from .retrospective import retrospective
 from . import collaboration

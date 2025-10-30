@@ -38,7 +38,7 @@ from .evaluation import (
     QualitativeEvaluationData,
 )
 from .report import GrowthAndCultureReport
-from .retrospective import RetrospectiveCreateRequest, RetrospectiveResponse
+from .retrospective import Retrospective, RetrospectiveCreate, RetrospectiveUpdate
 from .collaboration import CollaborationInteraction, CollaborationInteractionCreate, CollaborationData, CollaborationGraph, CollaborationAnalysis, CollaborationNode, CollaborationEdge
 
 class Msg(BaseModel):

@@ -1,5 +1,6 @@
 
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./growth_wave.db"
@@ -31,6 +32,9 @@ class Settings(BaseSettings):
     JIRA_SERVER_URL: Optional[str] = None
 
 
+
+    # Google Gemini API Key
+    GOOGLE_API_KEY: Optional[str] = None
 
     model_config = {"env_file": ".env"}
 
