@@ -81,7 +81,7 @@ class QualitativeEvaluation(Base):
     evaluatee_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     score = Column(Integer, nullable=False)
     evaluation_period = Column(String, nullable=False)
-    feedback = Column(String, nullable=True)
+    comment = Column(String, nullable=True)
 
     evaluator = relationship("User", foreign_keys=lambda: QualitativeEvaluation.evaluator_id)
     evaluatee = relationship("User", foreign_keys=lambda: QualitativeEvaluation.evaluatee_id)

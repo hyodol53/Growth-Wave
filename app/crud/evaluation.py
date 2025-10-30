@@ -7,8 +7,12 @@ from app.schemas.evaluation import EvaluationWeightCreate, EvaluationWeightUpdat
 from app.models.user import UserRole
 
 class CRUDEvaluationWeight(CRUDBase[EvaluationWeight, EvaluationWeightCreate, EvaluationWeightUpdate]):
+
     def get_multi_by_role(self, db: Session, *, role: UserRole) -> List[EvaluationWeight]:
+
         return db.query(EvaluationWeight).filter(EvaluationWeight.role == role).all()
+
+
 
     pass
 

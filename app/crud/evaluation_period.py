@@ -16,5 +16,8 @@ class CRUDEvaluationPeriod(CRUDBase[EvaluationPeriod, EvaluationPeriodCreate, Ev
             EvaluationPeriod.end_date >= today
         ).first()
 
+    def get_by_name(self, db: Session, *, name: str) -> EvaluationPeriod | None:
+        return db.query(EvaluationPeriod).filter(EvaluationPeriod.name == name).first()
+
 
 evaluation_period = CRUDEvaluationPeriod(EvaluationPeriod)
