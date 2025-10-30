@@ -732,7 +732,7 @@ def read_department_grade_ratios(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_admin_user),
+    current_user: models.User = Depends(deps.get_current_admin_or_dept_head_user),
 ) -> Any:
     """
     Retrieve department grade ratios. (Admin only)

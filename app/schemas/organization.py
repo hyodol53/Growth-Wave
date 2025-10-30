@@ -30,3 +30,7 @@ class OrganizationUpdate(BaseModel):
     level: Optional[int] = None
     parent_id: Optional[int] = None
     department_grade: Optional[str] = None
+
+
+class OrganizationGradeUpdate(BaseModel):
+    department_grade: str

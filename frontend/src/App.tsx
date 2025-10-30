@@ -14,6 +14,7 @@ import MyEvaluationsPage from './pages/MyEvaluationsPage';
 import FinalGradeAdjustmentPage from './pages/Admin/FinalGradeAdjustmentPage';
 import EvaluationResultPage from './pages/Admin/EvaluationResultPage';
 import HistoryPage from './pages/HistoryPage';
+import DepartmentEvaluationPage from './pages/Admin/DepartmentEvaluationPage'; // New import
 import type { User } from './schemas';
 import { UserRole } from './schemas';
 
@@ -111,6 +112,15 @@ function App() {
               element={
                 <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.DEPT_HEAD]}>
                   <EvaluationResultPage />
+                </AuthorizedRoute>
+              }
+            />
+            {/* New Department Evaluation Route */}
+            <Route
+              path="/admin/department-evaluation"
+              element={
+                <AuthorizedRoute roles={[UserRole.ADMIN, UserRole.CENTER_HEAD]}>
+                  <DepartmentEvaluationPage />
                 </AuthorizedRoute>
               }
             />

@@ -13,13 +13,13 @@ interface OrganizationDialogProps {
 
 const OrganizationDialog: React.FC<OrganizationDialogProps> = ({ open, onClose, onSave, organization, allOrganizations }) => {
   const [name, setName] = useState('');
-  const [level, setLevel] = useState<number | string>('');
+  const [level, setLevel] = useState<number | string>(''); // Renamed from organizationLevel
   const [parentId, setParentId] = useState<number | string>('');
 
   useEffect(() => {
     if (organization) {
       setName(organization.name);
-      setLevel(organization.level);
+      setLevel(organization.level); // Use level
       setParentId(organization.parent_id || '');
     } else {
       // Reset form for new organization
@@ -32,9 +32,9 @@ const OrganizationDialog: React.FC<OrganizationDialogProps> = ({ open, onClose, 
   const handleSave = () => {
     const orgData = {
       name,
-      level: Number(level),
+      level: Number(level), // Use level
       parent_id: parentId ? Number(parentId) : null,
-      department_grade: organization?.department_grade || null, // Not editable in this form for now
+      department_grade: organization?.department_grade || undefined, // Not editable in this form for now
     };
     onSave(orgData);
   };

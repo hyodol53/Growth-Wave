@@ -27,6 +27,8 @@ import type {
     EvaluatedUser,
     DetailedEvaluationResult
 } from '../schemas';
+import { DepartmentGrade } from "../schemas/evaluation";
+
 import type {
     MyEvaluationResult,
     EvaluationPeriod,
@@ -96,7 +98,14 @@ export const organizations = {
     getOrganizations: (): Promise<AxiosResponse<Organization[]>> => apiClient.get('/organizations/'),
     createOrganization: (data: OrganizationCreate): Promise<AxiosResponse<Organization>> => apiClient.post('/organizations/', data),
     updateOrganization: (id: number, data: OrganizationUpdate): Promise<AxiosResponse<Organization>> => apiClient.put(`/organizations/${id}`, data),
-    deleteOrganization: (id: number): Promise<AxiosResponse<void>> => apiClient.delete(`/organizations/${id}`),
+    setDepartmentGrade: async (orgId: number, grade: DepartmentGrade): Promise<Organization> => {
+        const response = await apiClient.put(`/organizations/${orgId}/grade`, { department_grade: grade });
+        return response.data;
+    },
+
+    deleteOrganization: async (orgId: number): Promise<void> => {
+      await apiClient.delete(`/organizations/${orgId}`);
+    },
     syncChart: (file: File): Promise<AxiosResponse<any>> => {
         const formData = new FormData();
         formData.append('file', file);
@@ -128,9 +137,9 @@ export const evaluations = {
     submitPmEvaluations: (data: PmEvaluationSubmit): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/pm-evaluations/', data),
     getQualitativeEvaluations: (): Promise<AxiosResponse<QualitativeEvaluationData>> => apiClient.get('/evaluations/qualitative-evaluations/'),
     submitQualitativeEvaluations: (data: QualitativeEvaluationCreate): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/qualitative-evaluations/', data),
-    getEvaluationResultForUser: (userId: number): Promise<AxiosResponse<ManagerEvaluationView>> => apiClient.get(`/evaluations/${userId}/result`),
+    getEvaluationResultForUser: (userId: number, evaluation_period?: string): Promise<AxiosResponse<ManagerEvaluationView>> => apiClient.get(`/evaluations/${userId}/result`, { params: { evaluation_period } }),
     getMyEvaluationResult: (): Promise<AxiosResponse<MyEvaluationResult>> => apiClient.get('/evaluations/me'),
-    adjustGrades: (adjustments: GradeAdjustment[]): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/adjust-grades', { adjustments }),
+    adjustGrades: (evaluation_period: string, adjustments: GradeAdjustment[]): Promise<AxiosResponse<any>> => apiClient.post('/evaluations/adjust-grades', { evaluation_period, adjustments }),
 
     // Settings
     getEvaluationPeriods: (): Promise<AxiosResponse<EvaluationPeriod[]>> => apiClient.get('/evaluations/evaluation-periods/'),

@@ -1,12 +1,17 @@
+import { DepartmentGrade } from "./evaluation";
 
-// Based on backend/app/schemas/organization.py
 export interface Organization {
   id: number;
   name: string;
-  level: number;
+  level: number; // Renamed from organization_level
   parent_id: number | null;
-  department_grade: string | null;
+  department_grade?: DepartmentGrade;
 }
 
-export type OrganizationCreate = Omit<Organization, 'id'>;
+export interface OrganizationCreate {
+    name: string;
+    level: number; // Renamed from organization_level
+    parent_id?: number | null;
+}
+
 export type OrganizationUpdate = Partial<OrganizationCreate>;

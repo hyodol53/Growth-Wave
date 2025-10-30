@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.user import User as UserModel
-from app.schemas.organization import Organization, OrganizationCreate, OrganizationUpdate
+from app.schemas.organization import Organization, OrganizationCreate, OrganizationUpdate, OrganizationGradeUpdate
 from app.crud import organization as org_crud
 from app.api import deps
 
@@ -93,6 +93,29 @@ def update_organization(
     if not db_org:
         raise HTTPException(status_code=404, detail="Organization not found")
     return org_crud.update_organization(db, db_org=db_org, org_in=org_in)
+
+
+@router.put("/{org_id}/grade", response_model=Organization)
+def set_organization_grade(
+    *,
+    db: Session = Depends(get_db),
+    org_id: int,
+    org_in: OrganizationGradeUpdate,
+    current_user: UserModel = Depends(deps.get_current_center_head_or_admin_user)
+):
+    """
+    Set the grade for a department and sync it to the department head.
+    (Center Head or Admin only)
+    """
+    db_org = org_crud.get_organization(db, org_id=org_id)
+    if not db_org:
+        raise HTTPException(status_code=404, detail=f"Organization with id {org_id} not found.")
+
+    valid_grades = ["S", "A", "B"]
+    if org_in.department_grade not in valid_grades:
+        raise HTTPException(status_code=400, detail=f"Invalid grade provided. Must be one of {valid_grades}.")
+
+    return org_crud.set_department_grade(db, db_org=db_org, grade=org_in.department_grade)
 
 
 @router.delete("/{org_id}", response_model=Organization)

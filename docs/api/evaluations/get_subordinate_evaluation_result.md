@@ -21,7 +21,7 @@
 - `Authorization`: `Bearer <ACCESS_TOKEN>`
 
 ### 쿼리 파라미터 (Query Parameters)
-- `evaluation_period` (string, optional): 조회할 평가 기간 (예: "2025-H1"). 지정하지 않으면 현재 날짜를 기준으로 자동으로 설정됩니다.
+- `evaluation_period` (string, optional): 조회할 평가 기간의 이름 (예: 2025-H1 , 2025-하반기 등). 지정하지 않으면 현재 날짜를 기준으로 자동으로 설정됩니다.
 
 ## 응답 (Response)
 

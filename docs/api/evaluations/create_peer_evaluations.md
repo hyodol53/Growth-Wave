@@ -63,7 +63,7 @@
     "score": 70,
     "id": 2,
     "evaluator_id": 1,
-    "evaluation_period": "2025-H2"
+    "evaluation_period": "2025-하반기"
   }
 ]
 ```
@@ -74,7 +74,7 @@
 - `evaluator_id` (integer): 평가를 제출한 사용자의 고유 ID.
 - `evaluatee_id` (integer): 평가를 받은 동료 사용자의 고유 ID.
 - `score` (integer): 부여된 점수.
-- `evaluation_period` (string): 평가가 속한 기간 (예: "2025-H1", "2025-H2").
+- `evaluation_period` (string): 평가가 속한 기간의 이름 (예: "2025-H1", "2025-하반기").
 
 ### 오류 응답
 

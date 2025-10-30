@@ -25,6 +25,7 @@ import TuneIcon from '@mui/icons-material/Tune';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import DomainVerificationIcon from '@mui/icons-material/DomainVerification'; // New import
 
 const drawerWidth = 240;
 
@@ -53,9 +54,10 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
     { text: '조직 관리', icon: <AdminPanelSettingsIcon />, path: '/admin/organizations', roles: ['admin'] },
     { text: '프로젝트 관리', icon: <BusinessCenterIcon />, path: '/admin/projects', roles: ['admin', 'dept_head'] },
     { text: '참여 비중 설정', icon: <AccountTreeIcon />, path: '/admin/member-weights', roles: ['admin', 'dept_head'] },
-    { text: '등급 조정', icon: <TuneIcon />, path: '/admin/grade-adjustment', roles: ['admin', 'dept_head'] },
+    { text: '고과 부여', icon: <TuneIcon />, path: '/admin/grade-adjustment', roles: ['admin', 'dept_head'] },
     { text: '평가 설정', icon: <TuneIcon />, path: '/admin/evaluation-settings', roles: ['admin'] },
     { text: '평가 결과 조회', icon: <FactCheckIcon />, path: '/admin/evaluation-results', roles: ['admin', 'dept_head'] },
+    { text: '부서 평가', icon: <DomainVerificationIcon />, path: '/admin/department-evaluation', roles: ['admin', 'center_head'] }, // New menu item
   ];
 
   return (
@@ -93,7 +95,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
               </ListItem>
             ))}
           </List>
-          {(user?.role === 'admin' || user?.role === 'dept_head') && (
+          {(user?.role === 'admin' || user?.role === 'dept_head' || user?.role === 'center_head') && (
             <List>
               <ListItem disablePadding>
                  <Typography sx={{ pl: 2, pt: 1, pb: 1, fontWeight: 'bold', color: 'text.secondary' }}>관리</Typography>

@@ -11,7 +11,10 @@ from app.schemas.organization import OrganizationCreate, OrganizationUpdate
 from app.crud import user as crud_user
 from app.core.security import get_password_hash
 from app.models.user import User, UserRole
+from app.models.evaluation import FinalEvaluation
 from app.schemas.user import UserCreate, UserUpdate
+from app.crud import evaluation_period as crud_evaluation_period
+
 
 def get_organizations(db: Session) -> List[Organization]:
     return db.query(Organization).all()
@@ -45,6 +48,50 @@ def update_organization(db: Session, db_org: Organization, org_in: "Organization
     for field, value in update_data.items():
         setattr(db_org, field, value)
     db.add(db_org)
+    db.commit()
+    db.refresh(db_org)
+    return db_org
+
+
+def set_department_grade(db: Session, db_org: Organization, grade: str) -> Organization:
+    # 1. Update organization's grade
+    db_org.department_grade = grade
+    db.add(db_org)
+
+    # 2. Find the department head
+    dept_head = db.query(User).filter(
+        User.organization_id == db_org.id,
+        User.role == UserRole.DEPT_HEAD
+    ).first()
+
+    if dept_head:
+        # 3. Get the active evaluation period
+        active_period = crud_evaluation_period.evaluation_period.get_active_period(db)
+        if not active_period:
+            # If no active period, we can't create/update the final evaluation.
+            # Depending on policy, we might raise an error or just skip this part.
+            # For now, we'll commit the org grade and let it be.
+            db.commit()
+            db.refresh(db_org)
+            return db_org
+
+        # 4. Find or create a final evaluation record for the department head
+        final_evaluation = db.query(FinalEvaluation).filter(
+            FinalEvaluation.evaluatee_id == dept_head.id,
+            FinalEvaluation.evaluation_period == active_period.name
+        ).first()
+
+        if not final_evaluation:
+            final_evaluation = FinalEvaluation(
+                evaluatee_id=dept_head.id,
+                evaluation_period=active_period.name,
+                final_score=0  # Default score, might need adjustment
+            )
+        
+        # 5. Update the grade and commit
+        final_evaluation.grade = grade
+        db.add(final_evaluation)
+
     db.commit()
     db.refresh(db_org)
     return db_org
