@@ -1,7 +1,7 @@
-from typing import List, Any
+from typing import List, Any, Optional
 from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
-from app.models.evaluation import PmEvaluation
+from app.models.evaluation import PmEvaluation, EvaluationPeriod
 from app.models.project import Project
 from app.models.user import User
 from app.schemas.evaluation import PmEvaluationCreate, PmEvaluationBase
@@ -29,17 +29,20 @@ class CRUDPmEvaluation(CRUDBase[PmEvaluation, PmEvaluationCreate, PmEvaluationBa
             .all()
         )
 
-    def get_by_project_and_evaluatee(
-        self, db: Session, *, project_id: int, evaluatee_id: int, evaluation_period: str
-    ) -> List[PmEvaluation]:
+    def get_for_evaluatee_by_project_and_period(
+        self, db: Session, *, evaluatee_id: int, project_id: int, period_id: int
+    ) -> Optional[PmEvaluation]:
+        period = db.query(EvaluationPeriod).filter(EvaluationPeriod.id == period_id).first()
+        if not period:
+            return None
         return (
             db.query(PmEvaluation)
             .filter(
-                PmEvaluation.project_id == project_id,
                 PmEvaluation.evaluatee_id == evaluatee_id,
-                PmEvaluation.evaluation_period == evaluation_period,
+                PmEvaluation.project_id == project_id,
+                PmEvaluation.evaluation_period == period.name,
             )
-            .all()
+            .first()
         )
 
     def get_by_evaluatee(self, db: Session, *, evaluatee_id: int, evaluation_period: str) -> List[PmEvaluation]:

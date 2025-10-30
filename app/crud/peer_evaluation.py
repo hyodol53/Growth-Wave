@@ -1,7 +1,8 @@
 from typing import List
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.crud.base import CRUDBase
-from app.models.evaluation import PeerEvaluation
+from app.models.evaluation import PeerEvaluation, EvaluationPeriod
 from app.schemas.evaluation import PeerEvaluationCreate, PeerEvaluationBase
 
 class CRUDPeerEvaluation(CRUDBase[PeerEvaluation, PeerEvaluationCreate, PeerEvaluationBase]):
@@ -9,7 +10,7 @@ class CRUDPeerEvaluation(CRUDBase[PeerEvaluation, PeerEvaluationCreate, PeerEval
         self, db: Session, *, evaluatee_id: int, evaluation_period: str
     ) -> List[str]:
         """
-        Gets all non-empty feedback strings for an evaluatee for a specific period.
+        Gets all non-empty feedback comments for an evaluatee for a specific period across all projects.
         """
         return (
             db.query(PeerEvaluation.comment)
@@ -22,18 +23,67 @@ class CRUDPeerEvaluation(CRUDBase[PeerEvaluation, PeerEvaluationCreate, PeerEval
             .all()
         )
 
-    def get_by_project_and_evaluatee(
-        self, db: Session, *, project_id: int, evaluatee_id: int, evaluation_period: str
+    def get_feedback_for_evaluatee(
+        self, db: Session, *, evaluatee_id: int, project_id: int, period_id: int
     ) -> List[PeerEvaluation]:
+        """
+        Gets all non-empty feedback for an evaluatee for a specific project and period.
+        """
+        period = db.query(EvaluationPeriod).filter(EvaluationPeriod.id == period_id).first()
+        if not period:
+            return []
         return (
             db.query(PeerEvaluation)
             .filter(
-                PeerEvaluation.project_id == project_id,
                 PeerEvaluation.evaluatee_id == evaluatee_id,
-                PeerEvaluation.evaluation_period == evaluation_period,
+                PeerEvaluation.project_id == project_id,
+                PeerEvaluation.evaluation_period == period.name,
+                PeerEvaluation.comment.isnot(None),
+                PeerEvaluation.comment != "",
             )
             .all()
         )
+
+    def get_average_score_for_evaluatee(
+        self, db: Session, *, evaluatee_id: int, project_id: int, period_id: int
+    ) -> float | None:
+        """Calculates the average total score for an evaluatee in a specific project and period."""
+        period = db.query(EvaluationPeriod).filter(EvaluationPeriod.id == period_id).first()
+        if not period:
+            return None
+            
+        scores_sum = db.query(
+            func.sum(
+                PeerEvaluation.score_1
+                + PeerEvaluation.score_2
+                + PeerEvaluation.score_3
+                + PeerEvaluation.score_4
+                + PeerEvaluation.score_5
+                + PeerEvaluation.score_6
+                + PeerEvaluation.score_7
+            )
+        ).filter(
+            PeerEvaluation.evaluatee_id == evaluatee_id,
+            PeerEvaluation.project_id == project_id,
+            PeerEvaluation.evaluation_period == period.name,
+        ).scalar()
+
+        count = self.get_count_for_evaluatee(db, evaluatee_id=evaluatee_id, project_id=project_id, period_id=period_id)
+
+        return scores_sum / count if scores_sum is not None and count > 0 else None
+
+    def get_count_for_evaluatee(
+        self, db: Session, *, evaluatee_id: int, project_id: int, period_id: int
+    ) -> int:
+        """Counts the number of evaluations for an evaluatee in a specific project and period."""
+        period = db.query(EvaluationPeriod).filter(EvaluationPeriod.id == period_id).first()
+        if not period:
+            return 0
+        return db.query(PeerEvaluation).filter(
+            PeerEvaluation.evaluatee_id == evaluatee_id,
+            PeerEvaluation.project_id == project_id,
+            PeerEvaluation.evaluation_period == period.name,
+        ).count()
 
     def get_by_evaluator_and_evaluatee(
         self, db: Session, *, project_id: int, evaluator_id: int, evaluatee_id: int, evaluation_period: str

@@ -74,7 +74,7 @@ class PmSelfEvaluationCreate(PmEvaluationBase):
 class QualitativeEvaluationBase(BaseModel):
     evaluatee_id: int
     score: int
-    feedback: Optional[str] = None
+    comment: Optional[str] = None
 
 
 class QualitativeEvaluationCreate(BaseModel):

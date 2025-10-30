@@ -16,7 +16,7 @@ def test_create_qualitative_evaluations_success(client: TestClient, db: Session)
 
     data = {
         "evaluations": [
-            {"evaluatee_id": team_member.id, "score": 95, "feedback": "Exceeded expectations on all fronts."}
+            {"evaluatee_id": team_member.id, "score": 95, "comment": "Exceeded expectations on all fronts."}
         ]
     }
     response = client.post(f"{settings.API_V1_STR}/evaluations/qualitative-evaluations/", headers=headers, json=data)
@@ -24,7 +24,7 @@ def test_create_qualitative_evaluations_success(client: TestClient, db: Session)
     content = response.json()
     assert len(content) == 1
     assert content[0]["score"] == 95
-    assert content[0]["feedback"] == "Exceeded expectations on all fronts."
+    assert content[0]["comment"] == "Exceeded expectations on all fronts."
     assert content[0]["evaluator_id"] == dept_head.id
 
 def test_create_qualitative_evaluations_not_a_manager(client: TestClient, db: Session) -> None:

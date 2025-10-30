@@ -7,6 +7,7 @@ from app.crud.base import CRUDBase
 from app.models.project_member import ProjectMember
 from app.models.project import Project
 from app.models.user import User
+from app.models.evaluation import EvaluationPeriod
 from app.schemas.project_member import (
     ProjectMemberCreate,
     ProjectMemberUpdate,
@@ -43,6 +44,16 @@ class CRUDProjectMember(
                 Project.end_date >= start_date,
             )
             .all()
+        )
+
+    def get_multi_by_user_and_period_id(
+        self, db: Session, *, user_id: int, period_id: int
+    ) -> List[ProjectMember]:
+        period = db.query(EvaluationPeriod).filter(EvaluationPeriod.id == period_id).first()
+        if not period:
+            return []
+        return self.get_multi_by_user_and_period(
+            db, user_id=user_id, start_date=period.start_date, end_date=period.end_date
         )
 
     def get_multi_by_project_with_user_details(

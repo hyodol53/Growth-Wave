@@ -97,8 +97,8 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         
         history_entries = []
         for period in all_periods:
-            final_eval = crud_final_eval.final_evaluation.get_by_evaluatee_and_period(
-                db, evaluatee_id=user_id, evaluation_period=period.name
+            final_eval = crud_final_eval.final_evaluation.get_by_user_and_period(
+                db, evaluatee_id=user_id, period_id=period.id
             )
             
             project_memberships = crud_proj_member.project_member.get_multi_by_user_and_period(

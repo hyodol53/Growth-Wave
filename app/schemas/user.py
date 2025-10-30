@@ -40,6 +40,14 @@ class UserUpdate(BaseModel):
     title: Optional[str] = None
 
 
+# Schema for basic user info, used in various API responses
+class UserInfo(BaseModel):
+    user_id: int
+    full_name: Optional[str] = None
+    title: Optional[str] = None
+    organization_name: Optional[str] = None
+
+
 # Schemas for User History
 class ProjectHistoryItem(BaseModel):
     project_id: int

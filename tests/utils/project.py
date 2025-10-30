@@ -16,6 +16,11 @@ def create_random_project(
 ) -> models.Project:
     if name is None:
         name = random_lower_string()
+    if start_date is None:
+        start_date = date(2025, 1, 1)
+    if end_date is None:
+        end_date = date(2025, 6, 30)
+        
     project_in = ProjectCreate(
         name=name, 
         pm_id=pm_id,

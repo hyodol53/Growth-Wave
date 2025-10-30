@@ -1,49 +1,39 @@
-# 개발 로그: 평가 결과 조회 UX 개선
+# 개발 로그: 평가 결과 조회 UX 개선 API 개발
 
-## 1. 작업 목표
+## 1. 작업 개요
 
-- 기존의 사용자별 이력 조회 방식(`HistoryPage`)에서 벗어나, 관리자 및 실장을 위한 새로운 평가 결과 조회 UX를 구현한다.
-- 새로운 UX 요구사항은 다음과 같다:
-    1.  먼저 **평가 기간**을 선택한다.
-    2.  해당 기간에 평가가 완료된 **사용자 목록**을 조회한다.
-    3.  목록에서 특정 사용자를 선택하면, 해당 사용자의 **상세 평가 내역**을 모달(Dialog)을 통해 확인한다.
-    4.  아직 최종 평가가 완료되지 않은 사용자에 대해서는 "평가가 완료되지 않았습니다"와 같은 안내 문구를 표시한다.
+-   **Task:** `request_for_backend_team_eval_ux.md` 문서에 따라 프론트엔드 팀의 평가 결과 조회 UX 개선을 지원하기 위한 신규 API 2종을 개발합니다.
+-   **목표:** 사용자가 특정 평가 기간의 완료된 평가자 목록을 조회하고, 그중 한 명을 선택하여 상세 평가 내역을 볼 수 있도록 백엔드 기능을 구현합니다.
 
-## 2. 프론트엔드 구현 내역
+## 2. 주요 변경 사항
 
-### 2.1. 신규 페이지 및 컴포넌트 생성
+### 2.1. 신규 API 엔드포인트 추가
 
--   **`frontend/src/pages/Admin/EvaluationResultPage.tsx`**:
-    -   새로운 평가 결과 조회 페이지의 메인 컴포넌트.
-    -   MUI `Select` 컴포넌트를 사용하여 평가 기간 선택 드롭다운을 구현.
-    -   MUI `DataGrid`를 사용하여 선택된 기간의 평가 완료자 목록을 테이블 형태로 표시.
-    -   사용자 선택 시 상세 정보 조회를 위한 다이얼로그를 열도록 로직을 구현.
+`app/api/endpoints/evaluations.py`에 다음 두 개의 GET 엔드포인트를 추가했습니다.
 
--   **`frontend/src/components/Admin/EvaluationDetailDialog.tsx`**:
-    -   특정 사용자의 상세 평가 내역을 표시하기 위한 재사용 가능한 다이얼로그 컴포넌트.
-    -   API 응답의 `status` 값에 따라 '평가 완료' 또는 '평가 미완료' 상태를 분기하여 표시.
-    -   최종 등급, 프로젝트별 평가 점수, 정성 평가 점수 및 코멘트 등 모든 상세 정보를 시각적으로 구분하여 보여줌.
+1.  **`GET /api/v1/evaluations/periods/{period_id}/evaluated-users`**
+    -   **기능:** 특정 평가 기간(`period_id`)에 대해 최종 평가가 완료된 사용자 목록을 반환합니다.
+    -   **권한:** `ADMIN`과 `DEPT_HEAD`만 접근 가능하며, `DEPT_HEAD`는 자신의 하위 조직원만 조회할 수 있습니다.
 
-### 2.2. API 연동 및 타입 정의
+2.  **`GET /api/v1/evaluations/periods/{period_id}/users/{user_id}/details`**
+    -   **기능:** 특정 사용자(`user_id`)의 상세 평가 내역(프로젝트별 평가, 정성 평가, 최종 등급 등)을 반환합니다. 평가가 진행 중인 경우, `status: "IN_PROGRESS"`를 반환하여 프론트엔드에서 상태를 처리할 수 있도록 구현했습니다.
+    -   **권한:** `ADMIN`은 모든 사용자를, `DEPT_HEAD`는 자신의 하위 조직원만 조회할 수 있습니다.
 
--   **`frontend/src/services/api.ts`**:
-    -   UX 구현에 필요한 다음의 신규 API 함수를 추가:
-        -   `getEvaluationPeriods`
-        -   `getEvaluatedUsersByPeriod`
-        -   `getDetailedEvaluationResult`
+### 2.2. 스키마 및 CRUD 로직 추가
 
--   **`frontend/src/schemas/evaluation.ts`**:
-    -   신규 API의 요청/응답 데이터를 처리하기 위한 TypeScript 인터페이스(`EvaluationPeriod`, `EvaluatedUser`, `DetailedEvaluationResult` 등)를 추가.
+-   **`app/schemas/report.py`**: 신규 API의 복잡한 응답 구조를 정의하기 위해 `EvaluatedUser`, `DetailedEvaluationResult` 등 Pydantic 스키마를 추가했습니다.
+-   **`app/crud/crud_report.py`**: 여러 테이블(FinalEvaluation, ProjectMember, PeerEvaluation 등)을 조인하고 조합해야 하는 복잡한 데이터베이스 조회 로직을 별도의 CRUD 모듈로 분리하여 구현했습니다.
+-   **기존 CRUD 모듈 수정**: `crud_report.py`가 의존하는 여러 기존 CRUD 함수들의 시그니처(주로 `evaluation_period`를 `period_id`로 변경)를 일관성 있게 수정하여 재사용성을 높이고 버그를 수정했습니다.
 
-### 2.3. 라우팅 및 네비게이션
+### 2.3. 테스트 추가 및 검증
 
--   `App.tsx`에 `/admin/evaluation-results` 경로를 추가하고 `AuthorizedRoute`를 통해 `admin` 및 `dept_head` 역할만 접근할 수 있도록 설정.
--   `Layout.tsx`의 사이드바 메뉴에 'Evaluation Results' 항목을 추가.
+-   **`tests/api/test_evaluations_ux.py`**: 신규 API의 기능 정확성과 보안(접근 권한)을 검증하기 위한 테스트 케이스를 작성했습니다.
+-   **테스트 시나리오:**
+    -   `ADMIN`, `DEPT_HEAD`, `EMPLOYEE` 역할별 접근 권한 테스트
+    -   평가 완료("COMPLETED") 및 진행 중("IN_PROGRESS") 상태에 대한 응답 확인
+    -   다른 부서의 데이터를 조회할 수 없는지 확인하는 권한 테스트
+-   **테스트 유틸리티 수정**: `tests/utils/evaluation.py` 등 기존 테스트 유틸리티 함수들이 새로운 테스트 케이스를 지원하도록 파라미터를 수정하고 기능을 보완했습니다.
 
-## 3. 빌드 오류 해결 과정
+## 3. 결론
 
--   개발 과정에서 `api.ts` 리팩토링으로 인해 발생했던 대규모 빌드 오류를 해결.
--   `UserRole` Enum 타입을 값으로 사용할 수 있도록 `export type`이 아닌 `export`로 변경.
--   여러 컴포넌트에 누락되었던 `React` hook 및 MUI 컴포넌트 import 구문을 추가.
--   `api` 객체 구조 변경에 맞춰 모든 페이지의 API 호출 코드를 수정.
--   위 과정을 통해 최종적으로 모든 빌드 오류를 해결하고 안정성을 확보.
+프론트엔드 팀의 요구사항에 따라 평가 결과 조회와 관련된 백엔드 API 개발을 완료했습니다. 엄격한 권한 제어 로직을 포함했으며, 테스트를 통해 안정성을 확보했습니다. 이제 프론트엔드에서는 이 API를 활용하여 개선된 UX를 구현할 수 있습니다.

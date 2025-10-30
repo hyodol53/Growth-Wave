@@ -19,7 +19,7 @@ from app.schemas.evaluation import (
     GradeAdjustmentRequest,
 )
 from app.models.user import User as UserModel, UserRole
-from app.crud import grade_adjustment
+from app.crud import grade_adjustment, crud_report
 from app.exceptions import GradeAdjustmentError, GradeTOExceededError
 
 router = APIRouter()
@@ -483,9 +483,16 @@ def read_my_evaluation_result(
         today = datetime.date.today()
         evaluation_period = f"{today.year}-H{1 if today.month <= 6 else 2}"
 
+    period = crud.evaluation_period.get_by_name(db, name=evaluation_period)
+    if not period:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Evaluation period '{evaluation_period}' not found.",
+        )
+
     # FR-A-5.1: Can view final grade and PM scores
-    final_eval = crud.final_evaluation.get_by_evaluatee_and_period(
-        db, evaluatee_id=current_user.id, evaluation_period=evaluation_period
+    final_eval = crud.final_evaluation.get_by_user_and_period(
+        db, evaluatee_id=current_user.id, period_id=period.id
     )
     pm_scores_data = crud.pm_evaluation.pm_evaluation.get_for_evaluatee_by_period(
         db, evaluatee_id=current_user.id, evaluation_period=evaluation_period
@@ -522,9 +529,16 @@ def read_subordinate_evaluation_result(
         today = datetime.date.today()
         evaluation_period = f"{today.year}-H{1 if today.month <= 6 else 2}"
 
+    period = crud.evaluation_period.get_by_name(db, name=evaluation_period)
+    if not period:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Evaluation period '{evaluation_period}' not found.",
+        )
+
     # FR-A-5.3: Can view all scores, rank, and anonymous feedback
-    final_eval = crud.final_evaluation.get_by_evaluatee_and_period(
-        db, evaluatee_id=user_to_view.id, evaluation_period=evaluation_period
+    final_eval = crud.final_evaluation.get_by_user_and_period(
+        db, evaluatee_id=user_to_view.id, period_id=period.id
     )
     if not final_eval:
         raise HTTPException(
@@ -610,7 +624,7 @@ def read_evaluation_periods(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_admin_user),
+    current_user: models.User = Depends(deps.get_current_admin_or_dept_head_user),
 ) -> Any:
     """
     Retrieve evaluation periods. (Admin only)
@@ -729,3 +743,53 @@ def delete_department_grade_ratio(
         raise HTTPException(status_code=404, detail="Department grade ratio not found")
     department_grade_ratio = crud.department_grade_ratio.remove(db=db, id=ratio_id)
     return department_grade_ratio
+
+
+# New endpoints for evaluation UX improvement
+
+@router.get("/periods/{period_id}/evaluated-users", response_model=List[schemas.report.EvaluatedUser])
+def read_evaluated_users_by_period(
+    *,
+    db: Session = Depends(deps.get_db),
+    period_id: int,
+    current_user: models.User = Depends(deps.get_current_admin_or_dept_head_user),
+) -> Any:
+    """
+    Get a list of users for whom final evaluations have been completed for a specific period.
+    - Accessible by ADMIN and DEPT_HEAD.
+    - DEPT_HEAD will only see users from their own department.
+    """
+    users = crud_report.get_evaluated_users_by_period(
+        db, period_id=period_id, current_user=current_user
+    )
+    return users
+
+
+@router.get("/periods/{period_id}/users/{user_id}/details", response_model=schemas.report.DetailedEvaluationResult)
+def read_detailed_evaluation_result(
+    *,
+    db: Session = Depends(deps.get_db),
+    period_id: int,
+    user_id: int,
+    current_user: models.User = Depends(deps.get_current_user), # First, get the current user
+) -> Any:
+    """
+    Get the detailed evaluation result for a specific user and period.
+    - Accessible by ADMIN for any user.
+    - Accessible by DEPT_HEAD for their subordinates only.
+    """
+    # Check for authorization
+    if current_user.role == UserRole.ADMIN:
+        pass  # Admin can view anyone
+    elif current_user.role == UserRole.DEPT_HEAD:
+        subordinate_ids = {user.id for user in crud.user.user.get_subordinates(db, user_id=current_user.id)}
+        if user_id not in subordinate_ids:
+            raise HTTPException(status_code=403, detail="Not enough privileges to view this user's evaluation")
+    else:
+        raise HTTPException(status_code=403, detail="Not enough privileges for this operation")
+
+    result = crud_report.get_detailed_evaluation_result(db, period_id=period_id, user_id=user_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="User or evaluation period not found")
+    
+    return result

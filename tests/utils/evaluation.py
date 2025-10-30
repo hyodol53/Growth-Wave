@@ -10,11 +10,23 @@ from app.schemas.evaluation import (
     QualitativeEvaluationBase, FinalEvaluationCreate, EvaluationPeriodCreate
 )
 from app.schemas.user import UserRole
-from datetime import date
+from datetime import date, timedelta
+from tests.utils.utils import random_lower_string
+from typing import Optional
 
 def create_random_evaluation_period(
-    db: Session, *, name: str, start_date: date, end_date: date
+    db: Session, 
+    *, 
+    name: Optional[str] = None, 
+    start_date: Optional[date] = None, 
+    end_date: Optional[date] = None
 ) -> EvaluationPeriod:
+    if name is None:
+        name = f"2025-H{1}"
+    if start_date is None:
+        start_date = date(2025, 1, 1)
+    if end_date is None:
+        end_date = date(2025, 6, 30)
     period_in = EvaluationPeriodCreate(name=name, start_date=start_date, end_date=end_date)
     return crud.evaluation_period.create(db=db, obj_in=period_in)
 
@@ -24,7 +36,7 @@ def create_random_evaluation_weight(
     item: EvaluationItem = EvaluationItem.PEER_REVIEW, 
     weight: float = 50.0
 ) -> EvaluationWeight:
-    weight_in = EvaluationWeightCreate(role=role, item=item, weight=weight)
+    weight_in = EvaluationWeightCreate(role=role.value, item=item, weight=weight)
     return crud.evaluation.evaluation_weight.create(db=db, obj_in=weight_in)
 
 def create_random_peer_evaluation(
@@ -75,12 +87,13 @@ def create_random_qualitative_evaluation(
     evaluator_id: int, 
     evaluatee_id: int, 
     score: float = 90.0,
-    feedback: str = "Excellent performance",
+    comment: str = "Excellent performance",
     evaluation_period: str = "2025-H1"
 ) -> QualitativeEvaluation:
     qual_eval_base = QualitativeEvaluationBase(
         evaluatee_id=evaluatee_id,
-        score=score
+        score=score,
+        comment=comment
     )
     qual_eval_in = QualitativeEvaluationCreate(evaluations=[qual_eval_base])
     return crud.qualitative_evaluation.qualitative_evaluation.create_multi(
@@ -91,10 +104,33 @@ def create_random_final_evaluation(
     db: Session,
     *,
     evaluatee_id: int,
-    evaluation_period: str,
     final_score: float,
+    evaluation_period: Optional[str] = None,
+    period_id: Optional[int] = None,
     grade: str | None = None,
 ) -> FinalEvaluation:
+    if evaluation_period is None:
+        if period_id:
+            period = crud.evaluation_period.get(db, id=period_id)
+            if not period:
+                 raise ValueError("period not found")
+            evaluation_period = period.name
+        else:
+            evaluation_period = f"{date.today().year}-H{1 if date.today().month <= 6 else 2}"
+
+    # Ensure the evaluation period exists
+    period = crud.evaluation_period.get_by_name(db, name=evaluation_period)
+    if not period:
+        year_str, half_str = evaluation_period.split("-H")
+        year = int(year_str)
+        if half_str == "1":
+            start_date = date(year, 1, 1)
+            end_date = date(year, 6, 30)
+        else:
+            start_date = date(year, 7, 1)
+            end_date = date(year, 12, 31)
+        create_random_evaluation_period(db, name=evaluation_period, start_date=start_date, end_date=end_date)
+            
     final_eval_in = FinalEvaluationCreate(
         evaluatee_id=evaluatee_id, 
         evaluation_period=evaluation_period, 

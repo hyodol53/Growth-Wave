@@ -1,18 +1,21 @@
 from typing import List
 from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
-from app.models.evaluation import QualitativeEvaluation
+from app.models.evaluation import QualitativeEvaluation, EvaluationPeriod
 from app.schemas.evaluation import QualitativeEvaluationCreate, QualitativeEvaluationBase
 
 class CRUDQualitativeEvaluation(CRUDBase[QualitativeEvaluation, QualitativeEvaluationCreate, QualitativeEvaluationBase]):
-    def get_by_evaluatee(
-        self, db: Session, *, evaluatee_id: int, evaluation_period: str
+    def get_by_evaluatee_and_period(
+        self, db: Session, *, evaluatee_id: int, period_id: int
     ) -> QualitativeEvaluation | None:
+        period = db.query(EvaluationPeriod).filter(EvaluationPeriod.id == period_id).first()
+        if not period:
+            return None
         return (
             db.query(QualitativeEvaluation)
             .filter(
                 QualitativeEvaluation.evaluatee_id == evaluatee_id,
-                QualitativeEvaluation.evaluation_period == evaluation_period,
+                QualitativeEvaluation.evaluation_period == period.name,
             )
             .first()
         )
@@ -24,7 +27,7 @@ class CRUDQualitativeEvaluation(CRUDBase[QualitativeEvaluation, QualitativeEvalu
             QualitativeEvaluation(
                 evaluatee_id=evaluation.evaluatee_id,
                 score=evaluation.score,
-                feedback=evaluation.feedback,
+                comment=evaluation.comment,
                 evaluator_id=evaluator_id,
                 evaluation_period=evaluation_period,
             )

@@ -11,7 +11,7 @@ from tests.utils.user import create_random_user, authentication_token_from_usern
 from tests.utils.organization import create_random_organization
 from tests.utils.project import create_random_project
 from tests.utils.project_member import create_project_member
-from tests.utils.evaluation import create_random_evaluation_weight, create_random_peer_evaluation, create_random_pm_evaluation, create_random_qualitative_evaluation
+from tests.utils.evaluation import create_random_evaluation_weight, create_random_peer_evaluation, create_random_pm_evaluation, create_random_qualitative_evaluation, create_random_evaluation_period
 
 
 def test_calculate_final_evaluations_as_dept_head(
@@ -34,6 +34,7 @@ def test_calculate_final_evaluations_as_dept_head(
     project2 = create_random_project(db, pm_id=team_lead.id)
     # Define a consistent evaluation period for the test
     test_evaluation_period = f"{datetime.date.today().year}-H{1 if datetime.date.today().month <= 6 else 2}"
+    create_random_evaluation_period(db, name=test_evaluation_period)
 
     # Project Members (employee1 is in two projects)
     create_project_member(db, project_id=project1.id, user_id=employee1.id, participation_weight=60.0)
@@ -95,6 +96,7 @@ def test_calculate_final_evaluations_for_pm(
 
     project = create_random_project(db, pm_id=pm_user.id)
     test_evaluation_period = f"{datetime.date.today().year}-H{1 if datetime.date.today().month <= 6 else 2}"
+    create_random_evaluation_period(db, name=test_evaluation_period)
 
     create_project_member(db, project_id=project.id, user_id=pm_user.id, participation_weight=100.0, is_pm=True)
 

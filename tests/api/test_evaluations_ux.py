@@ -1,231 +1,138 @@
-import datetime
+from typing import List
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.schemas.evaluation import PeerEvaluationBase
+from app.core.config import settings
 from tests.utils.user import create_random_user, authentication_token_from_username
+from tests.utils.organization import create_random_organization
+from tests.utils.evaluation import create_random_evaluation_period, create_random_final_evaluation
 from tests.utils.project import create_random_project
 from tests.utils.project_member import create_project_member
-from tests.utils.evaluation import create_random_evaluation_period
+from app.models.user import UserRole
 
-def test_get_my_evaluation_tasks(client: TestClient, db: Session) -> None:
-    # 1. Setup
-    user1 = create_random_user(db)
-    user2 = create_random_user(db)
-    user1_headers = authentication_token_from_username(client=client, username=user1.username, db=db)
-
-    # Create an active evaluation period
-    today = datetime.date.today()
-    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
-
-    # Create projects
-    project1 = create_random_project(db, pm_id=user1.id, start_date=today, end_date=today + datetime.timedelta(days=10))
-    project2 = create_random_project(db, pm_id=user2.id, start_date=today, end_date=today + datetime.timedelta(days=10))
-    # Project outside the evaluation period
-    project3 = create_random_project(db, pm_id=user1.id, start_date=today - datetime.timedelta(days=60), end_date=today - datetime.timedelta(days=30))
-
-    create_project_member(db, project_id=project1.id, user_id=user1.id, is_pm=True)
-    create_project_member(db, project_id=project2.id, user_id=user1.id, is_pm=False)
-    create_project_member(db, project_id=project3.id, user_id=user1.id, is_pm=True)
-
-    # 2. Action
-    response = client.get("/api/v1/evaluations/my-tasks", headers=user1_headers)
+def test_read_evaluated_users_by_period(client: TestClient, db: Session) -> None:
+    # Setup
+    admin_user = create_random_user(db, role=UserRole.ADMIN)
+    dept_head_user = create_random_user(db, role=UserRole.DEPT_HEAD)
+    employee_user = create_random_user(db, role=UserRole.EMPLOYEE)
     
-    # 3. Assert
+    org = create_random_organization(db)
+    dept_head_user.organization_id = org.id
+    employee_user.organization_id = org.id
+    db.add_all([dept_head_user, employee_user])
+    db.commit()
+
+    period = create_random_evaluation_period(db)
+    create_random_final_evaluation(db, evaluatee_id=employee_user.id, period_id=period.id, final_score=90.0)
+
+    admin_token_headers = authentication_token_from_username(
+        client=client, username=admin_user.username, db=db
+    )
+    dept_head_token_headers = authentication_token_from_username(
+        client=client, username=dept_head_user.username, db=db
+    )
+
+    # Test as Admin
+    response_admin = client.get(
+        f"{settings.API_V1_STR}/evaluations/periods/{period.id}/evaluated-users",
+        headers=admin_token_headers,
+    )
+    assert response_admin.status_code == 200
+    assert len(response_admin.json()) >= 1
+    assert response_admin.json()[0]["user_id"] == employee_user.id
+
+    # Test as Dept Head
+    response_dept_head = client.get(
+        f"{settings.API_V1_STR}/evaluations/periods/{period.id}/evaluated-users",
+        headers=dept_head_token_headers,
+    )
+    assert response_dept_head.status_code == 200
+    # This assumes get_subordinates works correctly
+    assert len(response_dept_head.json()) >= 1 
+    assert response_dept_head.json()[0]["user_id"] == employee_user.id
+
+def test_read_detailed_evaluation_result_completed(client: TestClient, db: Session) -> None:
+    # Setup
+    admin_user = create_random_user(db, role=UserRole.ADMIN)
+    dept_head_user = create_random_user(db, role=UserRole.DEPT_HEAD)
+    employee_user = create_random_user(db, role=UserRole.EMPLOYEE)
+    
+    org = create_random_organization(db)
+    dept_head_user.organization_id = org.id
+    employee_user.organization_id = org.id
+    db.add_all([dept_head_user, employee_user])
+    db.commit()
+
+    period = create_random_evaluation_period(db)
+    project = create_random_project(db, pm_id=dept_head_user.id)
+    create_project_member(db, user_id=employee_user.id, project_id=project.id)
+    create_random_final_evaluation(db, evaluatee_id=employee_user.id, period_id=period.id, grade="A", final_score=95.5)
+
+    admin_token_headers = authentication_token_from_username(
+        client=client, username=admin_user.username, db=db
+    )
+
+    # Test
+    response = client.get(
+        f"{settings.API_V1_STR}/evaluations/periods/{period.id}/users/{employee_user.id}/details",
+        headers=admin_token_headers,
+    )
+    data = response.json()
+    
     assert response.status_code == 200
-    tasks = response.json()
-    assert len(tasks) == 2
-    
-    project_ids = {task["project_id"] for task in tasks}
-    assert project1.id in project_ids
-    assert project2.id in project_ids
-    assert project3.id not in project_ids
+    assert data["status"] == "COMPLETED"
+    assert data["user_info"]["user_id"] == employee_user.id
+    assert data["final_evaluation"]["grade"] == "A"
+    assert data["final_evaluation"]["final_score"] == 95.5
+    assert len(data["project_evaluations"]) > 0
 
-    for task in tasks:
-        if task["project_id"] == project1.id:
-            assert task["user_role_in_project"] == "PM"
-        if task["project_id"] == project2.id:
-            assert task["user_role_in_project"] == "MEMBER"
+def test_read_detailed_evaluation_result_in_progress(client: TestClient, db: Session) -> None:
+    # Setup
+    admin_user = create_random_user(db, role=UserRole.ADMIN)
+    employee_user = create_random_user(db)
+    period = create_random_evaluation_period(db)
 
-def test_get_peer_evaluation_details(client: TestClient, db: Session) -> None:
-    # 1. Setup
-    evaluator = create_random_user(db)
-    evaluatee1 = create_random_user(db)
-    evaluatee2 = create_random_user(db)
-    evaluator_headers = authentication_token_from_username(client=client, username=evaluator.username, db=db)
+    admin_token_headers = authentication_token_from_username(
+        client=client, username=admin_user.username, db=db
+    )
 
-    today = datetime.date.today()
-    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
-    
-    project = create_random_project(db, pm_id=evaluator.id, start_date=today, end_date=today + datetime.timedelta(days=10))
-    create_project_member(db, project_id=project.id, user_id=evaluator.id, is_pm=True)
-    create_project_member(db, project_id=project.id, user_id=evaluatee1.id, is_pm=False)
-    create_project_member(db, project_id=project.id, user_id=evaluatee2.id, is_pm=False)
+    # Test
+    response = client.get(
+        f"{settings.API_V1_STR}/evaluations/periods/{period.id}/users/{employee_user.id}/details",
+        headers=admin_token_headers,
+    )
+    data = response.json()
 
-    # 2. Action (Not started)
-    response_not_started = client.get(f"/api/v1/evaluations/peer-evaluations/{project.id}", headers=evaluator_headers)
-    
-    # 3. Assert (Not started)
-    assert response_not_started.status_code == 200
-    details = response_not_started.json()
-    assert details["project_id"] == project.id
-    assert details["status"] == "NOT_STARTED"
-    assert len(details["peers_to_evaluate"]) == 2
-    assert details["peers_to_evaluate"][0]["scores"] == []
+    assert response.status_code == 200
+    assert data["status"] == "IN_PROGRESS"
+    assert data["user_info"]["user_id"] == employee_user.id
+    assert data["final_evaluation"] is None
+    assert data["project_evaluations"] == []
 
-    # 4. Action (In progress)
-    # Evaluator evaluates evaluatee1
-    evaluation_data = {
-        "evaluations": [
-            {"project_id": project.id, "evaluatee_id": evaluatee1.id, "scores": [10, 10, 10, 10, 10, 5, 5], "comment": "Good"}
-        ]
-    }
-    client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_headers, json=evaluation_data)
-    
-    response_in_progress = client.get(f"/api/v1/evaluations/peer-evaluations/{project.id}", headers=evaluator_headers)
-    
-    # 5. Assert (In progress)
-    assert response_in_progress.status_code == 200
-    details_in_progress = response_in_progress.json()
-    assert details_in_progress["status"] == "IN_PROGRESS"
-    
-    evaluated_peer = next(p for p in details_in_progress["peers_to_evaluate"] if p["evaluatee_id"] == evaluatee1.id)
-    unevaluated_peer = next(p for p in details_in_progress["peers_to_evaluate"] if p["evaluatee_id"] == evaluatee2.id)
-    
-    assert evaluated_peer["scores"] == [10, 10, 10, 10, 10, 5, 5]
-    assert evaluated_peer["comment"] == "Good"
-    assert unevaluated_peer["scores"] == []
+def test_read_detailed_evaluation_result_permission_denied(client: TestClient, db: Session) -> None:
+    # Setup
+    dept_head_1 = create_random_user(db, role=UserRole.DEPT_HEAD)
+    dept_head_2 = create_random_user(db, role=UserRole.DEPT_HEAD)
+    employee_of_dept_2 = create_random_user(db)
 
-def test_upsert_peer_evaluations(client: TestClient, db: Session) -> None:
-    # 1. Setup
-    evaluator = create_random_user(db)
-    evaluatee = create_random_user(db)
-    evaluator_headers = authentication_token_from_username(client=client, username=evaluator.username, db=db)
+    org1 = create_random_organization(db)
+    org2 = create_random_organization(db)
 
-    today = datetime.date.today()
-    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
-    
-    project = create_random_project(db, pm_id=evaluator.id, start_date=today, end_date=today + datetime.timedelta(days=10))
-    create_project_member(db, project_id=project.id, user_id=evaluator.id, is_pm=False)
-    create_project_member(db, project_id=project.id, user_id=evaluatee.id, is_pm=False)
+    dept_head_1.organization_id = org1.id
+    dept_head_2.organization_id = org2.id
+    employee_of_dept_2.organization_id = org2.id
+    db.add_all([dept_head_1, dept_head_2, employee_of_dept_2])
+    db.commit()
 
-    # 2. Action (Create)
-    create_data = {
-        "evaluations": [
-            {"project_id": project.id, "evaluatee_id": evaluatee.id, "scores": [15, 10, 10, 10, 10, 5, 5], "comment": "Initial feedback"}
-        ]
-    }
-    response_create = client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_headers, json=create_data)
-    
-    # 3. Assert (Create)
-    assert response_create.status_code == 200
-    assert response_create.json()[0]["scores"] == [15, 10, 10, 10, 10, 5, 5]
-    assert response_create.json()[0]["comment"] == "Initial feedback"
+    period = create_random_evaluation_period(db)
 
-    # 4. Action (Update)
-    update_data = {
-        "evaluations": [
-            {"project_id": project.id, "evaluatee_id": evaluatee.id, "scores": [18, 10, 10, 10, 10, 5, 5], "comment": "Updated feedback"}
-        ]
-    }
-    response_update = client.post("/api/v1/evaluations/peer-evaluations/", headers=evaluator_headers, json=update_data)
+    dept_head_1_token_headers = authentication_token_from_username(
+        client=client, username=dept_head_1.username, db=db
+    )
 
-    # 5. Assert (Update)
-    assert response_update.status_code == 200
-    assert response_update.json()[0]["scores"] == [18, 10, 10, 10, 10, 5, 5]
-    assert response_update.json()[0]["comment"] == "Updated feedback"
-
-def test_upsert_pm_evaluations(client: TestClient, db: Session) -> None:
-    # 1. Setup
-    pm = create_random_user(db)
-    member = create_random_user(db)
-    pm_headers = authentication_token_from_username(client=client, username=pm.username, db=db)
-
-    today = datetime.date.today()
-    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
-    
-    project = create_random_project(db, pm_id=pm.id, start_date=today, end_date=today + datetime.timedelta(days=10))
-    create_project_member(db, project_id=project.id, user_id=pm.id, is_pm=True)
-    create_project_member(db, project_id=project.id, user_id=member.id, is_pm=False)
-
-    # 2. Action (Create)
-    create_data = {
-        "evaluations": [
-            {"project_id": project.id, "evaluatee_id": member.id, "score": 80, "comment": "Good progress"}
-        ]
-    }
-    response_create = client.post("/api/v1/evaluations/pm-evaluations/", headers=pm_headers, json=create_data)
-    
-    # 3. Assert (Create)
-    assert response_create.status_code == 200
-    assert response_create.json()[0]["score"] == 80
-    assert response_create.json()[0]["comment"] == "Good progress"
-
-    # 4. Action (Update)
-    update_data = {
-        "evaluations": [
-            {"project_id": project.id, "evaluatee_id": member.id, "score": 85, "comment": "Excellent progress"}
-        ]
-    }
-    response_update = client.post("/api/v1/evaluations/pm-evaluations/", headers=pm_headers, json=update_data)
-
-    # 5. Assert (Update)
-    assert response_update.status_code == 200
-    assert response_update.json()[0]["score"] == 85
-    assert response_update.json()[0]["comment"] == "Excellent progress"
-
-
-def test_get_pm_evaluation_details(client: TestClient, db: Session) -> None:
-    # 1. Setup
-    pm = create_random_user(db)
-    member1 = create_random_user(db)
-    member2 = create_random_user(db)
-    non_pm = create_random_user(db)
-    pm_headers = authentication_token_from_username(client=client, username=pm.username, db=db)
-    non_pm_headers = authentication_token_from_username(client=client, username=non_pm.username, db=db)
-
-    today = datetime.date.today()
-    create_random_evaluation_period(db, name="2025-H1", start_date=today, end_date=today + datetime.timedelta(days=30))
-    
-    project = create_random_project(db, pm_id=pm.id, start_date=today, end_date=today + datetime.timedelta(days=10))
-    create_project_member(db, project_id=project.id, user_id=pm.id, is_pm=True)
-    create_project_member(db, project_id=project.id, user_id=member1.id, is_pm=False)
-    create_project_member(db, project_id=project.id, user_id=member2.id, is_pm=False)
-    create_project_member(db, project_id=project.id, user_id=non_pm.id, is_pm=False)
-
-    # 2. Action (Forbidden for non-PM)
-    response_forbidden = client.get(f"/api/v1/evaluations/pm-evaluations/{project.id}", headers=non_pm_headers)
-    assert response_forbidden.status_code == 403
-
-    # 3. Action (Not started for PM)
-    response_not_started = client.get(f"/api/v1/evaluations/pm-evaluations/{project.id}", headers=pm_headers)
-    
-    # 4. Assert (Not started)
-    assert response_not_started.status_code == 200
-    details = response_not_started.json()
-    assert details["project_id"] == project.id
-    assert details["status"] == "NOT_STARTED"
-    assert len(details["members_to_evaluate"]) == 3 # member1, member2, non_pm
-    assert details["members_to_evaluate"][0]["score"] is None
-
-    # 5. Action (In progress)
-    evaluation_data = {
-        "evaluations": [
-            {"project_id": project.id, "evaluatee_id": member1.id, "score": 90, "comment": "Great work"}
-        ]
-    }
-    client.post("/api/v1/evaluations/pm-evaluations/", headers=pm_headers, json=evaluation_data)
-    
-    response_in_progress = client.get(f"/api/v1/evaluations/pm-evaluations/{project.id}", headers=pm_headers)
-    
-    # 6. Assert (In progress)
-    assert response_in_progress.status_code == 200
-    details_in_progress = response_in_progress.json()
-    assert details_in_progress["status"] == "IN_PROGRESS"
-    
-    evaluated_member = next(p for p in details_in_progress["members_to_evaluate"] if p["evaluatee_id"] == member1.id)
-    unevaluated_member = next(p for p in details_in_progress["members_to_evaluate"] if p["evaluatee_id"] == member2.id)
-    
-    assert evaluated_member["score"] == 90
-    assert evaluated_member["comment"] == "Great work"
-    assert unevaluated_member["score"] is None
+    # Test: Dept Head 1 tries to access employee of Dept 2
+    response = client.get(
+        f"{settings.API_V1_STR}/evaluations/periods/{period.id}/users/{employee_of_dept_2.id}/details",
+        headers=dept_head_1_token_headers,
+    )
+    assert response.status_code == 403

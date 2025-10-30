@@ -8,10 +8,13 @@ def calculate_and_store_final_scores(
     """
     Calculates and stores the final evaluation score for a given user and period.
     """
+    period = crud.evaluation_period.get_by_name(db, name=evaluation_period)
+    if not period:
+        return None
+
     # 1. Get evaluation weights for the user's role
     role_weights = crud.evaluation.evaluation_weight.get_multi_by_role(db, role=evaluatee.role)
     if not role_weights:
-        # Or handle this case as an error, depending on requirements
         return None 
     
     weight_map = {item.item: item.weight for item in role_weights}
@@ -39,11 +42,11 @@ def calculate_and_store_final_scores(
         if project_memberships:
             for membership in project_memberships:
                 project_weight = membership.participation_weight / 100.0
-                peer_evals = crud.peer_evaluation.peer_evaluation.get_by_project_and_evaluatee(
-                    db, project_id=membership.project_id, evaluatee_id=evaluatee.id, evaluation_period=evaluation_period
+                avg_peer_score = crud.peer_evaluation.peer_evaluation.get_average_score_for_evaluatee(
+                    db, project_id=membership.project_id, evaluatee_id=evaluatee.id, period_id=period.id
                 )
-                avg_peer_score = mean(sum(e.scores) for e in peer_evals) if peer_evals else 0
-                total_weighted_peer_score += avg_peer_score * project_weight
+                if avg_peer_score:
+                    total_weighted_peer_score += avg_peer_score * project_weight
     else:
         # For non-PMs, calculate as before
         if project_memberships:
@@ -51,22 +54,22 @@ def calculate_and_store_final_scores(
                 project_weight = membership.participation_weight / 100.0
         
                 # Peer evaluations for the project
-                peer_evals = crud.peer_evaluation.peer_evaluation.get_by_project_and_evaluatee(
-                    db, project_id=membership.project_id, evaluatee_id=evaluatee.id, evaluation_period=evaluation_period
+                avg_peer_score = crud.peer_evaluation.peer_evaluation.get_average_score_for_evaluatee(
+                    db, project_id=membership.project_id, evaluatee_id=evaluatee.id, period_id=period.id
                 )
-                avg_peer_score = mean(sum(e.scores) for e in peer_evals) if peer_evals else 0
-                total_weighted_peer_score += avg_peer_score * project_weight
+                if avg_peer_score:
+                    total_weighted_peer_score += avg_peer_score * project_weight
         
                 # PM evaluations for the project
-                pm_evals = crud.pm_evaluation.pm_evaluation.get_by_project_and_evaluatee(
-                    db, project_id=membership.project_id, evaluatee_id=evaluatee.id, evaluation_period=evaluation_period
+                pm_eval = crud.pm_evaluation.pm_evaluation.get_for_evaluatee_by_project_and_period(
+                    db, project_id=membership.project_id, evaluatee_id=evaluatee.id, period_id=period.id
                 )
-                avg_pm_score = mean(e.score for e in pm_evals) if pm_evals else 0
-                total_weighted_pm_score += avg_pm_score * project_weight
+                if pm_eval:
+                    total_weighted_pm_score += pm_eval.score * project_weight
     
     # 5. Get qualitative evaluation score
-    qualitative_eval = crud.qualitative_evaluation.qualitative_evaluation.get_by_evaluatee(
-        db, evaluatee_id=evaluatee.id, evaluation_period=evaluation_period
+    qualitative_eval = crud.qualitative_evaluation.qualitative_evaluation.get_by_evaluatee_and_period(
+        db, evaluatee_id=evaluatee.id, period_id=period.id
     )
     qualitative_score = qualitative_eval.score if qualitative_eval else 0
     
@@ -76,6 +79,7 @@ def calculate_and_store_final_scores(
         total_weighted_pm_score * (weight_map.get(models.evaluation.EvaluationItem.PM_REVIEW, 0) / 100.0) +
         qualitative_score * (weight_map.get(models.evaluation.EvaluationItem.QUALITATIVE_REVIEW, 0) / 100.0)
     )
+    
     # 7. Create and store the final evaluation record
     final_eval_in = schemas.FinalEvaluationCreate(
         evaluatee_id=evaluatee.id,
@@ -87,8 +91,8 @@ def calculate_and_store_final_scores(
     )
     
     # Check if a final evaluation already exists and update it, or create a new one
-    db_obj = crud.final_evaluation.get_by_evaluatee_and_period(
-        db, evaluatee_id=evaluatee.id, evaluation_period=evaluation_period
+    db_obj = crud.final_evaluation.get_by_user_and_period(
+        db, evaluatee_id=evaluatee.id, period_id=period.id
     )
     if db_obj:
         final_evaluation = crud.final_evaluation.update(db, db_obj=db_obj, obj_in=final_eval_in)

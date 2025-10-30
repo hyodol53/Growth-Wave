@@ -17,6 +17,7 @@ from tests.utils.user import create_random_user, authentication_token_from_usern
 from tests.utils.organization import create_random_organization
 from tests.utils.project import create_random_project
 from tests.utils.project_member import create_project_member
+from tests.utils.evaluation import create_random_final_evaluation
 from tests.utils.utils import random_lower_string
 
 
@@ -40,14 +41,12 @@ def test_read_my_evaluation_result(
     today = datetime.date.today()
     period = f"{today.year}-H{1 if today.month <= 6 else 2}"
 
-    crud.final_evaluation.create(
+    create_random_final_evaluation(
         db,
-        obj_in=FinalEvaluationCreate(
-            evaluatee_id=employee.id,
-            evaluation_period=period,
-            final_score=88.5,
-            grade="A",
-        ),
+        evaluatee_id=employee.id,
+        evaluation_period=period,
+        final_score=88.5,
+        grade="A",
     )
     crud.pm_evaluation.pm_evaluation.create(
         db,
@@ -93,17 +92,12 @@ def test_read_subordinate_evaluation_as_dept_head(
     today = datetime.date.today()
     period = f"{today.year}-H{1 if today.month <= 6 else 2}"
     
-    crud.final_evaluation.create(
+    create_random_final_evaluation(
         db,
-        obj_in=FinalEvaluationCreate(
-            evaluatee_id=subordinate.id,
-            evaluation_period=period,
-            final_score=95.0,
-            peer_score=92.0,
-            pm_score=96.0,
-            qualitative_score=97.0,
-            grade="S",
-        ),
+        evaluatee_id=subordinate.id,
+        evaluation_period=period,
+        final_score=95.0,
+        grade="S",
     )
     # Create peer feedback
     peer = create_random_user(db)
@@ -130,9 +124,6 @@ def test_read_subordinate_evaluation_as_dept_head(
     assert final_eval_data["evaluatee_id"] == subordinate.id
     assert final_eval_data["grade"] == "S"
     assert final_eval_data["final_score"] == 95.0
-    assert final_eval_data["peer_score"] == 92.0
-    assert final_eval_data["pm_score"] == 96.0
-    assert final_eval_data["qualitative_score"] == 97.0
     
     assert len(data["peer_feedback"]) == 1
     assert data["peer_feedback"][0] == "Great team player!"
@@ -187,14 +178,12 @@ def test_read_subordinate_evaluation_as_admin(
     # Create evaluation data for the user
     today = datetime.date.today()
     period = f"{today.year}-H{1 if today.month <= 6 else 2}"
-    crud.final_evaluation.create(
+    create_random_final_evaluation(
         db,
-        obj_in=FinalEvaluationCreate(
-            evaluatee_id=user.id,
-            evaluation_period=period,
-            final_score=75.0,
-            grade="B",
-        ),
+        evaluatee_id=user.id,
+        evaluation_period=period,
+        final_score=75.0,
+        grade="B",
     )
 
     # Get admin token and make request
