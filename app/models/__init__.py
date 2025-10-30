@@ -1,6 +1,6 @@
 from .user import User, UserRole
 from .organization import Organization
-from .external_account import ExternalAccount, AccountType
+from .external_account import ExternalAccount, Provider
 from .praise import Praise
 from .strength import StrengthProfile
 from .evaluation import EvaluationWeight, PeerEvaluation, PmEvaluation, QualitativeEvaluation, FinalEvaluation, DepartmentEvaluation

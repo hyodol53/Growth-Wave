@@ -1,27 +1,32 @@
-# API: Delete External Account
+# API: 외부 계정 연동 해제
 
-## `DELETE /api/v1/external-accounts/{account_id}`
+- **HTTP Method:** `DELETE`
+- **URL:** `/api/v1/external-accounts/{id}`
+- **Description:** 현재 로그인한 사용자의 특정 외부 계정 연동을 해제(삭제)합니다.
+- **Permissions:** 로그인한 모든 사용자 (`employee` 이상). 단, **자기 자신이 연동한 계정만** 삭제할 수 있습니다.
 
-### 설명
-사용자 본인이 시스템에 연동한 외부 계정의 연결을 끊습니다(삭제합니다).
+---
 
-### 권한
-- 인증된 사용자만 접근 가능하며, **본인의 계정만** 삭제할 수 있습니다.
+## Request
 
-### 요청 (Request)
-- **Path Parameter:**
-    - `account_id` (int, required): 삭제할 외부 계정의 `id`
+### Headers
+- `Authorization: Bearer <access_token>`
 
-### 응답 (Response)
-- **Status Code:** `200 OK`
-- **Body:**
-    ```json
-    {
-      "message": "External account deleted successfully"
-    }
-    ```
+### Path Parameters
+- **id** (int, required): 삭제할 외부 계정 연동 정보의 고유 ID.
 
-### 발생 가능한 오류
-- **`401 Unauthorized`**: 인증되지 않은 사용자의 요청인 경우
-- **`403 Forbidden`**: 다른 사용자의 계정을 삭제하려고 시도하는 경우
-- **`404 Not Found`**: 해당 `account_id`를 가진 계정이 존재하지 않는 경우
+---
+
+## Response
+
+### Success
+- **Status Code:** `204 No Content`
+- **Body:** (없음)
+
+### Errors
+- **Status Code:** `401 Unauthorized`
+  - **Reason:** 인증 토큰이 없거나 유효하지 않은 경우.
+- **Status Code:** `403 Forbidden`
+  - **Reason:** 다른 사용자의 계정 정보를 삭제하려고 시도한 경우.
+- **Status Code:** `404 Not Found`
+  - **Reason:** `id`에 해당하는 계정 정보가 존재하지 않는 경우.

@@ -1,39 +1,47 @@
-# API: Create External Account
+# API: 외부 계정 연동
 
-## `POST /api/v1/external-accounts/`
+- **HTTP Method:** `POST`
+- **URL:** `/api/v1/external-accounts`
+- **Description:** 현재 로그인한 사용자의 새로운 외부 시스템 계정(Jira, Bitbucket 등)을 연동합니다. 인증 정보(API 토큰 등)는 암호화되어 안전하게 저장됩니다.
+- **Permissions:** 로그인한 모든 사용자 (`employee` 이상)
 
-### 설명
-사용자 본인의 외부 서비스 계정(Jira, GitHub, Bitbucket 등)을 시스템에 연동(등록)합니다. (요구사항 ID: `FR-B-1.1`)
+---
 
-### 권한
-- 인증된 사용자만 접근 가능합니다.
+## Request
 
-### 요청 (Request)
-- **Body (JSON):**
-    ```json
-    {
-      "account_type": "JIRA",
-      "username": "user@example.com",
-      "access_token": "your_personal_access_token"
-    }
-    ```
-    - `account_type` (str, required): 외부 서비스의 종류. (Enum: `JIRA`, `GITHUB`, `BITBUCKET`)
-    - `username` (str, required): 외부 서비스에서의 사용자 이름 또는 아이디
-    - `access_token` (str, required): 외부 서비스에서 발급받은 Personal Access Token (PAT) 또는 API 키
+### Headers
+- `Authorization: Bearer <access_token>`
 
-### 응답 (Response)
-- **Status Code:** `201 OK`
+### Body
+```json
+{
+  "provider": "jira",
+  "account_id": "user@example.com",
+  "credentials": "your-jira-api-token-here"
+}
+```
+- **provider** (str, required): 연동할 시스템의 종류. (`"jira"`, `"bitbucket"`)
+- **account_id** (str, required): 외부 시스템에서 사용하는 계정 식별자 (예: 이메일 주소, 사용자 이름).
+- **credentials** (str, required): API 토큰, OAuth 토큰 등 외부 시스템 접근에 필요한 인증 정보.
+
+---
+
+## Response
+
+### Success
+- **Status Code:** `201 Created`
 - **Body:**
-    ```json
-    {
-      "id": 1,
-      "account_type": "JIRA",
-      "username": "user@example.com",
-      "user_id": 123
-    }
-    ```
-    - **참고:** 보안을 위해 요청 시 보냈던 `access_token`은 응답에 포함되지 않습니다.
+  ```json
+  {
+    "id": 1,
+    "provider": "jira",
+    "account_id": "user@example.com"
+  }
+  ```
+  **참고:** 보안을 위해 요청 시 보냈던 `credentials` 정보는 절대 응답에 포함되지 않습니다.
 
-### 발생 가능한 오류
-- **`400 Bad Request`**: 필수 필드가 누락되거나 `account_type`이 유효하지 않은 경우
-- **`401 Unauthorized`**: 인증되지 않은 사용자의 요청인 경우
+### Errors
+- **Status Code:** `401 Unauthorized`
+  - **Reason:** 인증 토큰이 없거나 유효하지 않은 경우.
+- **Status Code:** `422 Unprocessable Entity`
+  - **Reason:** 요청 본문의 형식이 유효하지 않은 경우 (예: `provider`가 유효한 Enum 값이 아님).

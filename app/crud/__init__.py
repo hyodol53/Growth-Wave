@@ -1,6 +1,6 @@
 from . import user
 from . import organization
-from . import external_account
+from .external_account import external_account
 from .praise import praise
 from . import evaluation
 from . import project_member

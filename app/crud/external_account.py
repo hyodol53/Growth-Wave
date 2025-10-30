@@ -1,30 +1,38 @@
 from sqlalchemy.orm import Session
+from typing import List
+
+from app.crud.base import CRUDBase
 from app.models.external_account import ExternalAccount
 from app.schemas.external_account import ExternalAccountCreate
-from app.core.security import fernet
+from app.core.security import encrypt_data
 
-def create_external_account(db: Session, *, owner_id: int, obj_in: ExternalAccountCreate) -> ExternalAccount:
-    encrypted_token = fernet.encrypt(obj_in.access_token.encode())
-    db_obj = ExternalAccount(
-        owner_id=owner_id,
-        account_type=obj_in.account_type,
-        username=obj_in.username,
-        encrypted_access_token=encrypted_token.decode()
-    )
-    db.add(db_obj)
-    db.commit()
-    db.refresh(db_obj)
-    return db_obj
-
-def get_external_accounts_by_owner(db: Session, *, owner_id: int) -> list[ExternalAccount]:
-    return db.query(ExternalAccount).filter(ExternalAccount.owner_id == owner_id).all()
-
-def get_external_account(db: Session, *, account_id: int) -> ExternalAccount | None:
-    return db.query(ExternalAccount).filter(ExternalAccount.id == account_id).first()
-
-def delete_external_account(db: Session, *, account_id: int):
-    db_obj = db.query(ExternalAccount).filter(ExternalAccount.id == account_id).first()
-    if db_obj:
-        db.delete(db_obj)
+class CRUDExternalAccount(CRUDBase[ExternalAccount, ExternalAccountCreate, None]):
+    def create_with_owner(
+        self, db: Session, *, obj_in: ExternalAccountCreate, owner_id: int
+    ) -> ExternalAccount:
+        
+        encrypted_credentials = encrypt_data(obj_in.credentials)
+        
+        db_obj = self.model(
+            provider=obj_in.provider,
+            account_id=obj_in.account_id,
+            encrypted_credentials=encrypted_credentials,
+            owner_id=owner_id,
+        )
+        db.add(db_obj)
         db.commit()
-    return db_obj
+        db.refresh(db_obj)
+        return db_obj
+
+    def get_multi_by_owner(
+        self, db: Session, *, owner_id: int, skip: int = 0, limit: int = 100
+    ) -> List[ExternalAccount]:
+        return (
+            db.query(self.model)
+            .filter(ExternalAccount.owner_id == owner_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+external_account = CRUDExternalAccount(ExternalAccount)

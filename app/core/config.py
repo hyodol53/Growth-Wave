@@ -26,6 +26,11 @@ class Settings(BaseSettings):
         "용감한", "친절한", "현명한", "날렵한", "고요한", "명랑한", "성실한", "늠름한", "다정한", "재빠른",
         "총명한", "우아한", "강인한", "믿음직한", "평화로운", "유쾌한", "정의로운", "창의적인", "끈기있는", "열정적인"
     ]
+    
+    # Jira Collector settings
+    JIRA_SERVER_URL: Optional[str] = None
+
+
 
     model_config = {"env_file": ".env"}
 

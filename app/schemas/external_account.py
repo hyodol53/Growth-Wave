@@ -1,19 +1,17 @@
 from pydantic import BaseModel, ConfigDict
-from app.models.external_account import AccountType
-
+from app.models.external_account import Provider
 
 # Shared properties
 class ExternalAccountBase(BaseModel):
-    account_type: AccountType
-    username: str
+    provider: Provider
+    account_id: str
 
 # Properties to receive on item creation
 class ExternalAccountCreate(ExternalAccountBase):
-    access_token: str
+    credentials: str # API Token, OAuth Token, etc.
 
-# Properties to return to client
+# Properties to return to client (never include credentials)
 class ExternalAccount(ExternalAccountBase):
     id: int
-    owner_id: int
 
     model_config = ConfigDict(from_attributes=True)

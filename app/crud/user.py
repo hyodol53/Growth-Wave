@@ -8,30 +8,35 @@ from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
 
 from app.models.user import User
+from app.models.external_account import ExternalAccount, Provider
 
 from app.schemas.user import UserCreate, UserUpdate, UserHistoryResponse, UserHistoryEntry, ProjectHistoryItem
 
 from app.core.security import get_password_hash, verify_password
-
 from app.crud import (
-
     organization as crud_org,
-
     evaluation_period as crud_eval_period,
-
     final_evaluation as crud_final_eval,
-
     project_member as crud_proj_member,
-
 )
-
-
-
 
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     def get_by_username(self, db: Session, *, username: str) -> Optional[User]:
         return db.query(User).filter(User.username == username).first()
+
+    def get_by_external_account(
+        self, db: Session, *, provider: Provider, account_id: str
+    ) -> Optional[User]:
+        return (
+            db.query(User)
+            .join(User.external_accounts)
+            .filter(
+                ExternalAccount.provider == provider,
+                ExternalAccount.account_id == account_id,
+            )
+            .first()
+        )
 
     def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
         return db.query(User).filter(User.email == email).first()

@@ -1,35 +1,39 @@
-# API: Get External Accounts
+# API: 연동된 외부 계정 목록 조회
 
-## `GET /api/v1/external-accounts/`
+- **HTTP Method:** `GET`
+- **URL:** `/api/v1/external-accounts`
+- **Description:** 현재 로그인한 사용자가 연동한 모든 외부 계정의 목록을 조회합니다.
+- **Permissions:** 로그인한 모든 사용자 (`employee` 이상)
 
-### 설명
-현재 인증된 사용자가 시스템에 연동한 모든 외부 계정 목록을 조회합니다.
+---
 
-### 권한
-- 인증된 사용자만 접근 가능합니다.
+## Request
 
-### 요청 (Request)
-- 별도의 요청 본문이 필요하지 않습니다.
+### Headers
+- `Authorization: Bearer <access_token>`
 
-### 응답 (Response)
+---
+
+## Response
+
+### Success
 - **Status Code:** `200 OK`
 - **Body:**
-    ```json
-    [
-      {
-        "id": 1,
-        "account_type": "JIRA",
-        "username": "user@example.com",
-        "user_id": 123
-      },
-      {
-        "id": 2,
-        "account_type": "GITHUB",
-        "username": "github_user",
-        "user_id": 123
-      }
-    ]
-    ```
+  ```json
+  [
+    {
+      "id": 1,
+      "provider": "jira",
+      "account_id": "user@example.com"
+    },
+    {
+      "id": 2,
+      "provider": "bitbucket",
+      "account_id": "my_bitbucket_user"
+    }
+  ]
+  ```
 
-### 발생 가능한 오류
-- **`401 Unauthorized`**: 인증되지 않은 사용자의 요청인 경우
+### Errors
+- **Status Code:** `401 Unauthorized`
+  - **Reason:** 인증 토큰이 없거나 유효하지 않은 경우.
